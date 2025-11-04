@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "pulse-fresh",
-    "slug": "pulse-fresh",
+    "name": "Pulse Oslo",
+    "slug": "pulse-oslo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.ms.tery.pulsefresh",
+      "bundleIdentifier": "com.pulse.oslo",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -25,7 +25,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.ms.tery.pulsefresh"
+      "package": "com.pulse.oslo"
     },
     "web": {
       "favicon": "./assets/favicon.png"
