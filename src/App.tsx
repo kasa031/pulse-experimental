@@ -8,6 +8,7 @@ import { View } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { auth } from './services/firebase';
 import { saveUserToStorage, clearAuthStorage } from './services/authPersistence';
+import { createOrUpdateUserProfile } from './services/userService';
 import { ErrorBoundary } from './utils/errorBoundary';
 import { safeLog, safeError } from './utils/performance';
 import LoginScreen from './screens/LoginScreen';
@@ -17,6 +18,7 @@ import VoteScreen from './screens/VoteScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import CommunityScreen from './screens/CommunityScreen';
 import LocalHistoryScreen from './screens/LocalHistoryScreen';
+import CreatePollScreen from './screens/CreatePollScreen';
 // Firebase setup
 import './services/firebase';
 // Theme
@@ -44,6 +46,20 @@ const App = () => {
             if (firebaseUser) {
               // Lagre bruker lokalt
               await saveUserToStorage(firebaseUser);
+              
+              // Opprett/oppdater brukerprofil i Firestore
+              try {
+                await createOrUpdateUserProfile({
+                  uid: firebaseUser.uid,
+                  email: firebaseUser.email,
+                  displayName: firebaseUser.displayName,
+                  photoURL: firebaseUser.photoURL,
+                });
+              } catch (error) {
+                safeError('Feil ved opprettelse av brukerprofil:', error);
+                // Fortsett selv om profil-opprettelse feiler
+              }
+              
               setUser(firebaseUser);
             } else {
               // Fjern lagret bruker
@@ -153,6 +169,8 @@ const App = () => {
         iconName = focused ? 'account' : 'account-outline';
       } else if (route.name === 'Lokalhistorie') {
         iconName = 'history';
+      } else if (route.name === 'Opprett') {
+        iconName = focused ? 'plus-circle' : 'plus-circle-outline';
       } else {
         iconName = 'help';
       }
@@ -201,6 +219,11 @@ const App = () => {
                 name="Lokalhistorie" 
                 component={LocalHistoryScreen}
                 options={{ title: 'Lokalhistorie' }}
+              />
+              <Tab.Screen 
+                name="Opprett" 
+                component={CreatePollScreen}
+                options={{ title: 'Opprett avstemning' }}
               />
             </Tab.Navigator>
           </NavigationContainer>

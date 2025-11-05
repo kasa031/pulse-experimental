@@ -1,7 +1,8 @@
 // seedPolls.js
 const { initializeApp, cert } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
-const serviceAccount = require('./pulse-oslo-firebase-adminsdk-fbsvc-6fa2ced435.json');
+// Filnavn kan variere - oppdater hvis filen har et annet navn
+const serviceAccount = require('./pulse-oslo-firebase-adminsdk-fbsvc-7cc1242b6c.json');
 
 // Initialiser Firebase Admin SDK
 initializeApp({

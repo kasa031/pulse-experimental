@@ -6,6 +6,7 @@ import {
   doc, 
   getDoc, 
   setDoc, 
+  addDoc,
   updateDoc, 
   increment,
   orderBy,
@@ -15,6 +16,10 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { validatePollId, validateOptionIndex } from '../utils/validation';
+import { checkRateLimit } from '../utils/rateLimiter';
+import { safeError } from '../utils/performance';
+import { incrementUserVoteCount } from './userService';
 
 const POLLS_CACHE_KEY = '@pulse_oslo_polls_cache';
 const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutter
@@ -109,6 +114,21 @@ export const submitVote = async (
   userId: string
 ): Promise<boolean> => {
   try {
+    // Valider input
+    const pollIdValidation = validatePollId(pollId);
+    if (!pollIdValidation.valid) {
+      throw new Error(pollIdValidation.error || 'Ugyldig avstemning ID');
+    }
+
+    // Rate limiting
+    const rateLimitCheck = await checkRateLimit('vote', userId);
+    if (!rateLimitCheck.allowed) {
+      const remaining = rateLimitCheck.resetAt 
+        ? Math.ceil((rateLimitCheck.resetAt - Date.now()) / 1000)
+        : 60;
+      throw new Error(`For mange stemmer. Prøv igjen om ${remaining} sekunder.`);
+    }
+
     const pollRef = doc(db, 'polls', pollId);
     const voteRef = doc(db, 'votes', `${pollId}_${userId}`);
 
@@ -118,7 +138,7 @@ export const submitVote = async (
       throw new Error('Du har allerede stemt på denne avstemningen');
     }
 
-    // Oppdater stemmetall
+    // Hent poll data
     const poll = await getDoc(pollRef);
     if (!poll.exists()) {
       throw new Error('Avstemning ikke funnet');
@@ -127,8 +147,19 @@ export const submitVote = async (
     const pollData = poll.data();
     const options = pollData.options || [];
     
-    if (optionIndex < 0 || optionIndex >= options.length) {
-      throw new Error('Ugyldig valg');
+    // Valider option index
+    const optionValidation = validateOptionIndex(optionIndex, options.length);
+    if (!optionValidation.valid) {
+      throw new Error(optionValidation.error || 'Ugyldig valg');
+    }
+
+    // Sjekk om poll er aktiv
+    const now = new Date();
+    const startDate = pollData.startDate?.toDate?.() || new Date(pollData.startDate);
+    const endDate = pollData.endDate?.toDate?.() || new Date(pollData.endDate);
+    
+    if (!pollData.isActive || now < startDate || now > endDate) {
+      throw new Error('Denne avstemningen er ikke lenger aktiv');
     }
 
     // Oppdater stemmetall
@@ -152,13 +183,20 @@ export const submitVote = async (
       }),
     ]);
 
+    // Oppdater brukerens vote count
+    await incrementUserVoteCount(userId);
+
     // Oppdater cache
     await invalidateCache();
 
     return true;
-  } catch (error) {
-    console.error('Feil ved innsending av stemme:', error);
-    throw error;
+  } catch (error: any) {
+    safeError('Feil ved innsending av stemme:', error);
+    // Re-throw med bedre feilmelding
+    if (error.message) {
+      throw error;
+    }
+    throw new Error('Kunne ikke sende stemme. Prøv igjen.');
   }
 };
 
@@ -228,6 +266,113 @@ const invalidateCache = async (): Promise<void> => {
     await AsyncStorage.removeItem(POLLS_CACHE_KEY);
   } catch (error) {
     console.error('Feil ved invalidering av cache:', error);
+  }
+};
+
+/**
+ * Opprett en ny avstemning (kun admin)
+ */
+export interface CreatePollData {
+  title: string;
+  description: string;
+  options: { text: string }[];
+  startDate: Date;
+  endDate: Date;
+  district: string;
+  category: string;
+  isActive?: boolean;
+}
+
+export const createPoll = async (
+  pollData: CreatePollData,
+  userId: string,
+  createdBy: string
+): Promise<string> => {
+  try {
+    // Valider input
+    const { validatePollTitle, validatePollDescription, validatePollOption } = await import('../utils/validation');
+    
+    const titleValidation = validatePollTitle(pollData.title);
+    if (!titleValidation.valid) {
+      throw new Error(titleValidation.error || 'Ugyldig tittel');
+    }
+
+    const descValidation = validatePollDescription(pollData.description);
+    if (!descValidation.valid) {
+      throw new Error(descValidation.error || 'Ugyldig beskrivelse');
+    }
+
+    if (!pollData.options || pollData.options.length < 2 || pollData.options.length > 10) {
+      throw new Error('Avstemning må ha mellom 2 og 10 alternativer');
+    }
+
+    // Valider alle alternativer
+    for (const option of pollData.options) {
+      const optionValidation = validatePollOption(option.text);
+      if (!optionValidation.valid) {
+        throw new Error(`Ugyldig alternativ: ${optionValidation.error}`);
+      }
+    }
+
+    // Rate limiting
+    const rateLimitCheck = await checkRateLimit('pollCreate', userId);
+    if (!rateLimitCheck.allowed) {
+      const remaining = rateLimitCheck.resetAt 
+        ? Math.ceil((rateLimitCheck.resetAt - Date.now()) / 3600000)
+        : 1;
+      throw new Error(`For mange opprettelser. Prøv igjen om ${remaining} time(r).`);
+    }
+
+    // Sjekk datoer
+    const now = new Date();
+    if (pollData.startDate < now) {
+      throw new Error('Startdato kan ikke være i fortiden');
+    }
+
+    if (pollData.endDate <= pollData.startDate) {
+      throw new Error('Sluttdato må være etter startdato');
+    }
+
+    // Opprett poll
+    const pollsRef = collection(db, 'polls');
+    const pollDoc = {
+      title: pollData.title.trim(),
+      description: pollData.description.trim(),
+      options: pollData.options.map(opt => ({
+        text: opt.text.trim(),
+        votes: 0,
+      })),
+      isActive: pollData.isActive !== false,
+      startDate: Timestamp.fromDate(pollData.startDate),
+      endDate: Timestamp.fromDate(pollData.endDate),
+      createdBy: createdBy,
+      district: pollData.district,
+      category: pollData.category,
+      totalVotes: 0,
+      createdAt: serverTimestamp(),
+    };
+
+    const docRef = await addDoc(pollsRef, pollDoc);
+    
+    // Oppdater brukerens pollsCreated count
+    try {
+      const { incrementUserPollCount } = await import('./userService');
+      await incrementUserPollCount(userId);
+    } catch (error) {
+      safeError('Feil ved oppdatering av pollsCreated:', error);
+      // Ikke kast feil, dette er ikke kritisk
+    }
+    
+    // Oppdater cache
+    await invalidateCache();
+
+    return docRef.id;
+  } catch (error: any) {
+    safeError('Feil ved opprettelse av avstemning:', error);
+    if (error.message) {
+      throw error;
+    }
+    throw new Error('Kunne ikke opprette avstemning. Prøv igjen.');
   }
 };
 
