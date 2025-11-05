@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, useWindowDimensions } from 'react-native';
-import { Card, Text, Button, RadioButton, ProgressBar, ActivityIndicator, Snackbar } from 'react-native-paper';
-import { theme } from '../constants/theme';
+import { Card, Text, Button, RadioButton, ProgressBar, ActivityIndicator, Snackbar, Searchbar, Chip } from 'react-native-paper';
+import { theme, osloBranding } from '../constants/theme';
 import { getActivePolls, submitVote, subscribeToPolls, Poll } from '../services/pollsService';
 import { auth } from '../services/firebase';
 import { safeError, safeLog } from '../utils/performance';
+import { searchAndFilterPolls } from '../utils/search';
+import { OSLO_DISTRICTS } from '../constants/osloDistricts';
 
 const VoteScreen = React.memo(() => {
   const [polls, setPolls] = useState<Poll[]>([]);
@@ -15,8 +17,27 @@ const VoteScreen = React.memo(() => {
   const [error, setError] = useState<string | null>(null);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [optimisticVotes, setOptimisticVotes] = useState<Record<string, Record<number, number>>>({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
   const { width } = useWindowDimensions();
   const isTablet = width > 768;
+
+  // Filtrerte polls basert på søk og filter
+  const filteredPolls = useMemo(() => {
+    return searchAndFilterPolls(polls, searchQuery, selectedCategory, selectedDistrict);
+  }, [polls, searchQuery, selectedCategory, selectedDistrict]);
+
+  // Unike kategorier fra polls
+  const availableCategories = useMemo(() => {
+    const categories = new Set<string>();
+    polls.forEach(poll => {
+      if (poll.category) {
+        categories.add(poll.category);
+      }
+    });
+    return Array.from(categories).sort();
+  }, [polls]);
 
   // Hent avstemninger
   const loadPolls = useCallback(async () => {
@@ -120,7 +141,7 @@ const VoteScreen = React.memo(() => {
 
   // Memoize poll cards for performance
   const pollCards = useMemo(() => {
-    return polls.map((poll) => {
+    return filteredPolls.map((poll) => {
       const pollId = poll.id;
       const isSubmitting = submitting[pollId] || false;
       const optimistic = optimisticVotes[pollId];
@@ -197,7 +218,7 @@ const VoteScreen = React.memo(() => {
         </Card>
       );
     });
-  }, [polls, selectedOptions, submitting, optimisticVotes, isTablet, handleVote, submitVoteHandler]);
+      }, [filteredPolls, selectedOptions, submitting, optimisticVotes, isTablet, handleVote, submitVoteHandler]);
 
   if (loading && polls.length === 0) {
     return (
@@ -216,6 +237,65 @@ const VoteScreen = React.memo(() => {
       }
       contentContainerStyle={[styles.content, isTablet && styles.contentTablet]}
     >
+      {/* Search Bar */}
+      <Card style={styles.searchCard}>
+        <Card.Content>
+          <Searchbar
+            placeholder="Søk i avstemninger..."
+            onChangeText={setSearchQuery}
+            value={searchQuery}
+            style={styles.searchbar}
+          />
+        </Card.Content>
+      </Card>
+
+      {/* Filter Chips */}
+      {(availableCategories.length > 0 || OSLO_DISTRICTS.length > 0) && (
+        <Card style={styles.filterCard}>
+          <Card.Content>
+            <Text variant="bodySmall" style={styles.filterLabel}>
+              Filtrer etter:
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
+              {availableCategories.map((cat) => (
+                <Chip
+                  key={`cat-${cat}`}
+                  selected={selectedCategory === cat}
+                  onPress={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
+                  style={styles.chip}
+                  selectedColor={osloBranding.colors.primary}
+                >
+                  {cat}
+                </Chip>
+              ))}
+              {OSLO_DISTRICTS.slice(0, 10).map((district) => (
+                <Chip
+                  key={`dist-${district}`}
+                  selected={selectedDistrict === district}
+                  onPress={() => setSelectedDistrict(selectedDistrict === district ? null : district)}
+                  style={styles.chip}
+                  selectedColor={osloBranding.colors.primary}
+                >
+                  {district}
+                </Chip>
+              ))}
+            </ScrollView>
+            {(selectedCategory || selectedDistrict) && (
+              <Button
+                mode="text"
+                onPress={() => {
+                  setSelectedCategory(null);
+                  setSelectedDistrict(null);
+                }}
+                style={styles.clearFilterButton}
+              >
+                Nullstill filter
+              </Button>
+            )}
+          </Card.Content>
+        </Card>
+      )}
+
       {error && (
         <Card style={styles.errorCard}>
           <Card.Content>
@@ -224,7 +304,15 @@ const VoteScreen = React.memo(() => {
         </Card>
       )}
 
-      {polls.length === 0 ? (
+      {filteredPolls.length === 0 && polls.length > 0 ? (
+        <Card style={styles.card}>
+          <Card.Content>
+            <Text variant="bodyMedium" style={styles.emptyText}>
+              Ingen avstemninger funnet med de valgte filterne. Prøv å endre søket eller filterne.
+            </Text>
+          </Card.Content>
+        </Card>
+      ) : polls.length === 0 ? (
         <Card style={styles.card}>
           <Card.Content>
             <Text variant="bodyLarge" style={styles.emptyText}>
@@ -236,7 +324,14 @@ const VoteScreen = React.memo(() => {
           </Card.Content>
         </Card>
       ) : (
-        pollCards
+        <>
+          {filteredPolls.length > 0 && (
+            <Text variant="bodySmall" style={styles.resultCount}>
+              Viser {filteredPolls.length} av {polls.length} avstemninger
+            </Text>
+          )}
+          {pollCards}
+        </>
       )}
 
       <Snackbar
@@ -343,6 +438,39 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: '#c62828',
+  },
+  searchCard: {
+    marginBottom: 8,
+    elevation: 1,
+  },
+  searchbar: {
+    elevation: 0,
+    backgroundColor: theme.colors.surface,
+  },
+  filterCard: {
+    marginBottom: 16,
+    elevation: 1,
+  },
+  filterLabel: {
+    marginBottom: 8,
+    color: theme.colors.textSecondary,
+    fontWeight: '500',
+  },
+  chipScroll: {
+    marginBottom: 8,
+  },
+  chip: {
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  clearFilterButton: {
+    marginTop: 8,
+  },
+  resultCount: {
+    marginBottom: 8,
+    paddingHorizontal: 16,
+    color: theme.colors.textSecondary,
+    fontWeight: '500',
   },
 });
 
