@@ -37,21 +37,8 @@
       "eas": {
         "projectId": "ba378638-5c49-4d3e-afbd-78ebf13be463"
       },
-      "openrouterApiKey": "DIN_OPENROUTER_API_KEY_HER",
-      "firebase": {
-        "apiKey": "DIN_FIREBASE_API_KEY_HER",
-        "authDomain": "pulse-oslo.firebaseapp.com",
-        "projectId": "pulse-oslo",
-        "storageBucket": "pulse-oslo.firebasestorage.app",
-        "messagingSenderId": "DIN_MESSAGING_SENDER_ID_HER",
-        "appId": "DIN_APP_ID_HER"
-      },
-      "firebaseApiKey": "DIN_FIREBASE_API_KEY_HER",
-      "firebaseAuthDomain": "pulse-oslo.firebaseapp.com",
-      "firebaseProjectId": "pulse-oslo",
-      "firebaseStorageBucket": "pulse-oslo.firebasestorage.app",
-      "firebaseMessagingSenderId": "DIN_MESSAGING_SENDER_ID_HER",
-      "firebaseAppId": "DIN_APP_ID_HER"
+      "openrouterApiKey": "DIN_API_NØKKEL_HER"
     }
   }
 }
+

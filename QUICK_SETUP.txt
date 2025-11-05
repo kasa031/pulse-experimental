@@ -1,0 +1,32 @@
+═══════════════════════════════════════════════════════════════
+  FIREBASE SETUP - QUICK REFERENCE
+═══════════════════════════════════════════════════════════════
+
+1. Gå til: https://console.firebase.google.com/
+2. Velg prosjekt "pulse-oslo" (eller opprett nytt)
+3. Settings ⚙️ → Project settings → Your apps → Web (</>)
+4. Kopier disse 3 verdiene:
+   - apiKey
+   - messagingSenderId  
+   - appId
+
+5. Åpne app.json og erstatt:
+   - "LEGG_TIL_DIN_FIREBASE_API_KEY" → din apiKey
+   - "LEGG_TIL_DIN_MESSAGING_SENDER_ID" → din messagingSenderId
+   - "LEGG_TIL_DIN_APP_ID" → din appId
+
+6. I Firebase Console:
+   - Gå til "Firestore Database" → "Create database"
+   - Velg "Start in test mode"
+   - Velg lokasjon → "Enable"
+
+7. (Valgfritt) Authentication:
+   - "Authentication" → "Get started"
+   - "Email/Password" → Aktiver → Save
+
+8. Test: npm start
+
+═══════════════════════════════════════════════════════════════
+Du trenger kun 3 verdier fra Firebase!
+═══════════════════════════════════════════════════════════════
+

@@ -1,0 +1,4 @@
+# Sikkerhetsattributter
+# Forhindrer at sensitive filer blir committet ved uhell
+app.json filter=git-crypt diff=git-crypt
+
