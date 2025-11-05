@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { Card, Text, Button, Chip, ActivityIndicator, Dialog, Portal, TextInput } from 'react-native-paper';
 import { theme, osloBranding } from '../constants/theme';
-import { getDiscussions, createDiscussion, Discussion } from '../services/discussionService';
+import { getDiscussions, createDiscussion, Discussion, getComments, addComment, Comment } from '../services/discussionService';
 import { auth } from '../services/firebase';
 import { OSLO_DISTRICTS } from '../constants/osloDistricts';
 import { POLL_CATEGORIES } from '../constants/osloDistricts';
@@ -50,6 +50,12 @@ const CommunityScreen = () => {
   const [newContent, setNewContent] = useState('');
   const [newCategory, setNewCategory] = useState('generelt');
   const [creating, setCreating] = useState(false);
+  const [selectedDiscussion, setSelectedDiscussion] = useState<string | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [showCommentsDialog, setShowCommentsDialog] = useState(false);
+  const [newComment, setNewComment] = useState('');
+  const [submittingComment, setSubmittingComment] = useState(false);
 
   useEffect(() => {
     loadDiscussions();
@@ -99,6 +105,41 @@ const CommunityScreen = () => {
       safeError('Feil ved opprettelse av diskusjon:', error);
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleOpenComments = async (discussionId: string) => {
+    setSelectedDiscussion(discussionId);
+    setShowCommentsDialog(true);
+    setLoadingComments(true);
+    try {
+      const commentsList = await getComments(discussionId);
+      setComments(commentsList);
+    } catch (error) {
+      safeError('Feil ved henting av kommentarer:', error);
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!newComment.trim() || !selectedDiscussion) {
+      return;
+    }
+
+    try {
+      setSubmittingComment(true);
+      await addComment(selectedDiscussion, newComment);
+      setNewComment('');
+      // Last kommentarer på nytt
+      const commentsList = await getComments(selectedDiscussion);
+      setComments(commentsList);
+      // Oppdater diskusjoner for å oppdatere commentCount
+      await loadDiscussions();
+    } catch (error) {
+      safeError('Feil ved legg til kommentar:', error);
+    } finally {
+      setSubmittingComment(false);
     }
   };
 
@@ -213,12 +254,15 @@ const CommunityScreen = () => {
                   {discussion.content}
                 </Text>
                 <View style={styles.discussionFooter}>
-                  <View style={styles.footerItem}>
-                    <Icon name="comment-outline" size={16} color={osloBranding.colors.textSecondary} />
-                    <Text variant="bodySmall" style={styles.footerText}>
-                      {discussion.commentCount}
-                    </Text>
-                  </View>
+                  <Button
+                    mode="text"
+                    icon="comment-outline"
+                    onPress={() => handleOpenComments(discussion.id)}
+                    style={styles.commentButton}
+                    textColor={osloBranding.colors.primary}
+                  >
+                    {discussion.commentCount} {discussion.commentCount === 1 ? 'kommentar' : 'kommentarer'}
+                  </Button>
                 </View>
               </Card.Content>
             </Card>
@@ -273,6 +317,83 @@ const CommunityScreen = () => {
             >
               Opprett
             </Button>
+          </Dialog.Actions>
+        </Dialog>
+
+        {/* Comments Dialog */}
+        <Dialog 
+          visible={showCommentsDialog} 
+          onDismiss={() => {
+            setShowCommentsDialog(false);
+            setSelectedDiscussion(null);
+            setComments([]);
+            setNewComment('');
+          }}
+          style={styles.commentsDialog}
+        >
+          <Dialog.Title>Kommentarer</Dialog.Title>
+          <Dialog.ScrollArea style={styles.commentsScrollArea}>
+            <ScrollView>
+              {loadingComments ? (
+                <ActivityIndicator style={styles.loader} />
+              ) : comments.length === 0 ? (
+                <Text variant="bodyMedium" style={styles.emptyText}>
+                  Ingen kommentarer ennå. Vær den første!
+                </Text>
+              ) : (
+                comments.map((comment) => (
+                  <Card key={comment.id} style={styles.commentCard}>
+                    <Card.Content>
+                      <View style={styles.commentHeader}>
+                        <Text variant="titleSmall" style={styles.commentAuthor}>
+                          {comment.authorName}
+                        </Text>
+                        <Text variant="bodySmall" style={styles.commentDate}>
+                          {formatDate(comment.createdAt)}
+                        </Text>
+                      </View>
+                      <Text variant="bodyMedium" style={styles.commentContent}>
+                        {comment.content}
+                      </Text>
+                    </Card.Content>
+                  </Card>
+                ))
+              )}
+            </ScrollView>
+          </Dialog.ScrollArea>
+          {isAuthenticated && (
+            <Dialog.Content>
+              <TextInput
+                label="Skriv en kommentar..."
+                value={newComment}
+                onChangeText={setNewComment}
+                mode="outlined"
+                multiline
+                numberOfLines={3}
+                style={styles.commentInput}
+                maxLength={1000}
+              />
+            </Dialog.Content>
+          )}
+          <Dialog.Actions>
+            <Button onPress={() => {
+              setShowCommentsDialog(false);
+              setSelectedDiscussion(null);
+              setComments([]);
+              setNewComment('');
+            }}>
+              Lukk
+            </Button>
+            {isAuthenticated && (
+              <Button
+                mode="contained"
+                onPress={handleAddComment}
+                loading={submittingComment}
+                disabled={!newComment.trim() || submittingComment}
+              >
+                Legg til
+              </Button>
+            )}
           </Dialog.Actions>
         </Dialog>
       </Portal>
@@ -389,6 +510,40 @@ const styles = StyleSheet.create({
   },
   dialogInput: {
     marginBottom: 12,
+  },
+  commentButton: {
+    marginTop: 0,
+  },
+  commentsDialog: {
+    maxHeight: '80%',
+  },
+  commentsScrollArea: {
+    maxHeight: 400,
+    paddingHorizontal: 0,
+  },
+  commentCard: {
+    marginBottom: 8,
+    elevation: 1,
+  },
+  commentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  commentAuthor: {
+    fontWeight: '600',
+    color: osloBranding.colors.primary,
+  },
+  commentDate: {
+    color: osloBranding.colors.textSecondary,
+  },
+  commentContent: {
+    color: osloBranding.colors.text,
+    lineHeight: 20,
+  },
+  commentInput: {
+    marginTop: 8,
   },
 });
 
