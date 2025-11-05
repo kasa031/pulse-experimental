@@ -1,15 +1,33 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
-import { Card, Text, Button, Chip } from 'react-native-paper';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, useWindowDimensions, Image } from 'react-native';
+import { Card, Text, Button, Chip, ActivityIndicator } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { theme, osloBranding } from '../constants/theme';
 import { OSLO_DISTRICTS } from '../constants/osloDistricts';
+import { getActivePolls } from '../services/pollsService';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const HomeScreen = () => {
   const navigation = useNavigation<any>();
   const { width } = useWindowDimensions();
   const isTablet = width > 768;
+  const [activePollsCount, setActivePollsCount] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  const loadStats = async () => {
+    try {
+      const polls = await getActivePolls();
+      setActivePollsCount(polls.length);
+    } catch (error) {
+      console.error('Feil ved henting av statistikk:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -35,9 +53,13 @@ const HomeScreen = () => {
             <View style={styles.statsRow}>
               <View style={styles.stat}>
                 <Icon name="vote" size={20} color={osloBranding.colors.secondary} />
-                <Text variant="bodySmall" style={styles.statText}>
-                  Aktive avstemninger
-                </Text>
+                {loading ? (
+                  <ActivityIndicator size="small" color={osloBranding.colors.secondary} style={styles.statLoader} />
+                ) : (
+                  <Text variant="bodySmall" style={styles.statText}>
+                    {activePollsCount} aktive avstemninger
+                  </Text>
+                )}
               </View>
               <View style={styles.stat}>
                 <Icon name="map" size={20} color={osloBranding.colors.primary} />
@@ -76,17 +98,38 @@ const HomeScreen = () => {
             <Text variant="titleMedium" style={styles.sectionTitle}>
               Aktive avstemninger
             </Text>
-            <Text variant="bodyMedium" style={styles.emptyText}>
-              Gå til "Stem"-fanen for å se alle aktive avstemninger og delta med din stemme.
-            </Text>
-            <Button 
-              mode="contained" 
-              icon="vote" 
-              style={styles.actionButton}
-              onPress={() => navigation.navigate('Stem')}
-            >
-              Se alle avstemninger
-            </Button>
+            {loading ? (
+              <ActivityIndicator style={styles.loader} />
+            ) : activePollsCount > 0 ? (
+              <>
+                <Text variant="bodyMedium" style={styles.infoText}>
+                  Det er for øyeblikket {activePollsCount} {activePollsCount === 1 ? 'aktiv avstemning' : 'aktive avstemninger'} som du kan delta på.
+                </Text>
+                <Button 
+                  mode="contained" 
+                  icon="vote" 
+                  style={styles.actionButton}
+                  onPress={() => navigation.navigate('Stem')}
+                >
+                  Se alle avstemninger
+                </Button>
+              </>
+            ) : (
+              <>
+                <Text variant="bodyMedium" style={styles.emptyText}>
+                  Det er ingen aktive avstemninger for øyeblikket. 
+                  Sjekk tilbake senere for nye avstemninger!
+                </Text>
+                <Button 
+                  mode="outlined" 
+                  icon="vote" 
+                  style={styles.actionButton}
+                  onPress={() => navigation.navigate('Stem')}
+                >
+                  Se alle avstemninger
+                </Button>
+              </>
+            )}
           </Card.Content>
         </Card>
 
@@ -169,6 +212,9 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     color: osloBranding.colors.textSecondary,
   },
+  statLoader: {
+    marginLeft: 8,
+  },
   sectionTitle: {
     marginBottom: 12,
     fontWeight: '600',
@@ -199,6 +245,9 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     marginTop: 8,
+  },
+  loader: {
+    marginVertical: 16,
   },
 });
 
