@@ -20,7 +20,7 @@ import LocalHistoryScreen from './screens/LocalHistoryScreen';
 // Firebase setup
 import './services/firebase';
 // Theme
-import { theme } from './constants/theme';
+import { theme, osloBranding } from './constants/theme';
 
 const Tab = createBottomTabNavigator();
 
@@ -158,8 +158,8 @@ const App = () => {
       }
       return <Icon name={iconName} size={size} color={color} />;
     },
-    tabBarActiveTintColor: theme.colors.primary,
-    tabBarInactiveTintColor: 'gray',
+    tabBarActiveTintColor: osloBranding.colors.primary,
+    tabBarInactiveTintColor: osloBranding.colors.textSecondary,
     headerStyle: {
       backgroundColor: theme.colors.primary,
     },
@@ -180,7 +180,7 @@ const App = () => {
               <Tab.Screen 
                 name="Hjem" 
                 component={HomeScreen}
-                options={{ title: 'Pulse Oslo' }}
+                options={{ title: osloBranding.logo.text }}
               />
               <Tab.Screen 
                 name="Stem" 

@@ -27,7 +27,7 @@ jobs:
         uses: expo/expo-github-action@v8
         with:
           expo-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
+          # EXPO_TOKEN is optional for public repos
 
       - name: Install dependencies
         run: npm ci
@@ -55,7 +55,8 @@ jobs:
           "
 
       - name: Build web
-        run: npx expo export:web
+        run: |
+          npx expo export --platform web
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
@@ -65,13 +66,86 @@ jobs:
           FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
           FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
 
+      - name: Create 404.html for SPA routing (GitHub Pages)
+        run: |
+          # Expo export with Metro outputs to 'dist' directory
+          OUTPUT_DIR=""
+          if [ -d "dist" ]; then
+            OUTPUT_DIR="dist"
+          elif [ -d "web-build" ]; then
+            OUTPUT_DIR="web-build"
+          fi
+          
+          if [ -n "$OUTPUT_DIR" ]; then
+            cat > $OUTPUT_DIR/404.html << 'EOF'
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Pulse Oslo</title>
+  <script>
+    // Single Page Apps for GitHub Pages
+    // https://github.com/rafgraph/spa-github-pages
+    var pathSegmentsToKeep = 1;
+    var l = window.location;
+    l.replace(
+      l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+      l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
+      l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
+      (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+      l.hash
+    );
+  </script>
+</head>
+<body>
+</body>
+</html>
+EOF
+            echo "✅ Created 404.html in $OUTPUT_DIR"
+          fi
+
+      - name: Find build output directory
+        id: find_output
+        run: |
+          # Expo export with Metro bundler outputs to 'dist' directory
+          if [ -d "dist" ]; then
+            echo "output_dir=dist" >> $GITHUB_OUTPUT
+            echo "Found dist directory"
+          elif [ -d "web-build" ]; then
+            echo "output_dir=web-build" >> $GITHUB_OUTPUT
+            echo "Found web-build directory"
+          else
+            echo "ERROR: No build output directory found!"
+            echo "Listing current directory:"
+            ls -la
+            echo "Checking for common output directories:"
+            ls -la dist/ 2>/dev/null || echo "dist/ not found"
+            ls -la web-build/ 2>/dev/null || echo "web-build/ not found"
+            exit 1
+          fi
+
+      - name: Verify build output
+        run: |
+          OUTPUT_DIR="${{ steps.find_output.outputs.output_dir }}"
+          echo "Checking $OUTPUT_DIR directory..."
+          ls -la $OUTPUT_DIR/ || echo "$OUTPUT_DIR not found"
+          if [ ! -f "$OUTPUT_DIR/index.html" ]; then
+            echo "ERROR: index.html not found in $OUTPUT_DIR!"
+            echo "Files in $OUTPUT_DIR:"
+            ls -la $OUTPUT_DIR/
+            exit 1
+          fi
+          echo "✅ Build output verified: $OUTPUT_DIR/index.html exists"
+          echo "Files in $OUTPUT_DIR:"
+          ls -la $OUTPUT_DIR/ | head -20
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./web-build
+          path: ./${{ steps.find_output.outputs.output_dir }}
 
       - name: Deploy to GitHub Pages
         id: deployment
