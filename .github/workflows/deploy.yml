@@ -73,15 +73,33 @@ jobs:
           export EXPO_PUBLIC_USE_STATIC=0
           export EXPO_PUBLIC_BASE_URL=/pulse-experimental
           echo "Building web app with base URL: /pulse-experimental"
+          
+          # Temporarily rename public/index.html so Expo generates its own
+          # Expo will use public/index.html if it exists, but we want it to generate script tags
+          if [ -f "public/index.html" ]; then
+            echo "Temporarily moving public/index.html so Expo can generate its own..."
+            mv public/index.html public/index.html.template
+          fi
+          
           npx expo export --platform web --no-minify 2>&1 | tee build.log || {
             echo "Build failed, checking logs..."
             cat build.log || true
+            # Restore template if build failed
+            if [ -f "public/index.html.template" ]; then
+              mv public/index.html.template public/index.html
+            fi
             echo "Trying alternative build method..."
             npx expo export --platform web 2>&1 || {
               echo "Build completely failed"
               exit 1
             }
           }
+          
+          # Restore template after successful build
+          if [ -f "public/index.html.template" ]; then
+            mv public/index.html.template public/index.html
+          fi
+          
           echo "✅ Build completed"
         env:
           EXPO_NO_ROUTER: "1"
@@ -154,39 +172,98 @@ jobs:
             exit 1
           fi
 
-      - name: Fix base path in HTML and JS files
+      - name: Inject error handling and fix paths in index.html
         run: |
           OUTPUT_DIR="${{ steps.find_output.outputs.output_dir }}"
           BASE_PATH="/pulse-experimental"
           
-          echo "Fixing base path in all files..."
+          echo "Processing index.html..."
           
-          # Fix all HTML files
-          find "$OUTPUT_DIR" -name "*.html" -type f | while read file; do
-            echo "Fixing: $file"
-            # Fix absolute paths (starting with /)
-            sed -i "s|href=\"/|href=\"$BASE_PATH/|g" "$file"
-            sed -i "s|src=\"/|src=\"$BASE_PATH/|g" "$file"
-            sed -i "s|url('/|url('$BASE_PATH/|g" "$file"
-            sed -i "s|url(\"/|url(\"$BASE_PATH/|g" "$file"
-            # Fix relative paths in script tags (ensure they're relative to base)
-            sed -i "s|src=\"_expo/|src=\"$BASE_PATH/_expo/|g" "$file"
-            sed -i "s|src=\"static/|src=\"$BASE_PATH/static/|g" "$file"
-          done
-          
-          # Fix JS files that might have hardcoded paths
-          find "$OUTPUT_DIR" -name "*.js" -type f | while read file; do
-            # Only fix if it contains absolute paths
-            if grep -q '"/_expo' "$file" || grep -q "'/_expo" "$file"; then
-              echo "Fixing JS paths in: $file"
-              sed -i "s|\"/_expo|\"$BASE_PATH/_expo|g" "$file"
-              sed -i "s|'/_expo|'$BASE_PATH/_expo|g" "$file"
-              sed -i "s|\"/static|\"$BASE_PATH/static|g" "$file"
-              sed -i "s|'/static|'$BASE_PATH/static|g" "$file"
+          if [ -f "$OUTPUT_DIR/index.html" ]; then
+            # Check if script tags exist (Expo should have added them)
+            SCRIPT_COUNT=$(grep -c '<script' "$OUTPUT_DIR/index.html" || echo "0")
+            echo "Found $SCRIPT_COUNT script tags in index.html"
+            
+            if [ "$SCRIPT_COUNT" -eq "0" ]; then
+              echo "⚠️ WARNING: No script tags found! Checking _expo directory..."
+              if [ -d "$OUTPUT_DIR/_expo" ]; then
+                echo "✅ _expo directory exists"
+                JS_FILES=$(find "$OUTPUT_DIR/_expo" -name "*.js" -type f | head -3)
+                if [ -n "$JS_FILES" ]; then
+                  echo "Found JS files:"
+                  echo "$JS_FILES"
+                  # Manually inject script tag if Expo didn't
+                  MAIN_JS=$(find "$OUTPUT_DIR/_expo" -path "*/js/web/index.js" -type f | head -1)
+                  if [ -n "$MAIN_JS" ]; then
+                    RELATIVE_PATH=$(echo "$MAIN_JS" | sed "s|^$OUTPUT_DIR/||")
+                    echo "Injecting script tag for: $RELATIVE_PATH"
+                    # Add script tag before closing body tag
+                    sed -i "s|</body>|<script src=\"$BASE_PATH/$RELATIVE_PATH\"></script></body>|" "$OUTPUT_DIR/index.html"
+                  fi
+                fi
+              else
+                echo "❌ _expo directory not found!"
+              fi
             fi
-          done
+            
+            # Fix all paths in index.html
+            echo "Fixing paths in index.html..."
+            sed -i "s|src=\"/_expo|src=\"$BASE_PATH/_expo|g" "$OUTPUT_DIR/index.html"
+            sed -i "s|src=\"/static|src=\"$BASE_PATH/static|g" "$OUTPUT_DIR/index.html"
+            sed -i "s|href=\"/_expo|href=\"$BASE_PATH/_expo|g" "$OUTPUT_DIR/index.html"
+            sed -i "s|href=\"/static|href=\"$BASE_PATH/static|g" "$OUTPUT_DIR/index.html"
+            sed -i "s|url('/_expo|url('$BASE_PATH/_expo|g" "$OUTPUT_DIR/index.html"
+            sed -i "s|url(\"/_expo|url(\"$BASE_PATH/_expo|g" "$OUTPUT_DIR/index.html"
+            
+            # Inject error handling script before closing body tag (but after Expo's scripts)
+            echo "Injecting error handling script..."
+            ERROR_SCRIPT='<script>
+    // Error handling and load detection
+    console.log("OsloPuls - Environment info:", {
+      userAgent: navigator.userAgent,
+      location: window.location.href,
+      basePath: window.location.pathname.split("/").slice(0, -1).join("/") || "/",
+      timestamp: new Date().toISOString()
+    });
+    
+    window.addEventListener("error", function(e) {
+      console.error("Global error:", e.error, e.filename, e.lineno, e.colno);
+      const root = document.getElementById("root");
+      if (root && !root.querySelector(".error-container")) {
+        const errorMsg = e.error ? e.error.toString() : "Ukjent feil";
+        root.innerHTML = "<div class=\"error-container\" style=\"padding: 40px; text-align: center; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;\"><h2 style=\"color: #d32f2f; margin-bottom: 16px;\">En feil oppstod</h2><p style=\"margin-bottom: 8px; color: #666;\">" + errorMsg + "</p><button onclick=\"window.location.reload()\" style=\"padding: 12px 24px; background-color: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer;\">Last på nytt</button></div>";
+      }
+    });
+    
+    window.addEventListener("unhandledrejection", function(e) {
+      console.error("Unhandled promise rejection:", e.reason);
+    });
+    
+    setTimeout(function() {
+      const root = document.getElementById("root");
+      if (root && root.querySelector(".loading-container")) {
+        console.error("❌ App failed to load after 10 seconds");
+        console.error("Debug info:", {
+          scripts: Array.from(document.scripts).map(s => s.src),
+          stylesheets: Array.from(document.styleSheets).map(s => s.href),
+          rootContent: root.innerHTML.substring(0, 200)
+        });
+        root.innerHTML = "<div class=\"error-container\" style=\"padding: 40px; text-align: center; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;\"><h2 style=\"color: #d32f2f; margin-bottom: 16px;\">Appen lastet ikke</h2><p style=\"margin-bottom: 8px; color: #666;\">Det ser ut til at appen ikke lastet etter 10 sekunder.</p><p style=\"margin-bottom: 8px; color: #999; font-size: 12px;\">Sjekk browser console (F12) for detaljer.</p><button onclick=\"window.location.reload()\" style=\"padding: 12px 24px; background-color: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer;\">Last på nytt</button></div>";
+      }
+    }, 10000);
+  </script>'
+            
+            # Insert error script before closing body tag
+            sed -i "s|</body>|$ERROR_SCRIPT</body>|" "$OUTPUT_DIR/index.html"
+            
+            # Verify final result
+            FINAL_SCRIPT_COUNT=$(grep -c '<script' "$OUTPUT_DIR/index.html" || echo "0")
+            echo "✅ Final script tag count: $FINAL_SCRIPT_COUNT"
+            echo "Script tags:"
+            grep '<script' "$OUTPUT_DIR/index.html" | head -5 || echo "No script tags found"
+          fi
           
-          echo "✅ Base path fixes completed"
+          echo "✅ index.html processing completed"
 
       - name: Verify build output
         run: |
