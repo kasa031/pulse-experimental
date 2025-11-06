@@ -157,7 +157,8 @@ const CommunityScreen = () => {
         styles.content,
         { padding },
         isTablet && styles.contentTablet,
-        isMobile && styles.contentMobile
+        isMobile && styles.contentMobile,
+        isDesktop && styles.contentDesktop
       ]}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
@@ -425,6 +426,12 @@ const styles = StyleSheet.create({
   },
   contentTablet: {
     padding: SPACING.screenPadding.tablet,
+    maxWidth: SPACING.contentMaxWidth.tablet,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  contentDesktop: {
+    padding: SPACING.screenPadding.desktop,
     maxWidth: SPACING.contentMaxWidth.desktop,
     alignSelf: 'center',
     width: '100%',

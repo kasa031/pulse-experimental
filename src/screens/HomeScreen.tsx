@@ -40,7 +40,8 @@ const HomeScreen = () => {
         styles.content, 
         { padding },
         isTablet && styles.contentTablet,
-        isMobile && styles.contentMobile
+        isMobile && styles.contentMobile,
+        isDesktop && styles.contentDesktop
       ]}>
         {/* Welcome Card */}
         <Card style={[styles.card, styles.welcomeCard]}>
@@ -85,10 +86,18 @@ const HomeScreen = () => {
           </Card.Content>
         </Card>
 
-        {/* Cards Grid for Tablet */}
-        <View style={[styles.cardsGrid, isTablet && styles.cardsGridTablet]}>
+        {/* Cards Grid for Tablet/Desktop */}
+        <View style={[
+          styles.cardsGrid, 
+          isTablet && styles.cardsGridTablet,
+          isDesktop && styles.cardsGridDesktop
+        ]}>
           {/* Quick Info Card */}
-          <Card style={[styles.card, isTablet && styles.cardTablet]}>
+          <Card style={[
+            styles.card, 
+            isTablet && styles.cardTablet,
+            isDesktop && styles.cardDesktop
+          ]}>
             <Card.Content>
               <Text variant="titleMedium" style={styles.sectionTitle}>
                 Hva er OsloPuls?
@@ -109,7 +118,11 @@ const HomeScreen = () => {
           </Card>
 
           {/* Active Polls Card */}
-          <Card style={[styles.card, isTablet && styles.cardTablet]}>
+          <Card style={[
+            styles.card, 
+            isTablet && styles.cardTablet,
+            isDesktop && styles.cardDesktop
+          ]}>
             <Card.Content>
               <Text variant="titleMedium" style={styles.sectionTitle}>
                 Aktive avstemninger
@@ -188,6 +201,12 @@ const styles = StyleSheet.create({
   },
   contentTablet: {
     padding: SPACING.screenPadding.tablet,
+    maxWidth: SPACING.contentMaxWidth.tablet,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  contentDesktop: {
+    padding: SPACING.screenPadding.desktop,
     maxWidth: SPACING.contentMaxWidth.desktop,
     alignSelf: 'center',
     width: '100%',
@@ -207,6 +226,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: SPACING.md,
     marginBottom: SPACING.cardMargin.tablet,
+  },
+  cardsGridDesktop: {
+    flexDirection: 'row',
+    gap: SPACING.lg,
+    marginBottom: SPACING.cardMargin.desktop,
+  },
+  cardDesktop: {
+    flex: 1,
+    marginBottom: 0,
   },
   welcomeCard: {
     backgroundColor: theme.colors.surface,
