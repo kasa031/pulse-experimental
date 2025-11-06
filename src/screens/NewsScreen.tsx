@@ -4,8 +4,8 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Linking } from 'react-native';
-import { Card, Text, Button, Chip, ActivityIndicator, Surface } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, RefreshControl, Linking, Share, Image, Platform } from 'react-native';
+import { Card, Text, Button, Chip, ActivityIndicator, Dialog, Portal } from 'react-native-paper';
 import { theme, osloBranding } from '../constants/theme';
 import { getLatestNews, getNewsByCategory, getNewsByDistrict, NewsItem } from '../services/newsService';
 import { OSLO_DISTRICTS, POLL_CATEGORIES } from '../constants/osloDistricts';
@@ -72,6 +72,8 @@ const NewsScreen = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
   const [userDistrict, setUserDistrict] = useState<string | null>(null);
+  const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
+  const [showFullNews, setShowFullNews] = useState(false);
 
   useEffect(() => {
     loadUserDistrict();
@@ -135,6 +137,35 @@ const NewsScreen = () => {
         safeError('Feil ved åpning av lenke:', error);
       }
     }
+  };
+
+  const handleShare = async (item: NewsItem) => {
+    try {
+      const shareContent = {
+        message: `${item.title}\n\n${item.summary || item.content.substring(0, 200)}...\n\n${item.linkUrl || ''}`,
+        title: item.title,
+        url: item.linkUrl,
+      };
+
+      if (Platform.OS === 'web') {
+        if (navigator.share) {
+          await navigator.share(shareContent);
+        } else {
+          // Fallback: kopier til utklippstavle
+          await navigator.clipboard.writeText(shareContent.message);
+          safeLog('Nyhet kopiert til utklippstavle');
+        }
+      } else {
+        await Share.share(shareContent);
+      }
+    } catch (error) {
+      safeError('Feil ved deling av nyhet:', error);
+    }
+  };
+
+  const handleReadMore = (item: NewsItem) => {
+    setSelectedNews(item);
+    setShowFullNews(true);
   };
 
   const filteredNews = news.filter(item => {
@@ -302,6 +333,14 @@ const NewsScreen = () => {
                   </View>
                 </View>
                 
+                {item.imageUrl && (
+                  <Image 
+                    source={{ uri: item.imageUrl }} 
+                    style={styles.newsImage}
+                    resizeMode="cover"
+                  />
+                )}
+
                 {item.summary && (
                   <Text variant="bodyMedium" style={styles.summary}>
                     {item.summary}
@@ -312,22 +351,124 @@ const NewsScreen = () => {
                   {item.content}
                 </Text>
 
-                {item.linkUrl && (
+                <View style={styles.newsActions}>
                   <Button
                     mode="text"
-                    icon="open-in-new"
-                    onPress={() => handleOpenLink(item.linkUrl)}
-                    style={styles.linkButton}
+                    icon="book-open-variant"
+                    onPress={() => handleReadMore(item)}
+                    style={styles.actionButton}
                     textColor={osloBranding.colors.primary}
                   >
                     Les mer
                   </Button>
-                )}
+                  <Button
+                    mode="text"
+                    icon="share-variant"
+                    onPress={() => handleShare(item)}
+                    style={styles.actionButton}
+                    textColor={osloBranding.colors.primary}
+                  >
+                    Del
+                  </Button>
+                  {item.linkUrl && (
+                    <Button
+                      mode="text"
+                      icon="open-in-new"
+                      onPress={() => handleOpenLink(item.linkUrl)}
+                      style={styles.actionButton}
+                      textColor={osloBranding.colors.primary}
+                    >
+                      Ekstern lenke
+                    </Button>
+                  )}
+                </View>
               </Card.Content>
             </Card>
           ))
         )}
       </View>
+
+      {/* Full News Dialog */}
+      <Portal>
+        <Dialog 
+          visible={showFullNews} 
+          onDismiss={() => {
+            setShowFullNews(false);
+            setSelectedNews(null);
+          }}
+          style={styles.fullNewsDialog}
+        >
+          {selectedNews && (
+            <>
+              <Dialog.Title style={styles.fullNewsTitle}>
+                {selectedNews.title}
+              </Dialog.Title>
+              <Dialog.ScrollArea style={styles.fullNewsScrollArea}>
+                <Dialog.Content>
+                  <View style={styles.fullNewsMeta}>
+                    <Text variant="bodySmall" style={styles.fullNewsMetaText}>
+                      {selectedNews.author}
+                    </Text>
+                    <Text variant="bodySmall" style={styles.fullNewsMetaText}>
+                      • {formatDate(selectedNews.publishedAt)}
+                    </Text>
+                    {selectedNews.district && (
+                      <Text variant="bodySmall" style={styles.fullNewsMetaText}>
+                        • {selectedNews.district}
+                      </Text>
+                    )}
+                  </View>
+                  
+                  {selectedNews.imageUrl && (
+                    <Image 
+                      source={{ uri: selectedNews.imageUrl }} 
+                      style={styles.fullNewsImage}
+                      resizeMode="cover"
+                    />
+                  )}
+
+                  {selectedNews.summary && (
+                    <Text variant="bodyLarge" style={styles.fullNewsSummary}>
+                      {selectedNews.summary}
+                    </Text>
+                  )}
+                  
+                  <Text variant="bodyMedium" style={styles.fullNewsContent}>
+                    {selectedNews.content}
+                  </Text>
+                </Dialog.Content>
+              </Dialog.ScrollArea>
+              <Dialog.Actions>
+                <Button
+                  onPress={() => handleShare(selectedNews)}
+                  icon="share-variant"
+                  textColor={osloBranding.colors.primary}
+                >
+                  Del
+                </Button>
+                {selectedNews.linkUrl && (
+                  <Button
+                    onPress={() => handleOpenLink(selectedNews.linkUrl)}
+                    icon="open-in-new"
+                    textColor={osloBranding.colors.primary}
+                  >
+                    Ekstern lenke
+                  </Button>
+                )}
+                <Button
+                  onPress={() => {
+                    setShowFullNews(false);
+                    setSelectedNews(null);
+                  }}
+                  textColor={osloBranding.colors.primary}
+                >
+                  Lukk
+                </Button>
+              </Dialog.Actions>
+            </>
+          )}
+        </Dialog>
+      </Portal>
     </ScrollView>
   );
 };
@@ -450,10 +591,62 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: SPACING.md,
   },
-  linkButton: {
+  newsImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 8,
+    marginBottom: SPACING.md,
+    backgroundColor: osloBranding.colors.backgroundSecondary,
+  },
+  newsActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     marginTop: SPACING.sm,
-    alignSelf: 'flex-start',
+    gap: SPACING.xs,
+  },
+  actionButton: {
     minHeight: BUTTON_MIN_HEIGHT,
+  },
+  fullNewsDialog: {
+    maxWidth: isTablet ? 600 : '90%',
+    maxHeight: '90%',
+  },
+  fullNewsTitle: {
+    fontWeight: 'bold',
+    color: osloBranding.colors.primary,
+  },
+  fullNewsScrollArea: {
+    maxHeight: 400,
+  },
+  fullNewsMeta: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: SPACING.md,
+    paddingBottom: SPACING.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: osloBranding.colors.border || '#E0E0E0',
+  },
+  fullNewsMetaText: {
+    color: osloBranding.colors.textSecondary,
+    marginRight: SPACING.sm,
+  },
+  fullNewsImage: {
+    width: '100%',
+    height: 250,
+    borderRadius: 8,
+    marginBottom: SPACING.md,
+    backgroundColor: osloBranding.colors.backgroundSecondary,
+  },
+  fullNewsSummary: {
+    fontWeight: '600',
+    marginBottom: SPACING.md,
+    color: osloBranding.colors.text,
+    fontStyle: 'italic',
+    lineHeight: 24,
+  },
+  fullNewsContent: {
+    color: osloBranding.colors.text,
+    lineHeight: 22,
   },
   emptyState: {
     alignItems: 'center',

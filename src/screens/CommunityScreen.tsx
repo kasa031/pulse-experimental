@@ -291,7 +291,7 @@ const CommunityScreen = () => {
         {/* Discussions List */}
         {loading && !refreshing ? (
           <ActivityIndicator style={styles.loader} />
-        ) : discussions.length === 0 ? (
+        ) : sortedDiscussions.length === 0 ? (
           <Card style={styles.card}>
             <Card.Content>
               <Text variant="bodyMedium" style={styles.emptyText}>
@@ -301,7 +301,7 @@ const CommunityScreen = () => {
             </Card.Content>
           </Card>
         ) : (
-          discussions.map((discussion) => (
+          sortedDiscussions.map((discussion) => (
             <Card key={discussion.id} style={styles.discussionCard}>
               <Card.Content>
                 <View style={styles.discussionHeader}>
