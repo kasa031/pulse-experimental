@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, useWindowDimensions } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { Card, Text, Button, RadioButton, ProgressBar, ActivityIndicator, Snackbar, Searchbar, Chip } from 'react-native-paper';
 import { theme, osloBranding } from '../constants/theme';
 import { getActivePolls, submitVote, subscribeToPolls, Poll } from '../services/pollsService';
@@ -7,6 +7,9 @@ import { auth } from '../services/firebase';
 import { safeError, safeLog } from '../utils/performance';
 import { searchAndFilterPolls } from '../utils/search';
 import { OSLO_DISTRICTS } from '../constants/osloDistricts';
+import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
+import { SPACING } from '../constants/spacing';
+import { BUTTON_MIN_HEIGHT, CHIP_MIN_HEIGHT } from '../constants/touchTargets';
 
 const VoteScreen = React.memo(() => {
   const [polls, setPolls] = useState<Poll[]>([]);
@@ -20,8 +23,8 @@ const VoteScreen = React.memo(() => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
-  const { width } = useWindowDimensions();
-  const isTablet = width > 768;
+  const { isMobile, isTablet, width } = useResponsive();
+  const padding = getResponsivePadding(width);
 
   // Filtrerte polls basert på søk og filter
   const filteredPolls = useMemo(() => {
@@ -236,7 +239,12 @@ const VoteScreen = React.memo(() => {
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
-      contentContainerStyle={[styles.content, isTablet && styles.contentTablet]}
+      contentContainerStyle={[
+        styles.content, 
+        { padding },
+        isTablet && styles.contentTablet,
+        isMobile && styles.contentMobile
+      ]}
     >
       {/* Search Bar */}
       <Card style={styles.searchCard}>
@@ -358,16 +366,19 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   content: {
-    padding: 16,
+    padding: SPACING.screenPadding.mobile,
+  },
+  contentMobile: {
+    padding: SPACING.screenPadding.mobile,
   },
   contentTablet: {
-    padding: 24,
-    maxWidth: 1200,
+    padding: SPACING.screenPadding.tablet,
+    maxWidth: SPACING.contentMaxWidth.desktop,
     alignSelf: 'center',
     width: '100%',
   },
   card: {
-    marginBottom: 16,
+    marginBottom: SPACING.cardMargin.mobile,
     elevation: 2,
   },
   cardTablet: {
@@ -412,7 +423,8 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   voteButton: {
-    marginTop: 16,
+    marginTop: SPACING.md,
+    minHeight: BUTTON_MIN_HEIGHT,
   },
   center: {
     flex: 1,
@@ -461,11 +473,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   chip: {
-    marginRight: 8,
-    marginBottom: 8,
+    marginRight: SPACING.sm,
+    marginBottom: SPACING.sm,
+    minHeight: CHIP_MIN_HEIGHT,
   },
   clearFilterButton: {
-    marginTop: 8,
+    marginTop: SPACING.sm,
+    minHeight: BUTTON_MIN_HEIGHT,
   },
   resultCount: {
     marginBottom: 8,
