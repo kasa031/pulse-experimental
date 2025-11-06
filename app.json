@@ -30,7 +30,6 @@
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro",
-      "output": "static",
       "baseUrl": "/pulse-experimental"
     },
     "plugins": [
