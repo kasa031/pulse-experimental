@@ -415,10 +415,24 @@ const styles = StyleSheet.create({
     minHeight: BUTTON_MIN_HEIGHT,
     paddingVertical: BUTTON_PADDING_VERTICAL,
   },
-  error: {
-    color: 'red',
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#ffebee',
+    padding: 12,
+    borderRadius: 8,
     marginBottom: 16,
-    textAlign: 'center',
+    borderLeftWidth: 4,
+    borderLeftColor: '#d32f2f',
+  },
+  errorIcon: {
+    marginRight: 8,
+    marginTop: 2,
+  },
+  error: {
+    flex: 1,
+    color: '#d32f2f',
+    lineHeight: 20,
   },
   passwordHint: {
     fontSize: 12,
