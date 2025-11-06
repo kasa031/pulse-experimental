@@ -305,7 +305,7 @@ const App = () => {
     },
     tabBarLabelStyle: {
       fontSize: 12,
-      fontWeight: '500',
+      fontWeight: '500' as const,
     },
     tabBarIconStyle: {
       marginTop: 4,
