@@ -130,10 +130,52 @@ const App = () => {
   // Sjekk Firebase initialisering først
   if (!firebaseInitialized) {
     const firebaseError = getFirebaseError();
+    // On web, show error immediately
+    if (Platform.OS === 'web') {
+      return (
+        <SafeAreaProvider>
+          <PaperProvider theme={theme}>
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, minHeight: '100vh' }}>
+              <Icon name="alert-circle" size={48} color="#d32f2f" style={{ marginBottom: 16 }} />
+              <Text variant="headlineSmall" style={{ marginBottom: 16, textAlign: 'center', color: '#c62828' }}>
+                Konfigurasjonsfeil
+              </Text>
+              <Text variant="bodyMedium" style={{ marginBottom: 24, textAlign: 'center', color: '#666', maxWidth: 600 }}>
+                {firebaseError?.message || 'Firebase er ikke konfigurert riktig. Sjekk at API-nøkler er satt i GitHub Secrets.'}
+              </Text>
+              <Text variant="bodySmall" style={{ marginBottom: 16, textAlign: 'center', color: '#999' }}>
+                For å fikse dette:
+              </Text>
+              <Text variant="bodySmall" style={{ marginBottom: 8, textAlign: 'center', color: '#999' }}>
+                1. Gå til GitHub repository Settings → Secrets
+              </Text>
+              <Text variant="bodySmall" style={{ marginBottom: 8, textAlign: 'center', color: '#999' }}>
+                2. Sjekk at alle Firebase Secrets er satt
+              </Text>
+              <Text variant="bodySmall" style={{ marginBottom: 24, textAlign: 'center', color: '#999' }}>
+                3. Trigger en ny deployment
+              </Text>
+              <Button 
+                mode="contained" 
+                onPress={() => {
+                  if (typeof window !== 'undefined') {
+                    window.location.reload();
+                  }
+                }}
+              >
+                Last på nytt
+              </Button>
+            </View>
+          </PaperProvider>
+        </SafeAreaProvider>
+      );
+    }
+    // On mobile, show error
     return (
       <SafeAreaProvider>
         <PaperProvider theme={theme}>
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+            <Icon name="alert-circle" size={48} color="#d32f2f" style={{ marginBottom: 16 }} />
             <Text variant="headlineSmall" style={{ marginBottom: 16, textAlign: 'center', color: '#c62828' }}>
               Konfigurasjonsfeil
             </Text>
