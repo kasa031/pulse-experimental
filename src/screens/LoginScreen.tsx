@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, KeyboardAvoidingView, Platform, Image } from 'react-native';
-import { TextInput, Button, Text, Surface, HelperText } from 'react-native-paper';
+import { TextInput, Button, Text, Surface, HelperText, Checkbox } from 'react-native-paper';
 import { auth } from '../services/firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { theme, osloBranding } from '../constants/theme';
@@ -8,6 +8,10 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { validateEmail, validatePassword } from '../utils/validation';
 import { checkRateLimit } from '../utils/rateLimiter';
 import { safeError } from '../utils/performance';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const REMEMBER_ME_KEY = '@pulse_oslo_remember_me';
+const REMEMBERED_EMAIL_KEY = '@pulse_oslo_remembered_email';
 
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
@@ -21,6 +25,26 @@ const LoginScreen = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [forgotPasswordSent, setForgotPasswordSent] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+
+  // Hent lagret e-post ved oppstart
+  useEffect(() => {
+    const loadRememberedEmail = async () => {
+      try {
+        const remembered = await AsyncStorage.getItem(REMEMBER_ME_KEY);
+        if (remembered === 'true') {
+          const savedEmail = await AsyncStorage.getItem(REMEMBERED_EMAIL_KEY);
+          if (savedEmail) {
+            setEmail(savedEmail);
+            setRememberMe(true);
+          }
+        }
+      } catch (err) {
+        safeError('Feil ved henting av lagret e-post:', err);
+      }
+    };
+    loadRememberedEmail();
+  }, []);
 
   const handleEmailChange = (text: string) => {
     setEmail(text);
@@ -81,6 +105,15 @@ const LoginScreen = () => {
         await createUserWithEmailAndPassword(auth, email.trim(), password);
       } else {
         await signInWithEmailAndPassword(auth, email.trim(), password);
+        // Lagre e-post hvis "Husk meg" er valgt
+        if (rememberMe) {
+          await AsyncStorage.setItem(REMEMBER_ME_KEY, 'true');
+          await AsyncStorage.setItem(REMEMBERED_EMAIL_KEY, email.trim());
+        } else {
+          // Fjern lagret e-post hvis "Husk meg" ikke er valgt
+          await AsyncStorage.removeItem(REMEMBER_ME_KEY);
+          await AsyncStorage.removeItem(REMEMBERED_EMAIL_KEY);
+        }
       }
     } catch (err: unknown) {
       safeError('Auth feil:', err);
@@ -183,15 +216,31 @@ const LoginScreen = () => {
         </View>
 
         {!isSignUp && (
-          <Button
-            mode="text"
-            onPress={() => setShowForgotPassword(true)}
-            disabled={loading}
-            style={styles.forgotPasswordButton}
-            compact
-          >
-            Glemt passord?
-          </Button>
+          <>
+            <View style={styles.rememberMeContainer}>
+              <Checkbox
+                status={rememberMe ? 'checked' : 'unchecked'}
+                onPress={() => setRememberMe(!rememberMe)}
+                disabled={loading}
+              />
+              <Text 
+                variant="bodyMedium" 
+                style={styles.rememberMeText}
+                onPress={() => !loading && setRememberMe(!rememberMe)}
+              >
+                Husk meg
+              </Text>
+            </View>
+            <Button
+              mode="text"
+              onPress={() => setShowForgotPassword(true)}
+              disabled={loading}
+              style={styles.forgotPasswordButton}
+              compact
+            >
+              Glemt passord?
+            </Button>
+          </>
         )}
 
         <Button
@@ -354,6 +403,16 @@ const styles = StyleSheet.create({
   passwordHint: {
     fontSize: 12,
     marginTop: -8,
+  },
+  rememberMeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    marginTop: 8,
+  },
+  rememberMeText: {
+    marginLeft: 8,
+    color: osloBranding.colors.text,
   },
   forgotPasswordButton: {
     alignSelf: 'flex-end',
