@@ -18,6 +18,9 @@ const LoginScreen = () => {
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordStrength, setPasswordStrength] = useState<'weak' | 'medium' | 'strong' | null>(null);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [forgotPasswordSent, setForgotPasswordSent] = useState(false);
 
   const handleEmailChange = (text: string) => {
     setEmail(text);
@@ -198,7 +201,84 @@ const LoginScreen = () => {
           {isSignUp ? 'Har du allerede konto? Logg inn' : 'Ingen konto? Opprett en'}
         </Button>
       </Surface>
-    </KeyboardAvoidingView>
+
+      {/* Forgot Password Dialog */}
+      <Portal>
+        <Dialog visible={showForgotPassword} onDismiss={() => {
+          setShowForgotPassword(false);
+          setForgotPasswordEmail('');
+          setForgotPasswordSent(false);
+        }}>
+          <Dialog.Title>Glemt passord</Dialog.Title>
+          <Dialog.Content>
+            {!forgotPasswordSent ? (
+              <>
+                <Text variant="bodyMedium" style={styles.dialogText}>
+                  Skriv inn e-postadressen din, så sender vi deg en lenke for å tilbakestille passordet.
+                </Text>
+                <TextInput
+                  label="E-post"
+                  value={forgotPasswordEmail}
+                  onChangeText={setForgotPasswordEmail}
+                  mode="outlined"
+                  style={styles.dialogInput}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  error={!!emailError && forgotPasswordEmail.length > 0}
+                />
+                {emailError && forgotPasswordEmail.length > 0 && (
+                  <HelperText type="error" visible={!!emailError}>
+                    {emailError}
+                  </HelperText>
+                )}
+              </>
+            ) : (
+              <Text variant="bodyMedium" style={styles.dialogText}>
+                Vi har sendt en e-post til {forgotPasswordEmail} med instruksjoner for å tilbakestille passordet.
+              </Text>
+            )}
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => {
+              setShowForgotPassword(false);
+              setForgotPasswordEmail('');
+              setForgotPasswordSent(false);
+            }}>
+              {forgotPasswordSent ? 'Lukk' : 'Avbryt'}
+            </Button>
+            {!forgotPasswordSent && (
+              <Button
+                mode="contained"
+                onPress={async () => {
+                  const emailValidation = validateEmail(forgotPasswordEmail);
+                  if (!emailValidation.valid) {
+                    setEmailError(emailValidation.error || 'Ugyldig e-post');
+                    return;
+                  }
+                  
+                  try {
+                    await sendPasswordResetEmail(auth!, forgotPasswordEmail.trim());
+                    setForgotPasswordSent(true);
+                    setEmailError(null);
+                  } catch (err: unknown) {
+                    const error = err as { code?: string; message?: string };
+                    if (error.code === 'auth/user-not-found') {
+                      setEmailError('Ingen bruker funnet med denne e-postadressen');
+                    } else {
+                      setEmailError(error.message || 'Kunne ikke sende e-post. Prøv igjen.');
+                    }
+                    safeError('Feil ved sending av passord-tilbakestilling:', err);
+                  }
+                }}
+                disabled={!forgotPasswordEmail.trim() || !!emailError}
+              >
+                Send
+              </Button>
+            )}
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+</KeyboardAvoidingView>
   );
 };
 
@@ -246,10 +326,13 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 8,
-    paddingVertical: 4,
+    minHeight: BUTTON_MIN_HEIGHT,
+    paddingVertical: BUTTON_PADDING_VERTICAL,
   },
   switchButton: {
     marginTop: 16,
+    minHeight: BUTTON_MIN_HEIGHT,
+    paddingVertical: BUTTON_PADDING_VERTICAL,
   },
   error: {
     color: 'red',
@@ -259,6 +342,19 @@ const styles = StyleSheet.create({
   passwordHint: {
     fontSize: 12,
     marginTop: -8,
+  },
+  forgotPasswordButton: {
+    alignSelf: 'flex-end',
+    marginTop: -8,
+    marginBottom: 8,
+    minHeight: BUTTON_MIN_HEIGHT,
+  },
+  dialogText: {
+    marginBottom: 16,
+    color: osloBranding.colors.text,
+  },
+  dialogInput: {
+    marginTop: 8,
   },
 });
 
