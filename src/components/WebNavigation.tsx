@@ -244,9 +244,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginVertical: 4,
     minHeight: 48,
-    transition: 'background-color 0.2s ease, transform 0.1s ease',
-    cursor: 'pointer',
-  },
+  } as any,
   navItemActive: {
     backgroundColor: osloBranding.colors.primary + '15',
   },
