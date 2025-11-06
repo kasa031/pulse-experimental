@@ -266,7 +266,7 @@ const App = () => {
 
   // Memoize screen options for better performance
   const screenOptions = useMemo(() => ({
-    tabBarIcon: ({ focused, color, size, route }: { focused: boolean; color: string; size: number; route: { name: string } }) => {
+    tabBarIcon: ({ focused, color, size, route }: any) => {
       let iconName: string;
       if (route.name === 'Hjem') {
         iconName = focused ? 'home' : 'home-outline';
