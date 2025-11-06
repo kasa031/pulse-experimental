@@ -1,46 +1,132 @@
-# Pulse Oslo
+# 🏙️ Pulse Oslo
 
-En React Native app for lokal demokrati og deltakelse i Oslo.
+**Din stemme i byen** - En plattform for lokaldemokrati i Oslo
 
-## 🔒 Sikkerhet - API Nøkler
+## 📱 Om appen
 
-**VIKTIG**: `app.json` inneholder nå Open Router API-nøkkelen. 
+Pulse Oslo er en digital plattform hvor innbyggerne i Oslo kan delta i lokale avstemninger, diskutere saker og følge med på hva som skjer i byen. Appen er utviklet for å styrke lokaldemokratiet og gjøre det enklere for innbyggerne å påvirke utviklingen av Oslo.
 
-### Før du committer til GitHub:
+## ✨ Funksjoner
 
-**Metode 1: Bruk app.json.example (Anbefalt)**
-1. Kopier `app.json.example` til `app.json`
-2. Legg inn din faktiske API-nøkkel i `app.json`
-3. **Commit kun `app.json.example`** (ikke `app.json` med ekte nøkkel)
+### 🔹 Avstemninger
+- Delta i lokale avstemninger om temaer som påvirker byen
+- Søk og filtrer avstemninger etter kategori og bydel
+- Se resultater fra tidligere avstemninger
+- Stem på avstemninger som er aktive
 
-**Metode 2: Legg app.json i .gitignore (Ikke anbefalt)**
-- Dette kan skape problemer for andre utviklere
-- Bedre å bruke eksempel-filer
+### 🔹 Diskusjoner
+- Start og delta i diskusjoner om lokale saker
+- Kommenter på diskusjoner
+- Filtrer etter kategori
+- Se hvem som deltar og hva som diskuteres
 
-### Hvordan bruke API-nøkkelen i koden:
+### 🔹 Profil
+- Hold oversikt over dine stemmer
+- Se statistikk over din deltakelse
+- Rediger profilinformasjon
+- Velg din bydel
 
-```typescript
-import { OPENROUTER_CONFIG, getOpenRouterHeaders } from './config/api';
+### 🔹 Lokalhistorie
+- Se dine tidligere stemmer
+- Se resultater fra avsluttede avstemninger
+- Hold oversikt over din deltakelse
 
-// API-nøkkelen hentes automatisk fra app.json
-const response = await fetch('https://openrouter.ai/api/v1/...', {
-  headers: getOpenRouterHeaders(),
-});
+### 🔹 Admin-funksjoner
+- Opprett nye avstemninger (kun admin)
+- Administrer avstemninger og resultater
+
+## 🚀 Komme i gang
+
+### Forutsetninger
+- Node.js (v18 eller nyere)
+- npm eller yarn
+- Expo CLI
+- Firebase-prosjekt
+
+### Installasjon
+
+1. Klon repositoryet:
+```bash
+git clone https://github.com/kasa031/pulse-experimental.git
+cd pulse-experimental
 ```
 
-## Installasjon
-
+2. Installer avhengigheter:
 ```bash
 npm install
 ```
 
-## Kjøre appen
+3. Opprett lokal konfigurasjon:
+- Kopier `app.json.example` til `app.local.json`
+- Legg til dine Firebase credentials i `app.local.json`
+- Legg til OpenRouter API-nøkkel hvis nødvendig
 
+4. Start appen:
 ```bash
 npm start
 ```
 
-## Sikkerhetspraksis
+### Firebase Setup
 
-Se [SECURITY.md](./SECURITY.md) for detaljerte sikkerhetsretningslinjer.
+1. Opprett et Firebase-prosjekt på [Firebase Console](https://console.firebase.google.com/)
+2. Legg til Web-app i Firebase-prosjektet
+3. Kopier Firebase-konfigurasjonen til `app.local.json`
+4. Opprett Firestore-database
+5. Sett opp Security Rules (se `FIRESTORE_SECURITY_RULES_ADVANCED.txt`)
+6. Seed initial data med `node seedPolls.js` (hvis du har service account key)
 
+## 📁 Prosjektstruktur
+
+```
+pulse-experimental/
+├── assets/              # Bilder og ikoner
+├── src/
+│   ├── constants/       # Konstantdata (farger, bydeler, etc.)
+│   ├── screens/         # React Native skjermer
+│   ├── services/        # Firebase og API-tjenester
+│   └── utils/           # Hjelpefunksjoner
+├── .github/
+│   └── workflows/       # GitHub Actions for deployment
+├── scripts/             # Hjelpeskript
+└── app.json             # Expo konfigurasjon
+```
+
+## 🔒 Sikkerhet
+
+- API-nøkler lagres i `app.local.json` (ikke committet)
+- Pre-commit hooks sjekker for sensitive data
+- GitHub Secrets brukes for CI/CD
+- Firestore Security Rules implementert
+
+## 🌐 Deployment
+
+Appen deployes automatisk til GitHub Pages ved push til `main`-branchen.
+
+- **Web URL**: https://kasa031.github.io/pulse-experimental/
+- **GitHub Actions**: Automatisk build og deploy
+
+## 🛠️ Teknologier
+
+- **React Native** - Cross-platform app
+- **Expo** - Utviklings- og build-plattform
+- **Firebase** - Backend (Authentication, Firestore)
+- **React Navigation** - Navigasjon
+- **React Native Paper** - UI-komponenter
+- **TypeScript** - Type safety
+
+## 📝 Lisens
+
+Private - All rights reserved
+
+## 🤝 Bidrag
+
+Prosjektet er for øyeblikket privat. Kontakt eier for mer informasjon.
+
+## 📧 Kontakt
+
+- **Repository**: https://github.com/kasa031/pulse-experimental
+- **Firebase Project**: pulse-oslo
+
+---
+
+**Pulse Oslo** - Din stemme betyr noe! 🗳️

@@ -41,27 +41,31 @@
 ## ⏳ Gjenstående oppgaver
 
 ### 🔒 Sikkerhet (Praktisk)
-- [ ] Verifisere at deploy fungerer med GitHub Secrets
-- [ ] Teste at appen fungerer på GitHub Pages
+- [x] Verifisere at deploy fungerer med GitHub Secrets
+- [ ] Teste at appen fungerer på GitHub Pages (krever manuell testing)
 
 ### 🏙️ Oslo-orientering
-- [ ] Gjennomgå alle poll-titler og beskrivelser (de fleste er allerede Oslo-orientert)
-- [ ] Legge til Oslo-spesifikke bydeler (Grünerløkka, Frogner, St. Hanshaugen, etc.)
-- [ ] Oppdatere branding og tekster i hele appen
-- [ ] Legge til Oslo-logo og farger (hvis relevant)
+- [x] Gjennomgå alle poll-titler og beskrivelser (de fleste er allerede Oslo-orientert)
+- [x] Legge til Oslo-spesifikke bydeler (Grünerløkka, Frogner, St. Hanshaugen, etc.)
+- [x] Oppdatere branding og tekster i hele appen
+- [x] Legge til Oslo-logo og farger
 
-### 📰 Nyheter for Oslo (Fremtidig)
-- [ ] Planlegge struktur for nyhetsfunksjonalitet
-- [ ] Identifisere datakilder (Oslo Kommune, NRK Oslo, etc.)
-- [ ] Designe UI for nyhetsvisning
-- [ ] Implementere nyhetsfeed (kommer senere)
+### 📰 Nyheter for Oslo
+- [x] Planlegge struktur for nyhetsfunksjonalitet
+- [x] Implementere nyhetsfeed-service (getLatestNews, getNewsByDistrict, getNewsByCategory)
+- [ ] Identifisere datakilder (Oslo Kommune, NRK Oslo, etc.) - fremtidig
+- [ ] Designe UI for nyhetsvisning - fremtidig
+- [ ] Full implementering av nyhetsfeed-skjerm - fremtidig
 
 ### 🔍 Forbedringer
-- [ ] Teste at appen fungerer som web-app på mobil
-- [ ] Legge til Firestore Security Rules i Firebase Console
-- [ ] Seed initial polls data til Firestore
-- [ ] Teste autentisering og stemmefunksjonalitet
-- [ ] Legge til testing (hvis relevant)
+- [x] Legge til notifikasjons-utility
+- [x] Forbedre CommunityScreen med kommentarvisning
+- [x] Forbedre HomeScreen med statistikk
+- [x] Implementere søk og filter i VoteScreen
+- [ ] Teste at appen fungerer som web-app på mobil (krever manuell testing)
+- [ ] Legge til Firestore Security Rules i Firebase Console (krever manuell handling)
+- [ ] Seed initial polls data til Firestore (krever manuell handling)
+- [ ] Teste autentisering og stemmefunksjonalitet (krever manuell testing)
 
 ## 📝 Notater
 - Firebase project ID: pulse-oslo

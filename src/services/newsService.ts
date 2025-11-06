@@ -24,42 +24,82 @@ export interface NewsItem {
 
 /**
  * Hent siste nyheter fra Oslo
- * 
- * TODO: Implementer når nyhetsfeed er klar
  */
 export const getLatestNews = async (limitCount: number = 10): Promise<NewsItem[]> => {
-  // TODO: Implementer når Firestore collection 'news' er opprettet
-  // const newsRef = collection(db, 'news');
-  // const q = query(
-  //   newsRef,
-  //   where('publishedAt', '<=', Timestamp.now()),
-  //   orderBy('publishedAt', 'desc'),
-  //   limit(limitCount)
-  // );
-  // const snapshot = await getDocs(q);
-  // return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as NewsItem));
-  
-  return [];
+  try {
+    const newsRef = collection(db, 'news');
+    const now = Timestamp.now();
+    const q = query(
+      newsRef,
+      where('publishedAt', '<=', now),
+      orderBy('publishedAt', 'desc'),
+      limit(limitCount)
+    );
+    
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      publishedAt: doc.data().publishedAt || Timestamp.now(),
+    } as NewsItem));
+  } catch (error) {
+    console.error('Feil ved henting av nyheter:', error);
+    return [];
+  }
 };
 
 /**
  * Hent nyheter for en spesifikk bydel
- * 
- * TODO: Implementer når nyhetsfeed er klar
  */
 export const getNewsByDistrict = async (district: string, limitCount: number = 10): Promise<NewsItem[]> => {
-  // TODO: Implementer
-  return [];
+  try {
+    const newsRef = collection(db, 'news');
+    const now = Timestamp.now();
+    const q = query(
+      newsRef,
+      where('district', '==', district),
+      where('publishedAt', '<=', now),
+      orderBy('publishedAt', 'desc'),
+      limit(limitCount)
+    );
+    
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      publishedAt: doc.data().publishedAt || Timestamp.now(),
+    } as NewsItem));
+  } catch (error) {
+    console.error('Feil ved henting av nyheter for bydel:', error);
+    return [];
+  }
 };
 
 /**
  * Hent nyheter for en kategori
- * 
- * TODO: Implementer når nyhetsfeed er klar
  */
 export const getNewsByCategory = async (category: NewsItem['category'], limitCount: number = 10): Promise<NewsItem[]> => {
-  // TODO: Implementer
-  return [];
+  try {
+    const newsRef = collection(db, 'news');
+    const now = Timestamp.now();
+    const q = query(
+      newsRef,
+      where('category', '==', category),
+      where('publishedAt', '<=', now),
+      orderBy('publishedAt', 'desc'),
+      limit(limitCount)
+    );
+    
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      publishedAt: doc.data().publishedAt || Timestamp.now(),
+    } as NewsItem));
+  } catch (error) {
+    console.error('Feil ved henting av nyheter for kategori:', error);
+    return [];
+  }
 };
 
 /**
