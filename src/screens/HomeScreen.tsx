@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, Image, TouchableOpacity, RefreshControl } from 'react-native';
 import { Card, Text, Button, Chip, ActivityIndicator } from 'react-native-paper';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
@@ -20,6 +20,7 @@ const HomeScreen = () => {
   const [recentPolls, setRecentPolls] = useState<Poll[]>([]);
   const [latestNews, setLatestNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   
   const padding = getResponsivePadding(width);
 
@@ -45,7 +46,17 @@ const HomeScreen = () => {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView 
+      style={styles.container}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={[theme.colors.primary]}
+          tintColor={theme.colors.primary}
+        />
+      }
+    >
       <View style={[
         styles.content, 
         { padding },
