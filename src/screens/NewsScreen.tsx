@@ -608,7 +608,7 @@ const styles = StyleSheet.create({
     minHeight: BUTTON_MIN_HEIGHT,
   },
   fullNewsDialog: {
-    maxWidth: isTablet ? 600 : '90%',
+    maxWidth: Platform.OS === 'web' ? 700 : '90%',
     maxHeight: '90%',
   },
   fullNewsTitle: {
