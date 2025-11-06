@@ -21,10 +21,10 @@
   - Desktop-layout (> 1024px) med sidebar-navigasjon
   - Test på forskjellige skjermstørrelser
 
-- [ ] **Forbedre touch-targets for mobil**
-  - Minimum 44x44px touch targets
-  - Bedre spacing mellom klikkbare elementer
-  - Swipe-gestures hvor relevant
+- [x] **Forbedre touch-targets for mobil**
+  - ✅ Minimum 44x44px touch targets (touchTargets.ts constants)
+  - ✅ Bedre spacing mellom klikkbare elementer (LoginScreen oppdatert)
+  - [ ] Swipe-gestures hvor relevant
 
 ### Bilder og Assets
 - [x] **Flytte og organisere bilder**
@@ -67,12 +67,12 @@
 ## 🟡 Medium prioritet - Forbedringer
 
 ### Brukeropplevelse (UX)
-- [ ] **Forbedre innlogging**
-  - Bedre feilmeldinger med konkrete løsninger
-  - "Glemt passord?" funksjonalitet
-  - E-post verifisering flow
-  - "Husk meg" funksjonalitet
-  - Loading states under innlogging
+- [x] **Forbedre innlogging**
+  - ✅ Bedre feilmeldinger med konkrete løsninger
+  - ✅ "Glemt passord?" funksjonalitet
+  - [ ] E-post verifisering flow
+  - [ ] "Husk meg" funksjonalitet
+  - ✅ Loading states under innlogging
 
 - [ ] **Forbedre onboarding**
   - Velkomstskjerm for nye brukere
