@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Image } from 'react-native';
+import { View, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { Card, Text, Button, Chip, ActivityIndicator } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { theme, osloBranding } from '../constants/theme';
 import { OSLO_DISTRICTS } from '../constants/osloDistricts';
-import { getActivePolls } from '../services/pollsService';
+import { getActivePolls, Poll } from '../services/pollsService';
+import { getLatestNews, NewsItem } from '../services/newsService';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
 import { SPACING } from '../constants/spacing';
@@ -13,8 +14,10 @@ import { safeError } from '../utils/performance';
 
 const HomeScreen = () => {
   const navigation = useNavigation<any>();
-  const { isMobile, isTablet, width } = useResponsive();
+  const { isMobile, isTablet, isDesktop, width } = useResponsive();
   const [activePollsCount, setActivePollsCount] = useState<number>(0);
+  const [recentPolls, setRecentPolls] = useState<Poll[]>([]);
+  const [latestNews, setLatestNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   
   const padding = getResponsivePadding(width);
@@ -27,6 +30,12 @@ const HomeScreen = () => {
     try {
       const polls = await getActivePolls();
       setActivePollsCount(polls.length);
+      // Hent de 3 nyeste avstemningene for preview
+      setRecentPolls(polls.slice(0, 3));
+      
+      // Hent de 3 nyeste nyhetene for preview
+      const news = await getLatestNews(3);
+      setLatestNews(news);
     } catch (error) {
       safeError('Feil ved henting av statistikk:', error);
     } finally {
@@ -170,17 +179,43 @@ const HomeScreen = () => {
               Nyheter fra Oslo
             </Text>
             <Text variant="bodyMedium" style={styles.infoText}>
-              Få siste nyheter om lokale saker, byutvikling og viktige beslutninger i Oslo. 
-              Nyhetsfeed er tilgjengelig og oppdateres regelmessig med relevant informasjon for innbyggerne.
+              Få siste nyheter om lokale saker, byutvikling og viktige beslutninger i Oslo.
             </Text>
-                <Button 
-                  mode="outlined" 
-                  icon="newspaper" 
-                  style={styles.actionButton}
-                  onPress={() => navigation.navigate('Nyheter')}
-                >
-                  Se alle nyheter
-                </Button>
+            {latestNews.length > 0 && (
+              <View style={styles.previewList}>
+                {latestNews.map((news) => (
+                  <TouchableOpacity
+                    key={news.id}
+                    style={styles.previewItem}
+                    onPress={() => navigation.navigate('Nyheter')}
+                  >
+                    <Icon name="newspaper" size={16} color={osloBranding.colors.secondary} />
+                    <View style={styles.previewTextContainer}>
+                      <Text variant="bodySmall" style={styles.previewText} numberOfLines={1}>
+                        {news.title}
+                      </Text>
+                      {news.category && (
+                        <Chip 
+                          style={styles.previewChip}
+                          textStyle={styles.previewChipText}
+                          compact
+                        >
+                          {news.category}
+                        </Chip>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+            <Button 
+              mode="outlined" 
+              icon="newspaper" 
+              style={styles.actionButton}
+              onPress={() => navigation.navigate('Nyheter')}
+            >
+              Se alle nyheter
+            </Button>
           </Card.Content>
         </Card>
       </View>
@@ -323,6 +358,39 @@ const styles = StyleSheet.create({
   },
   loader: {
     marginVertical: 16,
+  },
+  previewList: {
+    marginTop: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+  previewItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.sm,
+    borderRadius: 8,
+    marginBottom: SPACING.xs,
+    backgroundColor: theme.colors.surface,
+  },
+  previewTextContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginLeft: SPACING.sm,
+  },
+  previewText: {
+    flex: 1,
+    color: osloBranding.colors.text,
+    marginRight: SPACING.sm,
+  },
+  previewChip: {
+    height: 20,
+    backgroundColor: osloBranding.colors.primary + '20',
+  },
+  previewChipText: {
+    fontSize: 10,
+    color: osloBranding.colors.primary,
   },
 });
 
