@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, Platform, Share } from 'react-native';
 import { Card, Text, ActivityIndicator, Chip, ProgressBar, Button, Snackbar } from 'react-native-paper';
-import { theme } from '../constants/theme';
+import { theme, osloBranding } from '../constants/theme';
 import { auth } from '../services/firebase';
 import { getUserVotingHistory, getCompletedPollResults, PollResult, UserVote } from '../services/historyService';
 import { safeError } from '../utils/performance';
@@ -396,7 +396,7 @@ const LocalHistoryScreen = React.memo(() => {
                             </View>
                             <ProgressBar 
                               progress={percentage / 100} 
-                              color={isUserChoice ? theme.colors.primary : theme.colors.accent}
+                              color={isUserChoice ? theme.colors.primary : osloBranding.colors.secondary}
                               style={styles.progressBar}
                             />
                           </View>

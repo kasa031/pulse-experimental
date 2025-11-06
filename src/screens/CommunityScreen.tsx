@@ -92,12 +92,20 @@ const CommunityScreen = () => {
   const sortedDiscussions = useMemo(() => {
     const sorted = [...discussions].sort((a, b) => {
       if (sortBy === 'newest') {
-        const aDate = a.createdAt?.toMillis?.() || a.createdAt?.getTime?.() || 0;
-        const bDate = b.createdAt?.toMillis?.() || b.createdAt?.getTime?.() || 0;
+        const aDate = (a.createdAt && 'toMillis' in a.createdAt) 
+          ? (a.createdAt as any).toMillis() 
+          : (a.createdAt instanceof Date ? a.createdAt.getTime() : new Date(a.createdAt as any).getTime()) || 0;
+        const bDate = (b.createdAt && 'toMillis' in b.createdAt) 
+          ? (b.createdAt as any).toMillis() 
+          : (b.createdAt instanceof Date ? b.createdAt.getTime() : new Date(b.createdAt as any).getTime()) || 0;
         return bDate - aDate;
       } else if (sortBy === 'oldest') {
-        const aDate = a.createdAt?.toMillis?.() || a.createdAt?.getTime?.() || 0;
-        const bDate = b.createdAt?.toMillis?.() || b.createdAt?.getTime?.() || 0;
+        const aDate = (a.createdAt && 'toMillis' in a.createdAt) 
+          ? (a.createdAt as any).toMillis() 
+          : (a.createdAt instanceof Date ? a.createdAt.getTime() : new Date(a.createdAt as any).getTime()) || 0;
+        const bDate = (b.createdAt && 'toMillis' in b.createdAt) 
+          ? (b.createdAt as any).toMillis() 
+          : (b.createdAt instanceof Date ? b.createdAt.getTime() : new Date(b.createdAt as any).getTime()) || 0;
         return aDate - bDate;
       } else if (sortBy === 'mostComments') {
         return (b.commentCount || 0) - (a.commentCount || 0);

@@ -6,7 +6,6 @@ export const theme: typeof DefaultTheme = {
   colors: {
     ...DefaultTheme.colors,
     primary: OSLO_COLORS.primary, // Oslo blå
-    accent: OSLO_COLORS.secondary, // Oslo oransje
     background: OSLO_COLORS.background,
     surface: OSLO_COLORS.surface,
     text: OSLO_COLORS.text,

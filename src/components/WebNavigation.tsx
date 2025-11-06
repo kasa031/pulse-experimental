@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Platform, useWindowDimensions, TouchableOpacity } from 'react-native';
-import { Drawer, Portal, Text, Surface } from 'react-native-paper';
+import { Drawer, Portal, Text, Surface, Modal } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation, useRoute, NavigationContainer } from '@react-navigation/native';
 import { osloBranding } from '../constants/theme';
@@ -98,8 +98,10 @@ const WebNavigation = ({ children }: WebNavigationProps) => {
           isHovered && styles.navItemHovered,
         ]}
         onPress={() => handleNavigate(item.name)}
-        onMouseEnter={() => setHoveredItem(item.name)}
-        onMouseLeave={() => setHoveredItem(null)}
+        {...(Platform.OS === 'web' ? {
+          onMouseEnter: () => setHoveredItem(item.name),
+          onMouseLeave: () => setHoveredItem(null),
+        } : {})}
         activeOpacity={0.7}
       >
         <Icon 
@@ -153,10 +155,10 @@ const WebNavigation = ({ children }: WebNavigationProps) => {
   return (
     <View style={styles.mobileContainer}>
       <Portal>
-        <Drawer.Section
+        <Modal
           visible={drawerOpen}
           onDismiss={() => setDrawerOpen(false)}
-          style={styles.drawer}
+          contentContainerStyle={styles.drawer}
         >
           <View style={styles.drawerHeader}>
             <Icon name="city-variant" size={32} color={osloBranding.colors.primary} />
@@ -164,20 +166,25 @@ const WebNavigation = ({ children }: WebNavigationProps) => {
               OsloPuls
             </Text>
           </View>
-          {navItems.map((item) => {
-            const isActive = (route?.name || '') === item.name;
-            return (
-              <Drawer.Item
-                key={item.name}
-                label={item.title}
-                icon={isActive ? item.iconFocused : item.icon}
-                active={isActive}
-                onPress={() => handleNavigate(item.name)}
-                style={styles.drawerItem}
-              />
-            );
-          })}
-        </Drawer.Section>
+          <Drawer.Section>
+            {navItems.map((item) => {
+              const isActive = (route?.name || '') === item.name;
+              return (
+                <Drawer.Item
+                  key={item.name}
+                  label={item.title}
+                  icon={isActive ? item.iconFocused : item.icon}
+                  active={isActive}
+                  onPress={() => {
+                    handleNavigate(item.name);
+                    setDrawerOpen(false);
+                  }}
+                  style={styles.drawerItem}
+                />
+              );
+            })}
+          </Drawer.Section>
+        </Modal>
       </Portal>
       
       <Surface style={styles.mobileHeader} elevation={2}>
