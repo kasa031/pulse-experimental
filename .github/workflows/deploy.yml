@@ -56,8 +56,10 @@ jobs:
 
       - name: Build web
         run: |
-          npx expo export --platform web
+          # Disable expo-router static rendering (we use react-navigation)
+          npx expo export --platform web --no-minify
         env:
+          EXPO_NO_ROUTER: "1"
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
           FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
