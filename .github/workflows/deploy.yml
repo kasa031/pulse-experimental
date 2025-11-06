@@ -22,6 +22,10 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+      
+      - name: Clear npm cache (if corrupted)
+        run: |
+          npm cache clean --force || true
 
       - name: Setup Expo
         uses: expo/expo-github-action@v8
@@ -57,9 +61,24 @@ jobs:
       - name: Build web
         run: |
           # Disable expo-router static rendering (we use react-navigation)
-          npx expo export --platform web --no-minify
+          # Use EXPO_NO_ROUTER to prevent expo-router from being used
+          export EXPO_NO_ROUTER=1
+          export EXPO_PUBLIC_USE_STATIC=0
+          echo "Building web app..."
+          npx expo export --platform web --no-minify 2>&1 | tee build.log || {
+            echo "Build failed, checking logs..."
+            cat build.log || true
+            echo "Trying alternative build method..."
+            npx expo export --platform web 2>&1 || {
+              echo "Build completely failed"
+              exit 1
+            }
+          }
+          echo "✅ Build completed"
         env:
           EXPO_NO_ROUTER: "1"
+          EXPO_PUBLIC_USE_STATIC: "0"
+          NODE_ENV: "production"
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
           FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
