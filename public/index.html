@@ -51,29 +51,81 @@
     </div>
   </div>
   <script>
+    // Log environment info for debugging
+    console.log('OsloPuls - Environment info:', {
+      userAgent: navigator.userAgent,
+      location: window.location.href,
+      basePath: window.location.pathname.split('/').slice(0, -1).join('/') || '/',
+      timestamp: new Date().toISOString()
+    });
+    
     // Error handler for unhandled errors
     window.addEventListener('error', function(e) {
-      console.error('Global error:', e.error);
+      console.error('Global error:', e.error, e.filename, e.lineno, e.colno);
       const root = document.getElementById('root');
       if (root && !root.querySelector('.error-container')) {
-        root.innerHTML = '<div class="error-container" style="padding: 40px; text-align: center; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;"><h2 style="color: #d32f2f; margin-bottom: 16px;">En feil oppstod</h2><p style="margin-bottom: 24px; color: #666;">Vennligst last siden på nytt.</p><button onclick="window.location.reload()" style="padding: 12px 24px; background-color: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer;">Last på nytt</button></div>';
+        const errorMsg = e.error ? e.error.toString() : 'Ukjent feil';
+        root.innerHTML = '<div class="error-container" style="padding: 40px; text-align: center; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;"><h2 style="color: #d32f2f; margin-bottom: 16px;">En feil oppstod</h2><p style="margin-bottom: 8px; color: #666;">' + errorMsg + '</p><p style="margin-bottom: 24px; color: #999; font-size: 12px;">Fil: ' + (e.filename || 'ukjent') + ':' + (e.lineno || '?') + '</p><button onclick="window.location.reload()" style="padding: 12px 24px; background-color: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer;">Last på nytt</button></div>';
       }
     });
     
     // Unhandled promise rejection handler
     window.addEventListener('unhandledrejection', function(e) {
       console.error('Unhandled promise rejection:', e.reason);
+      const root = document.getElementById('root');
+      if (root && !root.querySelector('.error-container')) {
+        const errorMsg = e.reason ? (e.reason.toString() || JSON.stringify(e.reason)) : 'Ukjent promise rejection';
+        root.innerHTML = '<div class="error-container" style="padding: 40px; text-align: center; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;"><h2 style="color: #d32f2f; margin-bottom: 16px;">Promise feilet</h2><p style="margin-bottom: 24px; color: #666;">' + errorMsg + '</p><button onclick="window.location.reload()" style="padding: 12px 24px; background-color: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer;">Last på nytt</button></div>';
+      }
     });
     
     // Check if React app loaded
-    setTimeout(function() {
+    let loadCheckInterval = null;
+    const checkAppLoaded = function() {
       const root = document.getElementById('root');
-      if (root && root.children.length === 1 && root.querySelector('.loading-container')) {
-        // Still showing loading after 10 seconds - something is wrong
-        console.error('App failed to load after 10 seconds');
-        root.innerHTML = '<div class="error-container" style="padding: 40px; text-align: center; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;"><h2 style="color: #d32f2f; margin-bottom: 16px;">Appen lastet ikke</h2><p style="margin-bottom: 24px; color: #666;">Det ser ut til at appen ikke lastet. Sjekk browser console for feil.</p><button onclick="window.location.reload()" style="padding: 12px 24px; background-color: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer;">Last på nytt</button></div>';
+      if (root) {
+        // Check if React has mounted (root should have more than just loading container)
+        const hasReactContent = root.children.length > 1 || 
+                               (root.children.length === 1 && !root.querySelector('.loading-container')) ||
+                               root.querySelector('[data-reactroot]') ||
+                               root.querySelector('[id^="__next"]');
+        
+        if (hasReactContent) {
+          console.log('✅ React app loaded successfully');
+          if (loadCheckInterval) {
+            clearInterval(loadCheckInterval);
+          }
+          return true;
+        }
       }
-    }, 10000);
+      return false;
+    };
+    
+    // Check immediately and then every 2 seconds
+    if (!checkAppLoaded()) {
+      loadCheckInterval = setInterval(function() {
+        if (checkAppLoaded()) {
+          clearInterval(loadCheckInterval);
+        }
+      }, 2000);
+      
+      // Final check after 10 seconds
+      setTimeout(function() {
+        if (loadCheckInterval) {
+          clearInterval(loadCheckInterval);
+        }
+        const root = document.getElementById('root');
+        if (root && root.querySelector('.loading-container')) {
+          console.error('❌ App failed to load after 10 seconds');
+          console.error('Debug info:', {
+            scripts: Array.from(document.scripts).map(s => s.src),
+            stylesheets: Array.from(document.styleSheets).map(s => s.href),
+            rootContent: root.innerHTML.substring(0, 200)
+          });
+          root.innerHTML = '<div class="error-container" style="padding: 40px; text-align: center; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;"><h2 style="color: #d32f2f; margin-bottom: 16px;">Appen lastet ikke</h2><p style="margin-bottom: 8px; color: #666;">Det ser ut til at appen ikke lastet etter 10 sekunder.</p><p style="margin-bottom: 8px; color: #999; font-size: 12px;">Sjekk browser console (F12) for detaljer.</p><p style="margin-bottom: 24px; color: #999; font-size: 12px;">URL: ' + window.location.href + '</p><button onclick="window.location.reload()" style="padding: 12px 24px; background-color: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer; margin-bottom: 8px;">Last på nytt</button><button onclick="console.log(\'Debug info:\', {scripts: Array.from(document.scripts).map(s => s.src), root: document.getElementById(\'root\')?.innerHTML.substring(0, 500)});" style="padding: 8px 16px; background-color: #666; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Vis debug info i console</button></div>';
+        }
+      }, 10000);
+    }
   </script>
 </body>
 </html>

@@ -30,7 +30,8 @@
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro",
-      "output": "static"
+      "output": "static",
+      "baseUrl": "/pulse-experimental"
     },
     "plugins": [
       "expo-secure-store"

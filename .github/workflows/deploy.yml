@@ -64,7 +64,8 @@ jobs:
           # Use EXPO_NO_ROUTER to prevent expo-router from being used
           export EXPO_NO_ROUTER=1
           export EXPO_PUBLIC_USE_STATIC=0
-          echo "Building web app..."
+          export EXPO_PUBLIC_BASE_URL=/pulse-experimental
+          echo "Building web app with base URL: /pulse-experimental"
           npx expo export --platform web --no-minify 2>&1 | tee build.log || {
             echo "Build failed, checking logs..."
             cat build.log || true
@@ -78,6 +79,7 @@ jobs:
         env:
           EXPO_NO_ROUTER: "1"
           EXPO_PUBLIC_USE_STATIC: "0"
+          EXPO_PUBLIC_BASE_URL: "/pulse-experimental"
           NODE_ENV: "production"
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
@@ -145,6 +147,36 @@ jobs:
             exit 1
           fi
 
+      - name: Fix base path in HTML files
+        run: |
+          OUTPUT_DIR="${{ steps.find_output.outputs.output_dir }}"
+          BASE_PATH="/pulse-experimental"
+          
+          echo "Fixing base path in HTML files..."
+          
+          # Fix index.html
+          if [ -f "$OUTPUT_DIR/index.html" ]; then
+            # Replace relative paths with base path
+            sed -i "s|href=\"/|href=\"$BASE_PATH/|g" "$OUTPUT_DIR/index.html"
+            sed -i "s|src=\"/|src=\"$BASE_PATH/|g" "$OUTPUT_DIR/index.html"
+            sed -i "s|url('/|url('$BASE_PATH/|g" "$OUTPUT_DIR/index.html"
+            sed -i "s|url(\"/|url(\"$BASE_PATH/|g" "$OUTPUT_DIR/index.html"
+            echo "✅ Fixed paths in index.html"
+          fi
+          
+          # Fix 404.html if it exists
+          if [ -f "$OUTPUT_DIR/404.html" ]; then
+            sed -i "s|href=\"/|href=\"$BASE_PATH/|g" "$OUTPUT_DIR/404.html"
+            sed -i "s|src=\"/|src=\"$BASE_PATH/|g" "$OUTPUT_DIR/404.html"
+            echo "✅ Fixed paths in 404.html"
+          fi
+          
+          # Also fix any _expo/static HTML files
+          find "$OUTPUT_DIR" -name "*.html" -type f -exec sed -i "s|href=\"/|href=\"$BASE_PATH/|g" {} \;
+          find "$OUTPUT_DIR" -name "*.html" -type f -exec sed -i "s|src=\"/|src=\"$BASE_PATH/|g" {} \;
+          
+          echo "✅ Base path fixes completed"
+
       - name: Verify build output
         run: |
           OUTPUT_DIR="${{ steps.find_output.outputs.output_dir }}"
@@ -165,6 +197,13 @@ jobs:
             echo "⚠️ WARNING: JavaScript bundle not found in expected location"
             echo "Looking for JS files:"
             find $OUTPUT_DIR -name "*.js" -type f | head -10
+          fi
+          
+          # Check if base path is set in index.html
+          if grep -q "/pulse-experimental" "$OUTPUT_DIR/index.html"; then
+            echo "✅ Base path found in index.html"
+          else
+            echo "⚠️ WARNING: Base path not found in index.html"
           fi
 
       - name: Setup Pages
