@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
-import { Card, Text, Button, Chip, ActivityIndicator, Dialog, Portal, TextInput } from 'react-native-paper';
+import { Card, Text, Button, Chip, ActivityIndicator, Dialog, Portal, TextInput, Menu, Divider } from 'react-native-paper';
 import { theme, osloBranding } from '../constants/theme';
 import { getDiscussions, createDiscussion, Discussion, getComments, addComment, Comment } from '../services/discussionService';
 import { auth } from '../services/firebase';
@@ -61,6 +61,8 @@ const CommunityScreen = () => {
   const [showCommentsDialog, setShowCommentsDialog] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [sortBy, setSortBy] = useState<'newest' | 'mostComments' | 'oldest'>('newest');
+  const [sortMenuVisible, setSortMenuVisible] = useState(false);
 
   useEffect(() => {
     loadDiscussions();
@@ -69,9 +71,7 @@ const CommunityScreen = () => {
   const loadDiscussions = useCallback(async () => {
     try {
       setLoading(true);
-      const discussionsList = selectedCategory
-        ? await getDiscussions()
-        : await getDiscussions();
+      const discussionsList = await getDiscussions();
       
       // Filtrer etter kategori hvis valgt
       const filtered = selectedCategory
@@ -86,6 +86,25 @@ const CommunityScreen = () => {
       setRefreshing(false);
     }
   }, [selectedCategory]);
+
+  // Sorterte diskusjoner
+  const sortedDiscussions = useMemo(() => {
+    const sorted = [...discussions].sort((a, b) => {
+      if (sortBy === 'newest') {
+        const aDate = a.createdAt?.toMillis?.() || a.createdAt?.getTime?.() || 0;
+        const bDate = b.createdAt?.toMillis?.() || b.createdAt?.getTime?.() || 0;
+        return bDate - aDate;
+      } else if (sortBy === 'oldest') {
+        const aDate = a.createdAt?.toMillis?.() || a.createdAt?.getTime?.() || 0;
+        const bDate = b.createdAt?.toMillis?.() || b.createdAt?.getTime?.() || 0;
+        return aDate - bDate;
+      } else if (sortBy === 'mostComments') {
+        return (b.commentCount || 0) - (a.commentCount || 0);
+      }
+      return 0;
+    });
+    return sorted;
+  }, [discussions, sortBy]);
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
@@ -177,9 +196,55 @@ const CommunityScreen = () => {
           </Card.Content>
         </Card>
 
-        {/* Category Filter */}
+        {/* Sort and Filter Section */}
         <Card style={styles.card}>
           <Card.Content>
+            <View style={styles.sortFilterRow}>
+              <Text variant="bodySmall" style={styles.filterLabel}>
+                Sorter:
+              </Text>
+              <Menu
+                visible={sortMenuVisible}
+                onDismiss={() => setSortMenuVisible(false)}
+                anchor={
+                  <Button
+                    mode="outlined"
+                    icon="sort"
+                    onPress={() => setSortMenuVisible(true)}
+                    style={styles.sortButton}
+                    compact
+                  >
+                    {sortBy === 'newest' ? 'Nyeste' : sortBy === 'mostComments' ? 'Mest kommentarer' : 'Eldste'}
+                  </Button>
+                }
+              >
+                <Menu.Item
+                  onPress={() => {
+                    setSortBy('newest');
+                    setSortMenuVisible(false);
+                  }}
+                  title="Nyeste"
+                  leadingIcon={sortBy === 'newest' ? 'check' : undefined}
+                />
+                <Menu.Item
+                  onPress={() => {
+                    setSortBy('mostComments');
+                    setSortMenuVisible(false);
+                  }}
+                  title="Mest kommentarer"
+                  leadingIcon={sortBy === 'mostComments' ? 'check' : undefined}
+                />
+                <Menu.Item
+                  onPress={() => {
+                    setSortBy('oldest');
+                    setSortMenuVisible(false);
+                  }}
+                  title="Eldste"
+                  leadingIcon={sortBy === 'oldest' ? 'check' : undefined}
+                />
+              </Menu>
+            </View>
+            <Divider style={styles.divider} />
             <Text variant="titleMedium" style={styles.sectionTitle}>
               Filtrer etter kategori
             </Text>
@@ -558,8 +623,11 @@ const styles = StyleSheet.create({
   commentHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 8,
+  },
+  commentHeaderLeft: {
+    flex: 1,
   },
   commentAuthor: {
     fontWeight: '600',
