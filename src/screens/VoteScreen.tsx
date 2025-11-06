@@ -26,7 +26,7 @@ const VoteScreen = React.memo(() => {
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'newest' | 'popular' | 'endingSoon'>('newest');
   const [sortMenuVisible, setSortMenuVisible] = useState(false);
-  const { isMobile, isTablet, width } = useResponsive();
+  const { isMobile, isTablet, isDesktop, width } = useResponsive();
   const padding = getResponsivePadding(width);
 
   // Filtrerte og sorterte polls
@@ -277,12 +277,31 @@ const VoteScreen = React.memo(() => {
       {/* Search Bar */}
       <Card style={styles.searchCard}>
         <Card.Content>
-          <Searchbar
-            placeholder="Søk i avstemninger..."
-            onChangeText={setSearchQuery}
-            value={searchQuery}
-            style={styles.searchbar}
-          />
+          <View style={styles.searchContainer}>
+            <Searchbar
+              placeholder="Søk i avstemninger..."
+              onChangeText={setSearchQuery}
+              value={searchQuery}
+              style={styles.searchbar}
+              icon="magnify"
+            />
+            {searchQuery.length > 0 && (
+              <Button
+                mode="text"
+                icon="close"
+                onPress={() => setSearchQuery('')}
+                style={styles.clearSearchButton}
+                compact
+              >
+                Nullstill
+              </Button>
+            )}
+          </View>
+          {searchQuery.length > 0 && (
+            <Text variant="bodySmall" style={styles.searchHint}>
+              Søker etter: "{searchQuery}"
+            </Text>
+          )}
         </Card.Content>
       </Card>
 
