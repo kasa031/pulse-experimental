@@ -36,7 +36,11 @@ const HomeScreen = () => {
         <Card style={[styles.card, styles.welcomeCard]}>
           <Card.Content>
             <View style={styles.headerRow}>
-              <Icon name="map-marker" size={32} color={osloBranding.colors.primary} />
+              <Image 
+                source={require('../../assets/oslo-logo.png')} 
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
               <View style={styles.headerText}>
                 <Text variant="headlineSmall" style={styles.title}>
                   {osloBranding.logo.text}
@@ -192,6 +196,10 @@ const styles = StyleSheet.create({
   headerText: {
     marginLeft: 12,
     flex: 1,
+  },
+  logoImage: {
+    width: 48,
+    height: 48,
   },
   title: {
     fontWeight: 'bold',

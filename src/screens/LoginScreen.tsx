@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { TextInput, Button, Text, Surface, HelperText } from 'react-native-paper';
 import { auth } from '../services/firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
@@ -109,7 +109,11 @@ const LoginScreen = () => {
     >
       <Surface style={styles.surface}>
         <View style={styles.header}>
-          <Icon name="map-marker" size={48} color={osloBranding.colors.primary} />
+          <Image 
+            source={require('../../assets/oslo-logo.png')} 
+            style={styles.logo}
+            resizeMode="contain"
+          />
           <Text variant="headlineMedium" style={styles.title}>
             {osloBranding.logo.text}
           </Text>
@@ -213,6 +217,11 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: 24,
+  },
+  logo: {
+    width: 80,
+    height: 80,
+    marginBottom: 8,
   },
   title: {
     textAlign: 'center',
