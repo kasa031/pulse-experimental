@@ -12,7 +12,7 @@
   - ✅ WebNavigation-komponent opprettet med sidebar for desktop
   - ✅ Hamburger-meny for tablet/mobil
   - ✅ Hover-effekter på menyelementer
-  - [ ] Integrer WebNavigation i App.tsx (kun på web)
+  - ✅ Integrert WebNavigation i App.tsx (kun på web)
   - [ ] Test hover-funksjonalitet
 
 - [ ] **Responsiv layout for alle skjermer**
@@ -32,9 +32,10 @@
   - ✅ Slettet tom Bilder-mappe
   - [ ] Sjekke at alle bilder i assets/ er i bruk
 
-- [ ] **Bruke ubrukte logoer**
-  - `frigg-oslo-logo.png` - vurdere bruk i footer eller about-seksjon
-  - `pul-is-logo.png` - vurdere bruk eller fjerne
+- [x] **Bruke ubrukte logoer**
+  - ✅ `frigg-oslo-logo.png` - Lagt til i ContactScreen
+  - [ ] `pul-is-logo.png` - vurdere bruk eller fjerne
+  - [ ] `frigg-oslo-logo-400x400.png` - vurdere bruk eller fjerne
   - Sjekke at alle logoer har riktig størrelse og format
 
 ### Kontakt og Informasjon
