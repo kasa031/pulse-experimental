@@ -1,18 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, useWindowDimensions, Image } from 'react-native';
+import { View, StyleSheet, ScrollView, Image } from 'react-native';
 import { Card, Text, Button, Chip, ActivityIndicator } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { theme, osloBranding } from '../constants/theme';
 import { OSLO_DISTRICTS } from '../constants/osloDistricts';
 import { getActivePolls } from '../services/pollsService';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
+import { SPACING } from '../constants/spacing';
+import { BUTTON_MIN_HEIGHT } from '../constants/touchTargets';
+import { safeError } from '../utils/performance';
 
 const HomeScreen = () => {
   const navigation = useNavigation<any>();
-  const { width } = useWindowDimensions();
-  const isTablet = width > 768;
+  const { isMobile, isTablet, width } = useResponsive();
   const [activePollsCount, setActivePollsCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  
+  const padding = getResponsivePadding(width);
 
   useEffect(() => {
     loadStats();
@@ -31,7 +36,12 @@ const HomeScreen = () => {
 
   return (
     <ScrollView style={styles.container}>
-      <View style={[styles.content, isTablet && styles.contentTablet]}>
+      <View style={[
+        styles.content, 
+        { padding },
+        isTablet && styles.contentTablet,
+        isMobile && styles.contentMobile
+      ]}>
         {/* Welcome Card */}
         <Card style={[styles.card, styles.welcomeCard]}>
           <Card.Content>
@@ -168,16 +178,19 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   content: {
-    padding: 16,
+    padding: SPACING.screenPadding.mobile,
+  },
+  contentMobile: {
+    padding: SPACING.screenPadding.mobile,
   },
   contentTablet: {
-    padding: 24,
-    maxWidth: 1200,
+    padding: SPACING.screenPadding.tablet,
+    maxWidth: SPACING.contentMaxWidth.desktop,
     alignSelf: 'center',
     width: '100%',
   },
   card: {
-    marginBottom: 16,
+    marginBottom: SPACING.cardMargin.mobile,
     elevation: 2,
   },
   welcomeCard: {
@@ -214,15 +227,17 @@ const styles = StyleSheet.create({
   },
   statsRow: {
     flexDirection: 'row',
-    marginTop: 16,
-    paddingTop: 16,
+    flexWrap: 'wrap',
+    marginTop: SPACING.md,
+    paddingTop: SPACING.md,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border || '#E0E0E0',
   },
   stat: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 24,
+    marginRight: SPACING.lg,
+    marginBottom: SPACING.xs,
   },
   statText: {
     marginLeft: 8,
@@ -260,7 +275,8 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   actionButton: {
-    marginTop: 8,
+    marginTop: SPACING.sm,
+    minHeight: BUTTON_MIN_HEIGHT,
   },
   loader: {
     marginVertical: 16,
