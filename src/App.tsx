@@ -135,7 +135,7 @@ const App = () => {
       return (
         <SafeAreaProvider>
           <PaperProvider theme={theme}>
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, minHeight: '100vh' }}>
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
               <Icon name="alert-circle" size={48} color="#d32f2f" style={{ marginBottom: 16 }} />
               <Text variant="headlineSmall" style={{ marginBottom: 16, textAlign: 'center', color: '#c62828' }}>
                 Konfigurasjonsfeil
