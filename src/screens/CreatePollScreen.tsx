@@ -8,7 +8,10 @@ import {
   HelperText,
   Chip,
   Snackbar,
-  ActivityIndicator
+  ActivityIndicator,
+  Dialog,
+  Portal,
+  Divider
 } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { theme, osloBranding } from '../constants/theme';
@@ -24,7 +27,7 @@ import { SPACING } from '../constants/spacing';
 import { BUTTON_MIN_HEIGHT, CHIP_MIN_HEIGHT } from '../constants/touchTargets';
 
 const CreatePollScreen = () => {
-  const { isMobile, isTablet, width } = useResponsive();
+  const { isMobile, isTablet, isDesktop, width } = useResponsive();
   const padding = getResponsivePadding(width);
   const [loading, setLoading] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
@@ -41,6 +44,7 @@ const CreatePollScreen = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     checkAdminStatus();
@@ -80,39 +84,58 @@ const CreatePollScreen = () => {
     setOptions(newOptions);
   };
 
-  const validateForm = (): boolean => {
+  const validateForm = (showErrors = true): boolean => {
     const newErrors: Record<string, string> = {};
 
-    const titleValidation = validatePollTitle(title);
-    if (!titleValidation.valid) {
-      newErrors.title = titleValidation.error || 'Ugyldig tittel';
+    if (!title.trim()) {
+      newErrors.title = 'Tittel er påkrevd';
+    } else {
+      const titleValidation = validatePollTitle(title);
+      if (!titleValidation.valid) {
+        newErrors.title = titleValidation.error || 'Tittel må være mellom 5 og 200 tegn';
+      }
     }
 
-    const descValidation = validatePollDescription(description);
-    if (!descValidation.valid) {
-      newErrors.description = descValidation.error || 'Ugyldig beskrivelse';
+    if (!description.trim()) {
+      newErrors.description = 'Beskrivelse er påkrevd';
+    } else {
+      const descValidation = validatePollDescription(description);
+      if (!descValidation.valid) {
+        newErrors.description = descValidation.error || 'Beskrivelse må være mellom 10 og 2000 tegn';
+      }
+    }
+
+    const validOptions = options.filter(opt => opt.trim());
+    if (validOptions.length < 2) {
+      newErrors.options = 'Minimum 2 alternativer påkrevd';
     }
 
     options.forEach((opt, index) => {
+      if (!opt.trim() && validOptions.length >= 2) {
+        // Ikke vis feil for tomme alternativer hvis vi har nok
+        return;
+      }
       if (!opt.trim()) {
         newErrors[`option_${index}`] = 'Alternativ kan ikke være tomt';
       } else {
         const optValidation = validatePollOption(opt);
         if (!optValidation.valid) {
-          newErrors[`option_${index}`] = optValidation.error || 'Ugyldig alternativ';
+          newErrors[`option_${index}`] = optValidation.error || 'Alternativ må være mellom 1 og 100 tegn';
         }
       }
     });
-
-    if (options.filter(opt => opt.trim()).length < 2) {
-      newErrors.options = 'Minimum 2 alternativer påkrevd';
-    }
 
     if (endDate <= startDate) {
       newErrors.dates = 'Sluttdato må være etter startdato';
     }
 
-    setErrors(newErrors);
+    if (startDate < new Date()) {
+      newErrors.dates = 'Startdato kan ikke være i fortiden';
+    }
+
+    if (showErrors) {
+      setErrors(newErrors);
+    }
     return Object.keys(newErrors).length === 0;
   };
 
@@ -405,16 +428,34 @@ const CreatePollScreen = () => {
             )}
           </View>
 
-          <Button
-            mode="contained"
-            onPress={handleSubmit}
-            loading={loading}
-            disabled={loading}
-            style={styles.submitButton}
-            icon="check"
-          >
-            Opprett avstemning
-          </Button>
+          <View style={styles.actionButtons}>
+            <Button
+              mode="outlined"
+              onPress={() => {
+                if (validateForm(false)) {
+                  setShowPreview(true);
+                } else {
+                  validateForm(true);
+                  setSnackbarMessage('Vennligst fyll ut alle felter korrekt før forhåndsvisning');
+                  setSnackbarVisible(true);
+                }
+              }}
+              style={styles.previewButton}
+              icon="eye"
+            >
+              Forhåndsvisning
+            </Button>
+            <Button
+              mode="contained"
+              onPress={handleSubmit}
+              loading={loading}
+              disabled={loading}
+              style={styles.submitButton}
+              icon="check"
+            >
+              Opprett avstemning
+            </Button>
+          </View>
         </Card.Content>
       </Card>
 
@@ -422,9 +463,76 @@ const CreatePollScreen = () => {
         visible={snackbarVisible}
         onDismiss={() => setSnackbarVisible(false)}
         duration={4000}
+        action={{
+          label: 'Lukk',
+          onPress: () => setSnackbarVisible(false),
+        }}
       >
         {snackbarMessage}
       </Snackbar>
+
+      {/* Preview Dialog */}
+      <Portal>
+        <Dialog 
+          visible={showPreview} 
+          onDismiss={() => setShowPreview(false)}
+          style={styles.previewDialog}
+        >
+          <Dialog.Title>Forhåndsvisning av avstemning</Dialog.Title>
+          <Dialog.ScrollArea style={styles.previewScrollArea}>
+            <Dialog.Content>
+              <Text variant="headlineSmall" style={styles.previewTitle}>
+                {title || '(Ingen tittel)'}
+              </Text>
+              <Divider style={styles.previewDivider} />
+              <Text variant="bodyMedium" style={styles.previewDescription}>
+                {description || '(Ingen beskrivelse)'}
+              </Text>
+              <Text variant="titleMedium" style={styles.previewSectionTitle}>
+                Alternativer:
+              </Text>
+              {options.filter(opt => opt.trim()).map((opt, index) => (
+                <View key={index} style={styles.previewOption}>
+                  <Chip style={styles.previewChip}>
+                    {opt || `Alternativ ${index + 1}`}
+                  </Chip>
+                </View>
+              ))}
+              <View style={styles.previewMeta}>
+                <Chip icon="map-marker" style={styles.previewMetaChip}>
+                  {district}
+                </Chip>
+                <Chip icon="tag" style={styles.previewMetaChip}>
+                  {category}
+                </Chip>
+              </View>
+              <View style={styles.previewDates}>
+                <Text variant="bodySmall" style={styles.previewDateLabel}>
+                  Start: {startDate.toLocaleDateString('no-NO')}
+                </Text>
+                <Text variant="bodySmall" style={styles.previewDateLabel}>
+                  Slutt: {endDate.toLocaleDateString('no-NO')}
+                </Text>
+              </View>
+            </Dialog.Content>
+          </Dialog.ScrollArea>
+          <Dialog.Actions>
+            <Button onPress={() => setShowPreview(false)}>
+              Lukk
+            </Button>
+            <Button 
+              mode="contained"
+              onPress={() => {
+                setShowPreview(false);
+                handleSubmit();
+              }}
+              icon="check"
+            >
+              Bekreft og opprett
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </ScrollView>
   );
 };
@@ -544,6 +652,67 @@ const styles = StyleSheet.create({
   dateButton: {
     marginBottom: SPACING.sm,
     minHeight: BUTTON_MIN_HEIGHT,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.md,
+  },
+  previewButton: {
+    flex: 1,
+    minHeight: BUTTON_MIN_HEIGHT,
+  },
+  previewDialog: {
+    maxWidth: Platform.OS === 'web' ? 600 : '90%',
+    maxHeight: '90%',
+  },
+  previewScrollArea: {
+    maxHeight: 400,
+  },
+  previewTitle: {
+    fontWeight: 'bold',
+    color: osloBranding.colors.primary,
+    marginBottom: SPACING.sm,
+  },
+  previewDivider: {
+    marginVertical: SPACING.md,
+  },
+  previewDescription: {
+    color: osloBranding.colors.text,
+    marginBottom: SPACING.md,
+    lineHeight: 22,
+  },
+  previewSectionTitle: {
+    fontWeight: '600',
+    marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
+    color: osloBranding.colors.text,
+  },
+  previewOption: {
+    marginBottom: SPACING.sm,
+  },
+  previewChip: {
+    backgroundColor: osloBranding.colors.primary + '15',
+  },
+  previewMeta: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+    marginTop: SPACING.md,
+  },
+  previewMetaChip: {
+    backgroundColor: osloBranding.colors.backgroundSecondary,
+  },
+  previewDates: {
+    marginTop: SPACING.md,
+    paddingTop: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: osloBranding.colors.border || '#E0E0E0',
+  },
+  previewDateLabel: {
+    color: osloBranding.colors.textSecondary,
+    marginBottom: SPACING.xs,
   },
 });
 
