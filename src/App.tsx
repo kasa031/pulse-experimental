@@ -220,7 +220,7 @@ const App = () => {
             style={{ flex: 1, marginTop: 100 }} 
           />
           <Text style={{ textAlign: 'center', marginTop: 20 }}>
-            Starter Pulse Oslo...
+            Starter OsloPuls...
           </Text>
         </PaperProvider>
       </SafeAreaProvider>

@@ -35,7 +35,7 @@ export const OPENROUTER_CONFIG = {
   headers: {
     'Content-Type': 'application/json',
     'HTTP-Referer': 'https://github.com/kasa031/pulse-experimental', // Optional
-    'X-Title': 'Pulse Oslo', // Optional
+    'X-Title': 'OsloPuls', // Optional
   },
 };
 

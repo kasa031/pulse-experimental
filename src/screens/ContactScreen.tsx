@@ -13,7 +13,7 @@ const ContactScreen = () => {
   const isTablet = width > 768;
 
   const handleEmailPress = () => {
-    Linking.openURL('mailto:ms.tery@icloud.com?subject=Kontakt fra Pulse Oslo');
+    Linking.openURL('mailto:ms.tery@icloud.com?subject=Kontakt fra OsloPuls');
   };
 
   return (
@@ -109,12 +109,12 @@ const ContactScreen = () => {
         <Card style={styles.card}>
           <Card.Content>
             <Text variant="titleLarge" style={styles.sectionTitle}>
-              Om Pulse Oslo
+              Om OsloPuls
             </Text>
             <Divider style={styles.divider} />
             
             <Text variant="bodyMedium" style={styles.description}>
-              Pulse Oslo er en digital plattform utviklet for å styrke lokaldemokratiet i Oslo. 
+              OsloPuls er en digital plattform utviklet for å styrke lokaldemokratiet i Oslo. 
               Appen gir innbyggerne mulighet til å delta i lokale avstemninger, diskutere saker 
               som påvirker byen, og holde seg oppdatert på nyheter fra Oslo kommune.
             </Text>

@@ -23,7 +23,7 @@ export const theme: typeof DefaultTheme = {
 // Oslo-branding spesifikke stiler
 export const osloBranding = {
   logo: {
-    text: 'Pulse Oslo',
+    text: 'OsloPuls',
     tagline: 'Din stemme i byen',
   },
   colors: OSLO_COLORS,

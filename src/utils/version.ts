@@ -20,7 +20,7 @@ export const getVersionInfo = (): VersionInfo => {
   return {
     version: APP_VERSION,
     build: APP_BUILD_NUMBER,
-    name: 'Pulse Oslo',
+    name: 'OsloPuls',
     timestamp: new Date().toISOString(),
   };
 };

@@ -132,7 +132,7 @@ const WebNavigation = ({ children }: WebNavigationProps) => {
           <View style={styles.sidebarHeader}>
             <Icon name="city-variant" size={32} color={osloBranding.colors.primary} />
             <Text variant="titleMedium" style={styles.sidebarTitle}>
-              Pulse Oslo
+              OsloPuls
             </Text>
           </View>
           <View style={styles.navList}>
@@ -161,7 +161,7 @@ const WebNavigation = ({ children }: WebNavigationProps) => {
           <View style={styles.drawerHeader}>
             <Icon name="city-variant" size={32} color={osloBranding.colors.primary} />
             <Text variant="titleLarge" style={styles.drawerTitle}>
-              Pulse Oslo
+              OsloPuls
             </Text>
           </View>
           {navItems.map((item) => {
@@ -188,7 +188,7 @@ const WebNavigation = ({ children }: WebNavigationProps) => {
           <Icon name="menu" size={24} color={osloBranding.colors.text} />
         </TouchableOpacity>
         <Text variant="titleMedium" style={styles.mobileTitle}>
-          Pulse Oslo
+          OsloPuls
         </Text>
       </Surface>
       

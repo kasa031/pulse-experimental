@@ -79,10 +79,10 @@ const HomeScreen = () => {
         <Card style={styles.card}>
           <Card.Content>
             <Text variant="titleMedium" style={styles.sectionTitle}>
-              Hva er Pulse Oslo?
+              Hva er OsloPuls?
             </Text>
             <Text variant="bodyMedium" style={styles.infoText}>
-              Pulse Oslo er en plattform hvor innbyggerne i Oslo kan delta i lokale avstemninger 
+              OsloPuls er en plattform hvor innbyggerne i Oslo kan delta i lokale avstemninger 
               om temaer som påvirker byen. Fra transport og miljø til byutvikling og politikk - 
               din mening betyr noe.
             </Text>
