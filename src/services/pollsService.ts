@@ -190,10 +190,11 @@ export const submitVote = async (
     await invalidateCache();
 
     return true;
-  } catch (error: any) {
+  } catch (error: unknown) {
     safeError('Feil ved innsending av stemme:', error);
     // Re-throw med bedre feilmelding
-    if (error.message) {
+    const err = error as { message?: string };
+    if (err.message) {
       throw error;
     }
     throw new Error('Kunne ikke sende stemme. Prøv igjen.');
@@ -367,9 +368,10 @@ export const createPoll = async (
     await invalidateCache();
 
     return docRef.id;
-  } catch (error: any) {
+  } catch (error: unknown) {
     safeError('Feil ved opprettelse av avstemning:', error);
-    if (error.message) {
+    const err = error as { message?: string };
+    if (err.message) {
       throw error;
     }
     throw new Error('Kunne ikke opprette avstemning. Prøv igjen.');

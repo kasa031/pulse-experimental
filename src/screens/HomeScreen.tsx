@@ -23,7 +23,7 @@ const HomeScreen = () => {
       const polls = await getActivePolls();
       setActivePollsCount(polls.length);
     } catch (error) {
-      console.error('Feil ved henting av statistikk:', error);
+      safeError('Feil ved henting av statistikk:', error);
     } finally {
       setLoading(false);
     }

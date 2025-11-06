@@ -77,7 +77,7 @@ export const getDiscussions = async (limitCount: number = 20): Promise<Discussio
     });
     
     return discussions;
-  } catch (error: any) {
+  } catch (error: unknown) {
     safeError('Feil ved henting av diskusjoner:', error);
     return [];
   }
@@ -120,7 +120,7 @@ export const getDiscussionsByCategory = async (
     });
     
     return discussions;
-  } catch (error: any) {
+  } catch (error: unknown) {
     safeError('Feil ved henting av diskusjoner:', error);
     return [];
   }
@@ -162,7 +162,7 @@ export const createDiscussion = async (
 
     safeLog('Diskusjon opprettet:', docRef.id);
     return docRef.id;
-  } catch (error: any) {
+  } catch (error: unknown) {
     safeError('Feil ved opprettelse av diskusjon:', error);
     throw error;
   }
@@ -196,7 +196,7 @@ export const getComments = async (discussionId: string): Promise<Comment[]> => {
     });
     
     return comments;
-  } catch (error: any) {
+  } catch (error: unknown) {
     safeError('Feil ved henting av kommentarer:', error);
     return [];
   }
@@ -242,7 +242,7 @@ export const addComment = async (
 
     safeLog('Kommentar lagt til:', docRef.id);
     return docRef.id;
-  } catch (error: any) {
+  } catch (error: unknown) {
     safeError('Feil ved legg til kommentar:', error);
     throw error;
   }

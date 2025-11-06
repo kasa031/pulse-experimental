@@ -161,9 +161,10 @@ const CreatePollScreen = () => {
       setStartDate(new Date());
       setEndDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
       setErrors({});
-    } catch (error: any) {
+    } catch (error: unknown) {
       safeError('Feil ved opprettelse av avstemning:', error);
-      setSnackbarMessage(error.message || 'Kunne ikke opprette avstemning');
+      const err = error as { message?: string };
+      setSnackbarMessage(err.message || 'Kunne ikke opprette avstemning');
       setSnackbarVisible(true);
     } finally {
       setLoading(false);

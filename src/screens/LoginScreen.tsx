@@ -79,22 +79,23 @@ const LoginScreen = () => {
       } else {
         await signInWithEmailAndPassword(auth, email.trim(), password);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       safeError('Auth feil:', err);
       // Bedre feilmeldinger
       let errorMessage = 'Noe gikk galt';
-      if (err.code === 'auth/user-not-found') {
+      const error = err as { code?: string; message?: string };
+      if (error.code === 'auth/user-not-found') {
         errorMessage = 'Bruker ikke funnet';
-      } else if (err.code === 'auth/wrong-password') {
+      } else if (error.code === 'auth/wrong-password') {
         errorMessage = 'Feil passord';
-      } else if (err.code === 'auth/email-already-in-use') {
+      } else if (error.code === 'auth/email-already-in-use') {
         errorMessage = 'E-post er allerede i bruk';
-      } else if (err.code === 'auth/weak-password') {
+      } else if (error.code === 'auth/weak-password') {
         errorMessage = 'Passordet er for svakt';
-      } else if (err.code === 'auth/invalid-email') {
+      } else if (error.code === 'auth/invalid-email') {
         errorMessage = 'Ugyldig e-postadresse';
-      } else if (err.message) {
-        errorMessage = err.message;
+      } else if (error.message) {
+        errorMessage = error.message;
       }
       setError(errorMessage);
     } finally {

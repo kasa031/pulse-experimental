@@ -2,6 +2,7 @@ import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore, enableIndexedDbPersistence } from 'firebase/firestore';
 import Constants from 'expo-constants';
+import { FirebaseConfig } from '../types';
 
 // Firebase konfigurasjon fra expo-constants eller miljøvariabler
 const getFirebaseConfig = () => {
@@ -26,7 +27,7 @@ const getFirebaseConfig = () => {
 const firebaseConfig = getFirebaseConfig();
 
 // Valider Firebase config
-const isValidConfig = (config: any): boolean => {
+const isValidConfig = (config: FirebaseConfig | Record<string, unknown>): boolean => {
   if (!config || !config.apiKey || !config.projectId) {
     return false;
   }

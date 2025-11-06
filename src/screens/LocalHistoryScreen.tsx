@@ -49,7 +49,7 @@ const LocalHistoryScreen = React.memo(() => {
       
       const results = await getCompletedPollResults(20);
       setCompletedPolls(results);
-    } catch (error: any) {
+    } catch (error: unknown) {
       safeError('Feil ved henting av historikk:', error);
     } finally {
       setLoading(false);

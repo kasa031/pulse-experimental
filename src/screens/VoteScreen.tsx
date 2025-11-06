@@ -46,7 +46,7 @@ const VoteScreen = React.memo(() => {
       const activePolls = await getActivePolls();
       setPolls(activePolls);
       setError(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       safeError('Feil ved henting av avstemninger:', err);
       setError('Kunne ikke laste avstemninger. Prøv igjen.');
     } finally {
@@ -123,9 +123,10 @@ const VoteScreen = React.memo(() => {
         }
         return p;
       }));
-    } catch (err: any) {
+    } catch (err: unknown) {
       safeError('Feil ved innsending av stemme:', err);
-      setError(err.message || 'Kunne ikke sende stemme. Prøv igjen.');
+      const error = err as { message?: string };
+      setError(error.message || 'Kunne ikke sende stemme. Prøv igjen.');
       setSnackbarVisible(true);
       
       // Revert optimistisk oppdatering

@@ -43,7 +43,7 @@ export const getLatestNews = async (limitCount: number = 10): Promise<NewsItem[]
       publishedAt: doc.data().publishedAt || Timestamp.now(),
     } as NewsItem));
   } catch (error) {
-    console.error('Feil ved henting av nyheter:', error);
+    safeError('Feil ved henting av nyheter:', error);
     return [];
   }
 };
@@ -70,7 +70,7 @@ export const getNewsByDistrict = async (district: string, limitCount: number = 1
       publishedAt: doc.data().publishedAt || Timestamp.now(),
     } as NewsItem));
   } catch (error) {
-    console.error('Feil ved henting av nyheter for bydel:', error);
+    safeError('Feil ved henting av nyheter for bydel:', error);
     return [];
   }
 };
@@ -97,7 +97,7 @@ export const getNewsByCategory = async (category: NewsItem['category'], limitCou
       publishedAt: doc.data().publishedAt || Timestamp.now(),
     } as NewsItem));
   } catch (error) {
-    console.error('Feil ved henting av nyheter for kategori:', error);
+    safeError('Feil ved henting av nyheter for kategori:', error);
     return [];
   }
 };

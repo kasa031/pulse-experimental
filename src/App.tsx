@@ -11,6 +11,7 @@ import { saveUserToStorage, clearAuthStorage } from './services/authPersistence'
 import { createOrUpdateUserProfile } from './services/userService';
 import { ErrorBoundary } from './utils/errorBoundary';
 import { safeLog, safeError } from './utils/performance';
+import { FirebaseUser, TabBarIconProps } from './types';
 import LoginScreen from './screens/LoginScreen';
 // Screens
 import HomeScreen from './screens/HomeScreen';
@@ -27,7 +28,7 @@ import { theme, osloBranding } from './constants/theme';
 const Tab = createBottomTabNavigator();
 
 const App = () => {
-  const [user, setUser] = useState<any>(undefined);
+  const [user, setUser] = useState<FirebaseUser>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authInitialized, setAuthInitialized] = useState(false);
@@ -212,7 +213,7 @@ const App = () => {
 
   // Memoize screen options for better performance
   const screenOptions = useMemo(() => ({
-    tabBarIcon: ({ focused, color, size, route }: any) => {
+    tabBarIcon: ({ focused, color, size, route }: TabBarIconProps) => {
       let iconName: string;
       if (route.name === 'Hjem') {
         iconName = focused ? 'home' : 'home-outline';

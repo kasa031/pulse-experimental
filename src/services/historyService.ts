@@ -65,8 +65,8 @@ export const getUserVotingHistory = async (userId: string): Promise<UserVote[]> 
     }
     
     return votes;
-  } catch (error: any) {
-    console.error('Feil ved henting av stemmehistorikk:', error);
+  } catch (error: unknown) {
+    safeError('Feil ved henting av stemmehistorikk:', error);
     return [];
   }
 };
@@ -147,8 +147,8 @@ export const getCompletedPollResults = async (limitCount: number = 10): Promise<
     }
     
     return results;
-  } catch (error: any) {
-    console.error('Feil ved henting av avsluttede avstemninger:', error);
+  } catch (error: unknown) {
+    safeError('Feil ved henting av avsluttede avstemninger:', error);
     return [];
   }
 };
@@ -218,8 +218,8 @@ export const getPollResult = async (pollId: string): Promise<PollResult | null> 
       optionCounts,
       userVote,
     };
-  } catch (error: any) {
-    console.error('Feil ved henting av avstemningsresultat:', error);
+  } catch (error: unknown) {
+    safeError('Feil ved henting av avstemningsresultat:', error);
     return null;
   }
 };

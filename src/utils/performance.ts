@@ -8,7 +8,7 @@ const isDevelopment = __DEV__;
 /**
  * Safe console.log - kun i development
  */
-export const safeLog = (...args: any[]) => {
+export const safeLog = (...args: unknown[]) => {
   if (isDevelopment) {
     console.log(...args);
   }
@@ -17,7 +17,7 @@ export const safeLog = (...args: any[]) => {
 /**
  * Safe console.error - alltid logg errors
  */
-export const safeError = (...args: any[]) => {
+export const safeError = (...args: unknown[]) => {
   console.error(...args);
   // Her kan du legge til error reporting (Sentry, etc.)
 };
@@ -25,7 +25,7 @@ export const safeError = (...args: any[]) => {
 /**
  * Safe console.warn - kun i development
  */
-export const safeWarn = (...args: any[]) => {
+export const safeWarn = (...args: unknown[]) => {
   if (isDevelopment) {
     console.warn(...args);
   }
@@ -34,7 +34,7 @@ export const safeWarn = (...args: any[]) => {
 /**
  * Memoize funksjon for performance
  */
-export const memoize = <T extends (...args: any[]) => any>(
+export const memoize = <T extends (...args: unknown[]) => unknown>(
   fn: T,
   keyGenerator?: (...args: Parameters<T>) => string
 ): T => {
