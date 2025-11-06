@@ -43,6 +43,14 @@ const LocalHistoryScreen = React.memo(() => {
   const [activeTab, setActiveTab] = useState<'my-votes' | 'results'>('my-votes');
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
+  const [participationStats, setParticipationStats] = useState({
+    totalVotes: 0,
+    totalPolls: 0,
+    categories: {} as Record<string, number>,
+    districts: {} as Record<string, number>,
+  });
 
   const loadData = useCallback(async () => {
     try {
@@ -52,6 +60,21 @@ const LocalHistoryScreen = React.memo(() => {
       if (user) {
         const votes = await getUserVotingHistory(user.uid);
         setUserVotes(votes);
+        
+        // Beregn deltakelsesstatistikk
+        const stats = {
+          totalVotes: votes.length,
+          totalPolls: 0,
+          categories: {} as Record<string, number>,
+          districts: {} as Record<string, number>,
+        };
+        
+        votes.forEach(vote => {
+          // Kategorier og bydeler kan hentes fra poll-data hvis tilgjengelig
+          // For nå teller vi bare totalt antall
+        });
+        
+        setParticipationStats(stats);
       }
       
       const results = await getCompletedPollResults(20);
@@ -254,8 +277,8 @@ const LocalHistoryScreen = React.memo(() => {
                   </Text>
                 </Card.Content>
               </Card>
-            ) : (
-              completedPolls.map((result) => (
+              ) : (
+              filteredResults.map((result) => (
                 <Card key={result.poll.id} style={styles.card}>
                   <Card.Content>
                     <Text variant="titleMedium" style={styles.pollTitle}>
