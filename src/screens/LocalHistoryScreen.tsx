@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
-import { Card, Text, ActivityIndicator, Chip, ProgressBar } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, RefreshControl, Platform, Share } from 'react-native';
+import { Card, Text, ActivityIndicator, Chip, ProgressBar, Button, Snackbar } from 'react-native-paper';
 import { theme } from '../constants/theme';
 import { auth } from '../services/firebase';
 import { getUserVotingHistory, getCompletedPollResults, PollResult, UserVote } from '../services/historyService';
@@ -34,13 +34,15 @@ const formatDate = (date: Date | Timestamp | any): string => {
 };
 
 const LocalHistoryScreen = React.memo(() => {
-  const { isMobile, isTablet, width } = useResponsive();
+  const { isMobile, isTablet, isDesktop, width } = useResponsive();
   const padding = getResponsivePadding(width);
   const [userVotes, setUserVotes] = useState<UserVote[]>([]);
   const [completedPolls, setCompletedPolls] = useState<PollResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'my-votes' | 'results'>('my-votes');
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const loadData = useCallback(async () => {
     try {
@@ -76,6 +78,66 @@ const LocalHistoryScreen = React.memo(() => {
     if (total === 0) return 0;
     return Math.round((count / total) * 100);
   };
+
+  const exportHistory = useCallback(async () => {
+    try {
+      let exportData: string;
+      let filename: string;
+
+      if (activeTab === 'my-votes') {
+        // Export as CSV
+        const csvHeader = 'Avstemning,Dato,Valgt alternativ\n';
+        const csvRows = userVotes.map(vote => 
+          `"${vote.pollTitle}","${formatDate(vote.votedAt)}","${vote.selectedOption}"`
+        ).join('\n');
+        exportData = csvHeader + csvRows;
+        filename = 'mine_stemmer.csv';
+      } else {
+        // Export results as JSON
+        const jsonData = completedPolls.map(result => ({
+          tittel: result.poll.title,
+          avsluttet: formatDate(result.poll.endDate),
+          totaltStemmer: result.totalVotes,
+          resultater: result.poll.options.map((option, index) => ({
+            alternativ: option,
+            antallStemmer: result.optionCounts[index] || 0,
+            prosent: getPercentage(result.optionCounts[index] || 0, result.totalVotes),
+          })),
+          minStemme: result.userVote ? result.userVote.selectedOption : null,
+        }));
+        exportData = JSON.stringify(jsonData, null, 2);
+        filename = 'avstemningsresultater.json';
+      }
+
+      if (Platform.OS === 'web') {
+        // For web: download file
+        const blob = new Blob([exportData], { 
+          type: activeTab === 'my-votes' ? 'text/csv' : 'application/json' 
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        setSnackbarMessage('Historikk eksportert!');
+      } else {
+        // For mobile: share
+        await Share.share({
+          message: exportData,
+          title: filename,
+        });
+        setSnackbarMessage('Historikk delt!');
+      }
+      setSnackbarVisible(true);
+    } catch (error) {
+      safeError('Feil ved eksport av historikk:', error);
+      setSnackbarMessage('Kunne ikke eksportere historikk');
+      setSnackbarVisible(true);
+    }
+  }, [activeTab, userVotes, completedPolls]);
 
   if (loading && !refreshing) {
     return (
@@ -113,24 +175,39 @@ const LocalHistoryScreen = React.memo(() => {
         </Card>
 
         {/* Tab selector */}
-        <View style={styles.tabContainer}>
-          <Chip
-            selected={activeTab === 'my-votes'}
-            onPress={() => setActiveTab('my-votes')}
-            style={styles.tab}
-            selectedColor={theme.colors.primary}
-          >
-            Mine stemmer ({userVotes.length})
-          </Chip>
-          <Chip
-            selected={activeTab === 'results'}
-            onPress={() => setActiveTab('results')}
-            style={styles.tab}
-            selectedColor={theme.colors.primary}
-          >
-            Resultater ({completedPolls.length})
-          </Chip>
-        </View>
+        <Card style={styles.card}>
+          <Card.Content>
+            <View style={styles.tabContainer}>
+              <Chip
+                selected={activeTab === 'my-votes'}
+                onPress={() => setActiveTab('my-votes')}
+                style={styles.tab}
+                selectedColor={theme.colors.primary}
+              >
+                Mine stemmer ({userVotes.length})
+              </Chip>
+              <Chip
+                selected={activeTab === 'results'}
+                onPress={() => setActiveTab('results')}
+                style={styles.tab}
+                selectedColor={theme.colors.primary}
+              >
+                Resultater ({completedPolls.length})
+              </Chip>
+            </View>
+            {(userVotes.length > 0 || completedPolls.length > 0) && (
+              <Button
+                mode="outlined"
+                icon="download"
+                onPress={exportHistory}
+                style={styles.exportButton}
+                compact
+              >
+                Eksporter {activeTab === 'my-votes' ? 'stemmer' : 'resultater'}
+              </Button>
+            )}
+          </Card.Content>
+        </Card>
 
         {/* My Votes Tab */}
         {activeTab === 'my-votes' && (
@@ -239,6 +316,18 @@ const LocalHistoryScreen = React.memo(() => {
           </>
         )}
       </View>
+
+      <Snackbar
+        visible={snackbarVisible}
+        onDismiss={() => setSnackbarVisible(false)}
+        duration={3000}
+        action={{
+          label: 'Lukk',
+          onPress: () => setSnackbarVisible(false),
+        }}
+      >
+        {snackbarMessage}
+      </Snackbar>
     </ScrollView>
   );
 });
@@ -296,6 +385,10 @@ const styles = StyleSheet.create({
   tab: {
     marginRight: SPACING.sm,
     minHeight: CHIP_MIN_HEIGHT,
+  },
+  exportButton: {
+    marginTop: SPACING.md,
+    alignSelf: 'flex-start',
   },
   pollTitle: {
     marginBottom: 8,
