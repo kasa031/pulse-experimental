@@ -108,13 +108,43 @@ const HomeScreen = () => {
             isDesktop && styles.cardDesktop
           ]}>
             <Card.Content>
-              <Text variant="titleMedium" style={styles.sectionTitle}>
-                Hva er OsloPuls?
-              </Text>
+              <View style={styles.aboutHeader}>
+                <Icon name="information" size={28} color={osloBranding.colors.primary} />
+                <Text variant="titleMedium" style={styles.sectionTitle}>
+                  Hva er OsloPuls?
+                </Text>
+              </View>
               <Text variant="bodyMedium" style={styles.infoText}>
-                OsloPuls er en plattform hvor innbyggerne i Oslo kan delta i lokale avstemninger 
-                om temaer som påvirker byen. Fra transport og miljø til byutvikling og politikk - 
-                din mening betyr noe.
+                OsloPuls er en digital plattform for lokaldemokrati i Oslo. Vi gir innbyggerne mulighet til å:
+              </Text>
+              <View style={styles.featureList}>
+                <View style={styles.featureItem}>
+                  <Icon name="vote" size={18} color={osloBranding.colors.secondary} />
+                  <Text variant="bodySmall" style={styles.featureText}>
+                    Delta i lokale avstemninger og påvirke beslutninger
+                  </Text>
+                </View>
+                <View style={styles.featureItem}>
+                  <Icon name="forum" size={18} color={osloBranding.colors.secondary} />
+                  <Text variant="bodySmall" style={styles.featureText}>
+                    Diskutere lokale saker med andre innbyggere
+                  </Text>
+                </View>
+                <View style={styles.featureItem}>
+                  <Icon name="newspaper" size={18} color={osloBranding.colors.secondary} />
+                  <Text variant="bodySmall" style={styles.featureText}>
+                    Holde seg oppdatert på nyheter fra Oslo kommune
+                  </Text>
+                </View>
+                <View style={styles.featureItem}>
+                  <Icon name="chart-bar" size={18} color={osloBranding.colors.secondary} />
+                  <Text variant="bodySmall" style={styles.featureText}>
+                    Se resultater fra tidligere avstemninger
+                  </Text>
+                </View>
+              </View>
+              <Text variant="bodySmall" style={styles.aboutFooter}>
+                Alle innbyggere i Oslo er velkommen til å delta. Din stemme betyr noe!
               </Text>
               <View style={styles.chipContainer}>
                 {['Miljø', 'Transport', 'Byutvikling', 'Politikk'].map((cat) => (
