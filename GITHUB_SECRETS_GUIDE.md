@@ -28,7 +28,7 @@ Klikk **"New repository secret"** for hver av disse:
 ### 1. FIREBASE_API_KEY
 - **Name:** `FIREBASE_API_KEY`
 - **Value:** Din Firebase API Key (fra Firebase Console → Project Settings → General → Your apps)
-- **Eksempel:** `AIzaSyBtfwQQeFo8FiKtjF_FKYo3pdVEFtll6W4`
+- **Hvor:** Firebase Console → Project Settings → Your apps → Web app → apiKey
 
 ### 2. FIREBASE_AUTH_DOMAIN
 - **Name:** `FIREBASE_AUTH_DOMAIN`
@@ -48,17 +48,17 @@ Klikk **"New repository secret"** for hver av disse:
 ### 5. FIREBASE_MESSAGING_SENDER_ID
 - **Name:** `FIREBASE_MESSAGING_SENDER_ID`
 - **Value:** Din Messaging Sender ID (fra Firebase Console)
-- **Eksempel:** `280480706163`
+- **Hvor:** Firebase Console → Project Settings → Your apps → Web app → messagingSenderId
 
 ### 6. FIREBASE_APP_ID
 - **Name:** `FIREBASE_APP_ID`
 - **Value:** Din App ID (fra Firebase Console)
-- **Eksempel:** `1:280480706163:web:6d4ff51d3f07688ebe8406`
+- **Hvor:** Firebase Console → Project Settings → Your apps → Web app → appId
 
 ### 7. OPENROUTER_API_KEY (Valgfritt)
 - **Name:** `OPENROUTER_API_KEY`
 - **Value:** Din OpenRouter API Key (hvis du bruker AI-funksjonalitet)
-- **Eksempel:** `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`
+- **Hvor:** app.local.json eller OpenRouter dashboard
 
 ---
 

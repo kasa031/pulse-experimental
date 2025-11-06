@@ -18,13 +18,13 @@ For at GitHub Actions skal kunne bygge med dine credentials:
 
 | Secret Name | Verdi | Hvor finner du det |
 |------------|-------|-------------------|
-| `OPENROUTER_API_KEY` | `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` | app.local.json |
-| `FIREBASE_API_KEY` | `AIzaSyBtfwQQeFo8FiKtjF_FKYo3pdVEFtll6W4` | app.local.json |
-| `FIREBASE_AUTH_DOMAIN` | `pulse-oslo.firebaseapp.com` | app.local.json |
-| `FIREBASE_PROJECT_ID` | `pulse-oslo` | app.local.json |
-| `FIREBASE_STORAGE_BUCKET` | `pulse-oslo.firebasestorage.app` | app.local.json |
-| `FIREBASE_MESSAGING_SENDER_ID` | `280480706163` | app.local.json |
-| `FIREBASE_APP_ID` | `1:280480706163:web:6d4ff51d3f07688ebe8406` | app.local.json |
+| `OPENROUTER_API_KEY` | [Hent fra app.local.json] | app.local.json |
+| `FIREBASE_API_KEY` | [Hent fra Firebase Console] | Firebase Console |
+| `FIREBASE_AUTH_DOMAIN` | `pulse-oslo.firebaseapp.com` | Firebase Console |
+| `FIREBASE_PROJECT_ID` | `pulse-oslo` | Firebase Console |
+| `FIREBASE_STORAGE_BUCKET` | `pulse-oslo.firebasestorage.app` | Firebase Console |
+| `FIREBASE_MESSAGING_SENDER_ID` | [Hent fra Firebase Console] | Firebase Console |
+| `FIREBASE_APP_ID` | [Hent fra Firebase Console] | Firebase Console |
 
 **⚠️ VIKTIG:** Disse secrets er kun tilgjengelige for GitHub Actions, ikke synlige i koden!
 

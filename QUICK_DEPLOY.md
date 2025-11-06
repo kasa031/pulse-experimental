@@ -12,13 +12,13 @@
 2. Klikk **New repository secret** for hver:
 
 ```
-OPENROUTER_API_KEY = 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
-FIREBASE_API_KEY = AIzaSyBtfwQQeFo8FiKtjF_FKYo3pdVEFtll6W4
+OPENROUTER_API_KEY = [Hent fra app.local.json]
+FIREBASE_API_KEY = [Hent fra Firebase Console]
 FIREBASE_AUTH_DOMAIN = pulse-oslo.firebaseapp.com
 FIREBASE_PROJECT_ID = pulse-oslo
 FIREBASE_STORAGE_BUCKET = pulse-oslo.firebasestorage.app
-FIREBASE_MESSAGING_SENDER_ID = 280480706163
-FIREBASE_APP_ID = 1:280480706163:web:6d4ff51d3f07688ebe8406
+FIREBASE_MESSAGING_SENDER_ID = [Hent fra Firebase Console]
+FIREBASE_APP_ID = [Hent fra Firebase Console]
 ```
 
 ### 2️⃣ Aktiver GitHub Pages
