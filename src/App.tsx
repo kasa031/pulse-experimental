@@ -46,14 +46,22 @@ const App = () => {
         const { firebaseInitialized, getFirebaseError } = await import('./services/firebase');
         if (!firebaseInitialized) {
           const error = getFirebaseError();
-          throw new Error(
-            error?.message || 
-            'Firebase er ikke initialisert. Sjekk at API-nøkler er satt riktig i GitHub Secrets.'
-          );
+          const errorMessage = error?.message || 
+            'Firebase er ikke initialisert. Sjekk at API-nøkler er satt riktig i GitHub Secrets.';
+          safeError('Firebase ikke initialisert:', errorMessage);
+          setError(errorMessage);
+          setAuthInitialized(true);
+          setLoading(false);
+          return; // Exit early, don't crash
         }
         
         if (!auth) {
-          throw new Error('Firebase Auth er ikke tilgjengelig. Sjekk konfigurasjon.');
+          const errorMessage = 'Firebase Auth er ikke tilgjengelig. Sjekk konfigurasjon.';
+          safeError('Firebase Auth mangler:', errorMessage);
+          setError(errorMessage);
+          setAuthInitialized(true);
+          setLoading(false);
+          return; // Exit early, don't crash
         }
         
         // Lytt til Firebase auth state changes

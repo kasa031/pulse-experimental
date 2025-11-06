@@ -138,6 +138,13 @@ jobs:
           echo "✅ Build output verified: $OUTPUT_DIR/index.html exists"
           echo "Files in $OUTPUT_DIR:"
           ls -la $OUTPUT_DIR/ | head -20
+          
+          # Verify critical files exist
+          if [ ! -f "$OUTPUT_DIR/_expo/static/js/web/index.js" ] && [ ! -f "$OUTPUT_DIR/static/js/web/index.js" ]; then
+            echo "⚠️ WARNING: JavaScript bundle not found in expected location"
+            echo "Looking for JS files:"
+            find $OUTPUT_DIR -name "*.js" -type f | head -10
+          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

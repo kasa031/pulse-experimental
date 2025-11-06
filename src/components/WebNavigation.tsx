@@ -33,8 +33,19 @@ interface WebNavigationProps {
 }
 
 const WebNavigation = ({ children }: WebNavigationProps) => {
-  const navigation = useNavigation<any>();
-  const route = useRoute();
+  // Safely get navigation and route - wrap in try-catch for safety
+  let navigation: any = null;
+  let route: any = null;
+  
+  try {
+    navigation = useNavigation<any>();
+    route = useRoute();
+  } catch (error) {
+    // Navigation context not available yet - return children
+    console.warn('Navigation not ready in WebNavigation:', error);
+    return <>{children}</>;
+  }
+
   const { width } = useWindowDimensions();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
@@ -44,11 +55,15 @@ const WebNavigation = ({ children }: WebNavigationProps) => {
 
   // Auto-close drawer on mobile when navigating
   useEffect(() => {
-    if (!isDesktop && drawerOpen) {
-      const unsubscribe = navigation.addListener('state', () => {
-        setDrawerOpen(false);
-      });
-      return unsubscribe;
+    if (!isDesktop && drawerOpen && navigation && navigation.addListener) {
+      try {
+        const unsubscribe = navigation.addListener('state', () => {
+          setDrawerOpen(false);
+        });
+        return unsubscribe;
+      } catch (error) {
+        console.warn('Error setting up navigation listener:', error);
+      }
     }
   }, [navigation, drawerOpen, isDesktop]);
 
@@ -58,9 +73,15 @@ const WebNavigation = ({ children }: WebNavigationProps) => {
   }
 
   const handleNavigate = (screenName: string) => {
-    navigation.navigate(screenName);
-    if (!isDesktop) {
-      setDrawerOpen(false);
+    if (navigation && navigation.navigate) {
+      try {
+        navigation.navigate(screenName);
+        if (!isDesktop) {
+          setDrawerOpen(false);
+        }
+      } catch (error) {
+        console.error('Navigation error:', error);
+      }
     }
   };
 
@@ -104,6 +125,7 @@ const WebNavigation = ({ children }: WebNavigationProps) => {
 
   if (isDesktop) {
     // Desktop: Sidebar navigation
+    const currentRouteName = route?.name || '';
     return (
       <View style={styles.desktopContainer}>
         <Surface style={styles.sidebar} elevation={2}>
@@ -115,7 +137,7 @@ const WebNavigation = ({ children }: WebNavigationProps) => {
           </View>
           <View style={styles.navList}>
             {navItems.map((item) => {
-              const isActive = route.name === item.name;
+              const isActive = currentRouteName === item.name;
               return renderNavItem(item, isActive);
             })}
           </View>
@@ -143,7 +165,7 @@ const WebNavigation = ({ children }: WebNavigationProps) => {
             </Text>
           </View>
           {navItems.map((item) => {
-            const isActive = route.name === item.name;
+            const isActive = (route?.name || '') === item.name;
             return (
               <Drawer.Item
                 key={item.name}
