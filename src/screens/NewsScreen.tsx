@@ -14,6 +14,9 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Timestamp } from 'firebase/firestore';
 import { auth } from '../services/firebase';
 import { getUserProfile } from '../services/userService';
+import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
+import { SPACING } from '../constants/spacing';
+import { BUTTON_MIN_HEIGHT, CHIP_MIN_HEIGHT } from '../constants/touchTargets';
 
 const CATEGORIES = POLL_CATEGORIES || ['politikk', 'transport', 'miljø', 'byutvikling', 'nyheter'];
 
@@ -61,6 +64,8 @@ const getPriorityColor = (priority: NewsItem['priority']): string => {
 };
 
 const NewsScreen = () => {
+  const { isMobile, isTablet, width } = useResponsive();
+  const padding = getResponsivePadding(width);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -141,11 +146,17 @@ const NewsScreen = () => {
   return (
     <ScrollView 
       style={styles.container}
+      contentContainerStyle={[
+        styles.contentContainer,
+        { padding },
+        isTablet && styles.contentTablet,
+        isMobile && styles.contentMobile
+      ]}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
       }
     >
-      <View style={styles.content}>
+      <View>
         {/* Header Card */}
         <Card style={styles.card}>
           <Card.Content>
@@ -296,7 +307,7 @@ const NewsScreen = () => {
                   </Text>
                 )}
                 
-                <Text variant="bodyMedium" style={styles.content} numberOfLines={3}>
+                <Text variant="bodyMedium" style={styles.newsContent} numberOfLines={3}>
                   {item.content}
                 </Text>
 
@@ -325,11 +336,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  content: {
-    padding: 16,
+  contentContainer: {
+    padding: SPACING.screenPadding.mobile,
+  },
+  contentMobile: {
+    padding: SPACING.screenPadding.mobile,
+  },
+  contentTablet: {
+    padding: SPACING.screenPadding.tablet,
+    maxWidth: SPACING.contentMaxWidth.desktop,
+    alignSelf: 'center',
+    width: '100%',
   },
   card: {
-    marginBottom: 16,
+    marginBottom: SPACING.cardMargin.mobile,
     elevation: 2,
   },
   headerRow: {
@@ -362,8 +382,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   chip: {
-    marginRight: 8,
-    marginBottom: 8,
+    marginRight: SPACING.sm,
+    marginBottom: SPACING.sm,
+    minHeight: CHIP_MIN_HEIGHT,
   },
   chipText: {
     fontSize: 12,
@@ -372,7 +393,7 @@ const styles = StyleSheet.create({
     marginVertical: 32,
   },
   newsCard: {
-    marginBottom: 16,
+    marginBottom: SPACING.cardMargin.mobile,
     elevation: 2,
   },
   newsHeader: {
@@ -417,14 +438,15 @@ const styles = StyleSheet.create({
     color: osloBranding.colors.text,
     fontStyle: 'italic',
   },
-  content: {
+  newsContent: {
     color: osloBranding.colors.text,
     lineHeight: 20,
-    marginBottom: 12,
+    marginBottom: SPACING.md,
   },
   linkButton: {
-    marginTop: 8,
+    marginTop: SPACING.sm,
     alignSelf: 'flex-start',
+    minHeight: BUTTON_MIN_HEIGHT,
   },
   emptyState: {
     alignItems: 'center',

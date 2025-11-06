@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, useWindowDimensions, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, Platform } from 'react-native';
 import { 
   Card, 
   Text, 
@@ -19,8 +19,13 @@ import { isUserAdmin } from '../utils/adminCheck';
 import { validatePollTitle, validatePollDescription, validatePollOption } from '../utils/validation';
 import { safeError, safeLog } from '../utils/performance';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
+import { SPACING } from '../constants/spacing';
+import { BUTTON_MIN_HEIGHT, CHIP_MIN_HEIGHT } from '../constants/touchTargets';
 
 const CreatePollScreen = () => {
+  const { isMobile, isTablet, width } = useResponsive();
+  const padding = getResponsivePadding(width);
   const [loading, setLoading] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -36,8 +41,6 @@ const CreatePollScreen = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const { width } = useWindowDimensions();
-  const isTablet = width > 768;
 
   useEffect(() => {
     checkAdminStatus();
@@ -200,7 +203,12 @@ const CreatePollScreen = () => {
   return (
     <ScrollView 
       style={styles.container}
-      contentContainerStyle={[styles.content, isTablet && styles.contentTablet]}
+      contentContainerStyle={[
+        styles.content,
+        { padding },
+        isTablet && styles.contentTablet,
+        isMobile && styles.contentMobile
+      ]}
     >
       <Card style={styles.card}>
         <Card.Content>
@@ -426,11 +434,14 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   content: {
-    padding: 16,
+    padding: SPACING.screenPadding.mobile,
+  },
+  contentMobile: {
+    padding: SPACING.screenPadding.mobile,
   },
   contentTablet: {
-    padding: 24,
-    maxWidth: 800,
+    padding: SPACING.screenPadding.tablet,
+    maxWidth: SPACING.contentMaxWidth.tablet,
     alignSelf: 'center',
     width: '100%',
   },
@@ -459,7 +470,7 @@ const styles = StyleSheet.create({
     color: osloBranding.colors.textSecondary,
   },
   card: {
-    marginBottom: 16,
+    marginBottom: SPACING.cardMargin.mobile,
     elevation: 2,
   },
   title: {
@@ -489,10 +500,12 @@ const styles = StyleSheet.create({
   },
   removeButton: {
     marginTop: -8,
-    marginBottom: 8,
+    marginBottom: SPACING.sm,
+    minHeight: BUTTON_MIN_HEIGHT,
   },
   addButton: {
-    marginTop: 8,
+    marginTop: SPACING.sm,
+    minHeight: BUTTON_MIN_HEIGHT,
   },
   chipContainer: {
     flexDirection: 'row',
@@ -500,12 +513,14 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   chip: {
-    marginRight: 8,
-    marginBottom: 8,
+    marginRight: SPACING.sm,
+    marginBottom: SPACING.sm,
+    minHeight: CHIP_MIN_HEIGHT,
   },
   submitButton: {
-    marginTop: 24,
-    marginBottom: 16,
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.md,
+    minHeight: BUTTON_MIN_HEIGHT,
   },
   dateRow: {
     flexDirection: 'row',
@@ -520,7 +535,8 @@ const styles = StyleSheet.create({
     color: osloBranding.colors.textSecondary,
   },
   dateButton: {
-    marginBottom: 8,
+    marginBottom: SPACING.sm,
+    minHeight: BUTTON_MIN_HEIGHT,
   },
 });
 

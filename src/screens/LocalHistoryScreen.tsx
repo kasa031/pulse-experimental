@@ -6,6 +6,9 @@ import { auth } from '../services/firebase';
 import { getUserVotingHistory, getCompletedPollResults, PollResult, UserVote } from '../services/historyService';
 import { safeError } from '../utils/performance';
 import { Timestamp } from 'firebase/firestore';
+import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
+import { SPACING } from '../constants/spacing';
+import { CHIP_MIN_HEIGHT } from '../constants/touchTargets';
 
 // Simple date formatter
 const formatDate = (date: Date | Timestamp | any): string => {
@@ -31,6 +34,8 @@ const formatDate = (date: Date | Timestamp | any): string => {
 };
 
 const LocalHistoryScreen = React.memo(() => {
+  const { isMobile, isTablet, width } = useResponsive();
+  const padding = getResponsivePadding(width);
   const [userVotes, setUserVotes] = useState<UserVote[]>([]);
   const [completedPolls, setCompletedPolls] = useState<PollResult[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,11 +89,17 @@ const LocalHistoryScreen = React.memo(() => {
   return (
     <ScrollView 
       style={styles.container}
+      contentContainerStyle={[
+        styles.content,
+        { padding },
+        isTablet && styles.contentTablet,
+        isMobile && styles.contentMobile
+      ]}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
-      <View style={styles.content}>
+      <View>
         <Card style={styles.card}>
           <Card.Content>
             <Text variant="headlineSmall" style={styles.title}>
@@ -247,10 +258,19 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
   content: {
-    padding: 16,
+    padding: SPACING.screenPadding.mobile,
+  },
+  contentMobile: {
+    padding: SPACING.screenPadding.mobile,
+  },
+  contentTablet: {
+    padding: SPACING.screenPadding.tablet,
+    maxWidth: SPACING.contentMaxWidth.tablet,
+    alignSelf: 'center',
+    width: '100%',
   },
   card: {
-    marginBottom: 16,
+    marginBottom: SPACING.cardMargin.mobile,
     elevation: 2,
   },
   title: {
@@ -267,7 +287,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   tab: {
-    marginRight: 8,
+    marginRight: SPACING.sm,
+    minHeight: CHIP_MIN_HEIGHT,
   },
   pollTitle: {
     marginBottom: 8,

@@ -9,6 +9,9 @@ import { POLL_CATEGORIES } from '../constants/osloDistricts';
 import { safeError, safeLog } from '../utils/performance';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Timestamp } from 'firebase/firestore';
+import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
+import { SPACING } from '../constants/spacing';
+import { BUTTON_MIN_HEIGHT, CHIP_MIN_HEIGHT } from '../constants/touchTargets';
 
 const CATEGORIES = POLL_CATEGORIES || ['generelt', 'transport', 'miljø', 'byutvikling', 'politikk'];
 
@@ -41,6 +44,8 @@ const formatDate = (date: Date | Timestamp | any): string => {
 };
 
 const CommunityScreen = () => {
+  const { isMobile, isTablet, width } = useResponsive();
+  const padding = getResponsivePadding(width);
   const [discussions, setDiscussions] = useState<Discussion[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -148,11 +153,17 @@ const CommunityScreen = () => {
   return (
     <ScrollView 
       style={styles.container}
+      contentContainerStyle={[
+        styles.content,
+        { padding },
+        isTablet && styles.contentTablet,
+        isMobile && styles.contentMobile
+      ]}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
       }
     >
-      <View style={styles.content}>
+      <View>
         {/* Header Card */}
         <Card style={styles.card}>
           <Card.Content>
@@ -407,10 +418,19 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   content: {
-    padding: 16,
+    padding: SPACING.screenPadding.mobile,
+  },
+  contentMobile: {
+    padding: SPACING.screenPadding.mobile,
+  },
+  contentTablet: {
+    padding: SPACING.screenPadding.tablet,
+    maxWidth: SPACING.contentMaxWidth.desktop,
+    alignSelf: 'center',
+    width: '100%',
   },
   card: {
-    marginBottom: 16,
+    marginBottom: SPACING.cardMargin.mobile,
     elevation: 2,
   },
   title: {
@@ -434,14 +454,16 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   chip: {
-    marginRight: 8,
-    marginBottom: 8,
+    marginRight: SPACING.sm,
+    marginBottom: SPACING.sm,
+    minHeight: CHIP_MIN_HEIGHT,
   },
   chipText: {
     fontSize: 12,
   },
   createButton: {
-    marginTop: 8,
+    marginTop: SPACING.sm,
+    minHeight: BUTTON_MIN_HEIGHT,
   },
   loader: {
     marginVertical: 32,
@@ -513,6 +535,7 @@ const styles = StyleSheet.create({
   },
   commentButton: {
     marginTop: 0,
+    minHeight: BUTTON_MIN_HEIGHT,
   },
   commentsDialog: {
     maxHeight: '80%',

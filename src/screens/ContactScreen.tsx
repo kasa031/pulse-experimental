@@ -3,22 +3,33 @@
  */
 
 import React from 'react';
-import { View, StyleSheet, ScrollView, Linking, useWindowDimensions } from 'react-native';
+import { View, StyleSheet, ScrollView, Linking } from 'react-native';
 import { Card, Text, Button, Surface, Divider } from 'react-native-paper';
 import { theme, osloBranding } from '../constants/theme';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
+import { SPACING } from '../constants/spacing';
+import { BUTTON_MIN_HEIGHT } from '../constants/touchTargets';
 
 const ContactScreen = () => {
-  const { width } = useWindowDimensions();
-  const isTablet = width > 768;
+  const { isMobile, isTablet, width } = useResponsive();
+  const padding = getResponsivePadding(width);
 
   const handleEmailPress = () => {
     Linking.openURL('mailto:ms.tery@icloud.com?subject=Kontakt fra OsloPuls');
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={[styles.content, isTablet && styles.contentTablet]}>
+    <ScrollView 
+      style={styles.container}
+      contentContainerStyle={[
+        styles.content,
+        { padding },
+        isTablet && styles.contentTablet,
+        isMobile && styles.contentMobile
+      ]}
+    >
+      <View>
         {/* Header Card */}
         <Card style={styles.card}>
           <Card.Content>
@@ -181,16 +192,19 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   content: {
-    padding: 16,
+    padding: SPACING.screenPadding.mobile,
+  },
+  contentMobile: {
+    padding: SPACING.screenPadding.mobile,
   },
   contentTablet: {
-    padding: 24,
-    maxWidth: 800,
+    padding: SPACING.screenPadding.tablet,
+    maxWidth: SPACING.contentMaxWidth.tablet,
     alignSelf: 'center',
     width: '100%',
   },
   card: {
-    marginBottom: 16,
+    marginBottom: SPACING.cardMargin.mobile,
     elevation: 2,
   },
   headerRow: {
@@ -245,7 +259,8 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   emailButton: {
-    marginTop: 8,
+    marginTop: SPACING.sm,
+    minHeight: BUTTON_MIN_HEIGHT,
   },
   description: {
     color: osloBranding.colors.text,

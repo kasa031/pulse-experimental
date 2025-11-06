@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { Card, Text, Button, Avatar, TextInput, HelperText, Chip, ActivityIndicator } from 'react-native-paper';
 import { auth } from '../services/firebase';
 import { signOut, updateProfile } from 'firebase/auth';
@@ -10,8 +10,13 @@ import { OSLO_DISTRICTS } from '../constants/osloDistricts';
 import { isUserAdmin } from '../utils/adminCheck';
 import { safeError, safeLog } from '../utils/performance';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
+import { SPACING } from '../constants/spacing';
+import { BUTTON_MIN_HEIGHT, CHIP_MIN_HEIGHT } from '../constants/touchTargets';
 
 const ProfileScreen = () => {
+  const { isMobile, isTablet, width } = useResponsive();
+  const padding = getResponsivePadding(width);
   const user = auth.currentUser;
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -21,8 +26,6 @@ const ProfileScreen = () => {
   const [district, setDistrict] = useState<string>('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [voteCount, setVoteCount] = useState(0);
-  const { width } = useWindowDimensions();
-  const isTablet = width > 768;
 
   useEffect(() => {
     loadProfile();
@@ -120,7 +123,12 @@ const ProfileScreen = () => {
   return (
     <ScrollView 
       style={styles.container}
-      contentContainerStyle={[styles.content, isTablet && styles.contentTablet]}
+      contentContainerStyle={[
+        styles.content,
+        { padding },
+        isTablet && styles.contentTablet,
+        isMobile && styles.contentMobile
+      ]}
     >
       <Card style={styles.card}>
         <Card.Content style={styles.profileContent}>
@@ -262,11 +270,14 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   content: {
-    padding: 16,
+    padding: SPACING.screenPadding.mobile,
+  },
+  contentMobile: {
+    padding: SPACING.screenPadding.mobile,
   },
   contentTablet: {
-    padding: 24,
-    maxWidth: 800,
+    padding: SPACING.screenPadding.tablet,
+    maxWidth: SPACING.contentMaxWidth.tablet,
     alignSelf: 'center',
     width: '100%',
   },
@@ -280,7 +291,7 @@ const styles = StyleSheet.create({
     color: osloBranding.colors.textSecondary,
   },
   card: {
-    marginBottom: 16,
+    marginBottom: SPACING.cardMargin.mobile,
     elevation: 2,
   },
   profileContent: {
@@ -327,7 +338,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   editButton: {
-    marginTop: 16,
+    marginTop: SPACING.md,
+    minHeight: BUTTON_MIN_HEIGHT,
   },
   editForm: {
     width: '100%',
@@ -349,8 +361,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   chip: {
-    marginRight: 8,
-    marginBottom: 8,
+    marginRight: SPACING.sm,
+    marginBottom: SPACING.sm,
+    minHeight: CHIP_MIN_HEIGHT,
   },
   editButtons: {
     flexDirection: 'row',
@@ -359,11 +372,13 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     flex: 1,
-    marginRight: 8,
+    marginRight: SPACING.sm,
+    minHeight: BUTTON_MIN_HEIGHT,
   },
   saveButton: {
     flex: 1,
-    marginLeft: 8,
+    marginLeft: SPACING.sm,
+    minHeight: BUTTON_MIN_HEIGHT,
   },
   sectionTitle: {
     marginBottom: 16,
@@ -386,8 +401,9 @@ const styles = StyleSheet.create({
     color: osloBranding.colors.primary,
   },
   logoutButton: {
-    marginTop: 16,
-    marginBottom: 32,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.xl,
+    minHeight: BUTTON_MIN_HEIGHT,
   },
 });
 
