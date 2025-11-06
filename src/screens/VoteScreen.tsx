@@ -286,13 +286,60 @@ const VoteScreen = React.memo(() => {
         </Card.Content>
       </Card>
 
-      {/* Filter Chips */}
-      {(availableCategories.length > 0 || OSLO_DISTRICTS.length > 0) && (
-        <Card style={styles.filterCard}>
-          <Card.Content>
+      {/* Sort and Filter Section */}
+      <Card style={styles.filterCard}>
+        <Card.Content>
+          <View style={styles.sortFilterRow}>
             <Text variant="bodySmall" style={styles.filterLabel}>
-              Filtrer etter:
+              Sorter:
             </Text>
+            <Menu
+              visible={sortMenuVisible}
+              onDismiss={() => setSortMenuVisible(false)}
+              anchor={
+                <Button
+                  mode="outlined"
+                  icon="sort"
+                  onPress={() => setSortMenuVisible(true)}
+                  style={styles.sortButton}
+                  compact
+                >
+                  {sortBy === 'newest' ? 'Nyeste' : sortBy === 'popular' ? 'Mest populære' : 'Slutter snart'}
+                </Button>
+              }
+            >
+              <Menu.Item
+                onPress={() => {
+                  setSortBy('newest');
+                  setSortMenuVisible(false);
+                }}
+                title="Nyeste"
+                leadingIcon={sortBy === 'newest' ? 'check' : undefined}
+              />
+              <Menu.Item
+                onPress={() => {
+                  setSortBy('popular');
+                  setSortMenuVisible(false);
+                }}
+                title="Mest populære"
+                leadingIcon={sortBy === 'popular' ? 'check' : undefined}
+              />
+              <Menu.Item
+                onPress={() => {
+                  setSortBy('endingSoon');
+                  setSortMenuVisible(false);
+                }}
+                title="Slutter snart"
+                leadingIcon={sortBy === 'endingSoon' ? 'check' : undefined}
+              />
+            </Menu>
+          </View>
+          {(availableCategories.length > 0 || OSLO_DISTRICTS.length > 0) && (
+            <>
+              <Divider style={styles.divider} />
+              <Text variant="bodySmall" style={styles.filterLabel}>
+                Filtrer etter:
+              </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
               {availableCategories.map((cat) => (
                 <Chip
@@ -317,21 +364,22 @@ const VoteScreen = React.memo(() => {
                 </Chip>
               ))}
             </ScrollView>
-            {(selectedCategory || selectedDistrict) && (
-              <Button
-                mode="text"
-                onPress={() => {
-                  setSelectedCategory(null);
-                  setSelectedDistrict(null);
-                }}
-                style={styles.clearFilterButton}
-              >
-                Nullstill filter
-              </Button>
-            )}
-          </Card.Content>
-        </Card>
-      )}
+              {(selectedCategory || selectedDistrict) && (
+                <Button
+                  mode="text"
+                  onPress={() => {
+                    setSelectedCategory(null);
+                    setSelectedDistrict(null);
+                  }}
+                  style={styles.clearFilterButton}
+                >
+                  Nullstill filter
+                </Button>
+              )}
+            </>
+          )}
+        </Card.Content>
+      </Card>
 
       {error && (
         <Card style={styles.errorCard}>
@@ -467,7 +515,13 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    color: '#666',
+    color: osloBranding.colors.textSecondary,
+    fontWeight: '500',
+  },
+  loadingSubtext: {
+    marginTop: 8,
+    color: osloBranding.colors.textSecondary,
+    opacity: 0.7,
   },
   emptyText: {
     textAlign: 'center',
@@ -498,10 +552,22 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     elevation: 1,
   },
+  sortFilterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   filterLabel: {
     marginBottom: 8,
     color: theme.colors.textSecondary,
     fontWeight: '500',
+  },
+  sortButton: {
+    minHeight: CHIP_MIN_HEIGHT,
+  },
+  divider: {
+    marginVertical: SPACING.sm,
   },
   chipScroll: {
     marginBottom: 8,
