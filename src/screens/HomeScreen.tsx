@@ -143,6 +143,22 @@ const HomeScreen = () => {
                   <Text variant="bodyMedium" style={styles.infoText}>
                     Det er for øyeblikket {activePollsCount} {activePollsCount === 1 ? 'aktiv avstemning' : 'aktive avstemninger'} som du kan delta på.
                   </Text>
+                  {recentPolls.length > 0 && (
+                    <View style={styles.previewList}>
+                      {recentPolls.map((poll) => (
+                        <TouchableOpacity
+                          key={poll.id}
+                          style={styles.previewItem}
+                          onPress={() => navigation.navigate('Stem')}
+                        >
+                          <Icon name="vote" size={16} color={osloBranding.colors.primary} />
+                          <Text variant="bodySmall" style={styles.previewText} numberOfLines={1}>
+                            {poll.title}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
                   <Button 
                     mode="contained" 
                     icon="vote" 
