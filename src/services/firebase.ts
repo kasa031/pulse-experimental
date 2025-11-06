@@ -13,14 +13,14 @@ const getFirebaseConfig = () => {
     return extra.firebase;
   }
 
-  // Fallback til environment variables
+  // Fallback til environment variables (uten mock-verdier)
   return {
-    apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || extra?.firebaseApiKey || "your-api-key",
-    authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || extra?.firebaseAuthDomain || "pulse-oslo.firebaseapp.com",
-    projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || extra?.firebaseProjectId || "pulse-oslo",
-    storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || extra?.firebaseStorageBucket || "pulse-oslo.appspot.com",
-    messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || extra?.firebaseMessagingSenderId || "123456789",
-    appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || extra?.firebaseAppId || "your-app-id",
+    apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || extra?.firebaseApiKey || "",
+    authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || extra?.firebaseAuthDomain || "",
+    projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || extra?.firebaseProjectId || "",
+    storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || extra?.firebaseStorageBucket || "",
+    messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || extra?.firebaseMessagingSenderId || "",
+    appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || extra?.firebaseAppId || "",
   };
 };
 
