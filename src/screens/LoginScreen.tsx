@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { TextInput, Button, Text, Surface, HelperText, Checkbox } from 'react-native-paper';
 import { auth } from '../services/firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { theme, osloBranding } from '../constants/theme';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { validateEmail, validatePassword } from '../utils/validation';
@@ -26,6 +26,8 @@ const LoginScreen = () => {
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [forgotPasswordSent, setForgotPasswordSent] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [showVerificationDialog, setShowVerificationDialog] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
 
   // Hent lagret e-post ved oppstart
   useEffect(() => {
@@ -354,6 +356,65 @@ const LoginScreen = () => {
                 disabled={!forgotPasswordEmail.trim() || !!emailError}
               >
                 Send
+              </Button>
+            )}
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
+      {/* Email Verification Dialog */}
+      <Portal>
+        <Dialog visible={showVerificationDialog} onDismiss={() => setShowVerificationDialog(false)}>
+          <Dialog.Title>E-post verifisering</Dialog.Title>
+          <Dialog.Content>
+            {verificationSent ? (
+              <>
+                <Text variant="bodyMedium" style={styles.dialogText}>
+                  Vi har sendt en verifiseringslenke til {email}. Sjekk e-posten din og klikk på lenken for å verifisere kontoen din.
+                </Text>
+                <Text variant="bodySmall" style={[styles.dialogText, { marginTop: 12, color: '#666' }]}>
+                  Etter at du har verifisert e-posten, kan du logge inn.
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text variant="bodyMedium" style={styles.dialogText}>
+                  Din e-post er ikke verifisert. For å logge inn må du først verifisere e-posten din.
+                </Text>
+                <Text variant="bodySmall" style={[styles.dialogText, { marginTop: 12, color: '#666' }]}>
+                  Sjekk e-posten din for verifiseringslenke, eller be om en ny lenke.
+                </Text>
+              </>
+            )}
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => {
+              setShowVerificationDialog(false);
+              setVerificationSent(false);
+            }}>
+              Lukk
+            </Button>
+            {!verificationSent && auth.currentUser && (
+              <Button
+                mode="contained"
+                onPress={async () => {
+                  try {
+                    if (auth.currentUser) {
+                      await sendEmailVerification(auth.currentUser);
+                      setVerificationSent(true);
+                    }
+                  } catch (err: unknown) {
+                    safeError('Feil ved sending av verifiseringslenke:', err);
+                    const error = err as { code?: string; message?: string };
+                    if (error.code === 'auth/too-many-requests') {
+                      setError('For mange forespørsler. Vent litt før du prøver igjen.');
+                    } else {
+                      setError('Kunne ikke sende verifiseringslenke. Prøv igjen senere.');
+                    }
+                  }
+                }}
+              >
+                Send ny lenke
               </Button>
             )}
           </Dialog.Actions>
