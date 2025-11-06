@@ -55,7 +55,14 @@ jobs:
             appId: process.env.FIREBASE_APP_ID || 'PLACEHOLDER'
           };
           
+          // Ensure web.baseUrl is set for GitHub Pages
+          if (!appJson.expo.web) {
+            appJson.expo.web = {};
+          }
+          appJson.expo.web.baseUrl = '/pulse-experimental';
+          
           fs.writeFileSync('app.json', JSON.stringify(appJson, null, 2));
+          console.log('✅ app.json configured with baseUrl:', appJson.expo.web.baseUrl);
           "
 
       - name: Build web
@@ -147,33 +154,37 @@ jobs:
             exit 1
           fi
 
-      - name: Fix base path in HTML files
+      - name: Fix base path in HTML and JS files
         run: |
           OUTPUT_DIR="${{ steps.find_output.outputs.output_dir }}"
           BASE_PATH="/pulse-experimental"
           
-          echo "Fixing base path in HTML files..."
+          echo "Fixing base path in all files..."
           
-          # Fix index.html
-          if [ -f "$OUTPUT_DIR/index.html" ]; then
-            # Replace relative paths with base path
-            sed -i "s|href=\"/|href=\"$BASE_PATH/|g" "$OUTPUT_DIR/index.html"
-            sed -i "s|src=\"/|src=\"$BASE_PATH/|g" "$OUTPUT_DIR/index.html"
-            sed -i "s|url('/|url('$BASE_PATH/|g" "$OUTPUT_DIR/index.html"
-            sed -i "s|url(\"/|url(\"$BASE_PATH/|g" "$OUTPUT_DIR/index.html"
-            echo "✅ Fixed paths in index.html"
-          fi
+          # Fix all HTML files
+          find "$OUTPUT_DIR" -name "*.html" -type f | while read file; do
+            echo "Fixing: $file"
+            # Fix absolute paths (starting with /)
+            sed -i "s|href=\"/|href=\"$BASE_PATH/|g" "$file"
+            sed -i "s|src=\"/|src=\"$BASE_PATH/|g" "$file"
+            sed -i "s|url('/|url('$BASE_PATH/|g" "$file"
+            sed -i "s|url(\"/|url(\"$BASE_PATH/|g" "$file"
+            # Fix relative paths in script tags (ensure they're relative to base)
+            sed -i "s|src=\"_expo/|src=\"$BASE_PATH/_expo/|g" "$file"
+            sed -i "s|src=\"static/|src=\"$BASE_PATH/static/|g" "$file"
+          done
           
-          # Fix 404.html if it exists
-          if [ -f "$OUTPUT_DIR/404.html" ]; then
-            sed -i "s|href=\"/|href=\"$BASE_PATH/|g" "$OUTPUT_DIR/404.html"
-            sed -i "s|src=\"/|src=\"$BASE_PATH/|g" "$OUTPUT_DIR/404.html"
-            echo "✅ Fixed paths in 404.html"
-          fi
-          
-          # Also fix any _expo/static HTML files
-          find "$OUTPUT_DIR" -name "*.html" -type f -exec sed -i "s|href=\"/|href=\"$BASE_PATH/|g" {} \;
-          find "$OUTPUT_DIR" -name "*.html" -type f -exec sed -i "s|src=\"/|src=\"$BASE_PATH/|g" {} \;
+          # Fix JS files that might have hardcoded paths
+          find "$OUTPUT_DIR" -name "*.js" -type f | while read file; do
+            # Only fix if it contains absolute paths
+            if grep -q '"/_expo' "$file" || grep -q "'/_expo" "$file"; then
+              echo "Fixing JS paths in: $file"
+              sed -i "s|\"/_expo|\"$BASE_PATH/_expo|g" "$file"
+              sed -i "s|'/_expo|'$BASE_PATH/_expo|g" "$file"
+              sed -i "s|\"/static|\"$BASE_PATH/static|g" "$file"
+              sed -i "s|'/static|'$BASE_PATH/static|g" "$file"
+            fi
+          done
           
           echo "✅ Base path fixes completed"
 
