@@ -147,17 +147,14 @@ const HomeScreen = () => {
               Få siste nyheter om lokale saker, byutvikling og viktige beslutninger i Oslo. 
               Nyhetsfeed er tilgjengelig og oppdateres regelmessig med relevant informasjon for innbyggerne.
             </Text>
-            <Button 
-              mode="outlined" 
-              icon="newspaper" 
-              style={styles.actionButton}
-              onPress={() => {
-                // Naviger til nyhetsfeed når den er implementert
-                safeLog('Nyhetsfeed - kommer snart');
-              }}
-            >
-              Se alle nyheter
-            </Button>
+                <Button 
+                  mode="outlined" 
+                  icon="newspaper" 
+                  style={styles.actionButton}
+                  onPress={() => navigation.navigate('Nyheter')}
+                >
+                  Se alle nyheter
+                </Button>
           </Card.Content>
         </Card>
       </View>

@@ -1,0 +1,447 @@
+/**
+ * NewsScreen - Nyhetsfeed for Oslo
+ * Viser siste nyheter fra Oslo kommune og lokale saker
+ */
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, StyleSheet, ScrollView, RefreshControl, Linking } from 'react-native';
+import { Card, Text, Button, Chip, ActivityIndicator, Surface } from 'react-native-paper';
+import { theme, osloBranding } from '../constants/theme';
+import { getLatestNews, getNewsByCategory, getNewsByDistrict, NewsItem } from '../services/newsService';
+import { OSLO_DISTRICTS, POLL_CATEGORIES } from '../constants/osloDistricts';
+import { safeError, safeLog } from '../utils/performance';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { Timestamp } from 'firebase/firestore';
+import { auth } from '../services/firebase';
+import { getUserProfile } from '../services/userService';
+
+const CATEGORIES = POLL_CATEGORIES || ['politikk', 'transport', 'miljø', 'byutvikling', 'nyheter'];
+
+const formatDate = (date: Date | Timestamp | unknown): string => {
+  try {
+    let dateObj: Date;
+    if (date instanceof Date) {
+      dateObj = date;
+    } else if (date && typeof date === 'object' && 'toDate' in date) {
+      dateObj = (date as Timestamp).toDate();
+    } else {
+      return 'Ukjent dato';
+    }
+    
+    const now = new Date();
+    const diffMs = now.getTime() - dateObj.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return 'Nettopp';
+    if (diffMins < 60) return `${diffMins} min siden`;
+    if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? 'time' : 'timer'} siden`;
+    if (diffDays < 7) return `${diffDays} ${diffDays === 1 ? 'dag' : 'dager'} siden`;
+    
+    return dateObj.toLocaleDateString('nb-NO', { 
+      day: 'numeric', 
+      month: 'short',
+      year: dateObj.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+    });
+  } catch {
+    return 'Ukjent dato';
+  }
+};
+
+const getPriorityColor = (priority: NewsItem['priority']): string => {
+  switch (priority) {
+    case 'urgent':
+      return '#d32f2f';
+    case 'high':
+      return '#f57c00';
+    default:
+      return osloBranding.colors.primary;
+  }
+};
+
+const NewsScreen = () => {
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
+  const [userDistrict, setUserDistrict] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadUserDistrict();
+  }, []);
+
+  useEffect(() => {
+    loadNews();
+  }, [selectedCategory, selectedDistrict]);
+
+  const loadUserDistrict = async () => {
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const profile = await getUserProfile(user.uid);
+        if (profile?.district) {
+          setUserDistrict(profile.district);
+        }
+      }
+    } catch (error) {
+      safeError('Feil ved henting av brukerens bydel:', error);
+    }
+  };
+
+  const loadNews = useCallback(async () => {
+    try {
+      setLoading(true);
+      let newsItems: NewsItem[] = [];
+
+      if (selectedDistrict) {
+        newsItems = await getNewsByDistrict(selectedDistrict, 20);
+      } else if (selectedCategory) {
+        newsItems = await getNewsByCategory(selectedCategory as NewsItem['category'], 20);
+      } else {
+        newsItems = await getLatestNews(20);
+      }
+
+      setNews(newsItems);
+    } catch (error) {
+      safeError('Feil ved henting av nyheter:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [selectedCategory, selectedDistrict]);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    loadNews();
+  }, [loadNews]);
+
+  const handleOpenLink = async (url?: string) => {
+    if (url) {
+      try {
+        const canOpen = await Linking.canOpenURL(url);
+        if (canOpen) {
+          await Linking.openURL(url);
+        } else {
+          safeLog('Kan ikke åpne URL:', url);
+        }
+      } catch (error) {
+        safeError('Feil ved åpning av lenke:', error);
+      }
+    }
+  };
+
+  const filteredNews = news.filter(item => {
+    if (selectedCategory && item.category !== selectedCategory) return false;
+    if (selectedDistrict && item.district !== selectedDistrict) return false;
+    return true;
+  });
+
+  return (
+    <ScrollView 
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+      }
+    >
+      <View style={styles.content}>
+        {/* Header Card */}
+        <Card style={styles.card}>
+          <Card.Content>
+            <View style={styles.headerRow}>
+              <Icon name="newspaper" size={32} color={osloBranding.colors.primary} />
+              <View style={styles.headerText}>
+                <Text variant="headlineSmall" style={styles.title}>
+                  Nyheter fra Oslo
+                </Text>
+                <Text variant="bodySmall" style={styles.subtitle}>
+                  Hold deg oppdatert på lokale saker og viktige beslutninger
+                </Text>
+              </View>
+            </View>
+          </Card.Content>
+        </Card>
+
+        {/* Category Filter */}
+        <Card style={styles.card}>
+          <Card.Content>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Filtrer etter kategori
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
+              <View style={styles.chipContainer}>
+                <Chip
+                  selected={selectedCategory === null}
+                  onPress={() => setSelectedCategory(null)}
+                  style={styles.chip}
+                  textStyle={styles.chipText}
+                >
+                  Alle
+                </Chip>
+                {CATEGORIES.map((cat) => (
+                  <Chip
+                    key={cat}
+                    selected={selectedCategory === cat}
+                    onPress={() => setSelectedCategory(cat)}
+                    style={styles.chip}
+                    textStyle={styles.chipText}
+                  >
+                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                  </Chip>
+                ))}
+              </View>
+            </ScrollView>
+          </Card.Content>
+        </Card>
+
+        {/* District Filter */}
+        {userDistrict && (
+          <Card style={styles.card}>
+            <Card.Content>
+              <Text variant="titleMedium" style={styles.sectionTitle}>
+                Filtrer etter bydel
+              </Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
+                <View style={styles.chipContainer}>
+                  <Chip
+                    selected={selectedDistrict === null}
+                    onPress={() => setSelectedDistrict(null)}
+                    style={styles.chip}
+                    textStyle={styles.chipText}
+                  >
+                    Alle
+                  </Chip>
+                  <Chip
+                    selected={selectedDistrict === userDistrict}
+                    onPress={() => setSelectedDistrict(userDistrict)}
+                    style={styles.chip}
+                    textStyle={styles.chipText}
+                  >
+                    {userDistrict}
+                  </Chip>
+                  {OSLO_DISTRICTS.slice(0, 5).map((district) => (
+                    <Chip
+                      key={district}
+                      selected={selectedDistrict === district}
+                      onPress={() => setSelectedDistrict(district)}
+                      style={styles.chip}
+                      textStyle={styles.chipText}
+                    >
+                      {district}
+                    </Chip>
+                  ))}
+                </View>
+              </ScrollView>
+            </Card.Content>
+          </Card>
+        )}
+
+        {/* News List */}
+        {loading && !refreshing ? (
+          <ActivityIndicator style={styles.loader} size="large" />
+        ) : filteredNews.length === 0 ? (
+          <Card style={styles.card}>
+            <Card.Content>
+              <View style={styles.emptyState}>
+                <Icon name="newspaper-variant-outline" size={64} color={osloBranding.colors.textSecondary} />
+                <Text variant="titleMedium" style={styles.emptyTitle}>
+                  Ingen nyheter funnet
+                </Text>
+                <Text variant="bodyMedium" style={styles.emptyText}>
+                  Det er ingen nyheter for øyeblikket. Sjekk tilbake senere!
+                </Text>
+              </View>
+            </Card.Content>
+          </Card>
+        ) : (
+          filteredNews.map((item) => (
+            <Card key={item.id} style={styles.newsCard}>
+              <Card.Content>
+                <View style={styles.newsHeader}>
+                  <View style={styles.newsHeaderLeft}>
+                    <View style={styles.newsMeta}>
+                      <Chip 
+                        style={[styles.categoryChip, { backgroundColor: getPriorityColor(item.priority) }]}
+                        textStyle={styles.categoryChipText}
+                      >
+                        {item.category}
+                      </Chip>
+                      {item.priority === 'urgent' && (
+                        <Icon name="alert" size={16} color="#d32f2f" style={styles.urgentIcon} />
+                      )}
+                    </View>
+                    <Text variant="titleMedium" style={styles.newsTitle}>
+                      {item.title}
+                    </Text>
+                    <View style={styles.newsMetaRow}>
+                      <Text variant="bodySmall" style={styles.metaText}>
+                        {item.author}
+                      </Text>
+                      <Text variant="bodySmall" style={styles.metaText}>
+                        • {formatDate(item.publishedAt)}
+                      </Text>
+                      {item.district && (
+                        <Text variant="bodySmall" style={styles.metaText}>
+                          • {item.district}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                </View>
+                
+                {item.summary && (
+                  <Text variant="bodyMedium" style={styles.summary}>
+                    {item.summary}
+                  </Text>
+                )}
+                
+                <Text variant="bodyMedium" style={styles.content} numberOfLines={3}>
+                  {item.content}
+                </Text>
+
+                {item.linkUrl && (
+                  <Button
+                    mode="text"
+                    icon="open-in-new"
+                    onPress={() => handleOpenLink(item.linkUrl)}
+                    style={styles.linkButton}
+                    textColor={osloBranding.colors.primary}
+                  >
+                    Les mer
+                  </Button>
+                )}
+              </Card.Content>
+            </Card>
+          ))
+        )}
+      </View>
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  content: {
+    padding: 16,
+  },
+  card: {
+    marginBottom: 16,
+    elevation: 2,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerText: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  title: {
+    fontWeight: 'bold',
+    color: osloBranding.colors.primary,
+  },
+  subtitle: {
+    color: osloBranding.colors.textSecondary,
+    marginTop: 4,
+  },
+  sectionTitle: {
+    fontWeight: '600',
+    marginBottom: 12,
+    color: osloBranding.colors.text,
+  },
+  chipScroll: {
+    marginHorizontal: -4,
+  },
+  chipContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  chip: {
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  chipText: {
+    fontSize: 12,
+  },
+  loader: {
+    marginVertical: 32,
+  },
+  newsCard: {
+    marginBottom: 16,
+    elevation: 2,
+  },
+  newsHeader: {
+    marginBottom: 12,
+  },
+  newsHeaderLeft: {
+    flex: 1,
+  },
+  newsMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  categoryChip: {
+    marginRight: 8,
+  },
+  categoryChipText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  urgentIcon: {
+    marginLeft: 4,
+  },
+  newsTitle: {
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: osloBranding.colors.text,
+  },
+  newsMetaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+  },
+  metaText: {
+    color: osloBranding.colors.textSecondary,
+    marginRight: 8,
+  },
+  summary: {
+    fontWeight: '600',
+    marginBottom: 8,
+    color: osloBranding.colors.text,
+    fontStyle: 'italic',
+  },
+  content: {
+    color: osloBranding.colors.text,
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  linkButton: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 48,
+  },
+  emptyTitle: {
+    marginTop: 16,
+    marginBottom: 8,
+    color: osloBranding.colors.text,
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: osloBranding.colors.textSecondary,
+    paddingHorizontal: 32,
+  },
+});
+
+export default NewsScreen;
+

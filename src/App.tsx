@@ -18,6 +18,7 @@ import HomeScreen from './screens/HomeScreen';
 import VoteScreen from './screens/VoteScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import CommunityScreen from './screens/CommunityScreen';
+import NewsScreen from './screens/NewsScreen';
 import LocalHistoryScreen from './screens/LocalHistoryScreen';
 import CreatePollScreen from './screens/CreatePollScreen';
 // Firebase setup
@@ -221,6 +222,8 @@ const App = () => {
         iconName = focused ? 'vote' : 'vote-outline';
       } else if (route.name === 'Fellesskap') {
         iconName = focused ? 'account-group' : 'account-group-outline';
+      } else if (route.name === 'Nyheter') {
+        iconName = focused ? 'newspaper' : 'newspaper-outline';
       } else if (route.name === 'Profil') {
         iconName = focused ? 'account' : 'account-outline';
       } else if (route.name === 'Lokalhistorie') {
@@ -265,6 +268,11 @@ const App = () => {
                 name="Fellesskap" 
                 component={CommunityScreen}
                 options={{ title: 'Fellesskap' }}
+              />
+              <Tab.Screen 
+                name="Nyheter" 
+                component={NewsScreen}
+                options={{ title: 'Nyheter' }}
               />
               <Tab.Screen 
                 name="Profil" 

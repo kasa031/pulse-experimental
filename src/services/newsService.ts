@@ -1,12 +1,11 @@
 /**
- * Nyhetsfeed Service - Planlagt struktur for fremtidig implementering
- * 
- * Dette er en planleggingsfil for nyhetsfeed-funksjonalitet.
- * Implementeringen vil komme i en senere fase.
+ * Nyhetsfeed Service
+ * Håndterer henting av nyheter fra Firestore
  */
 
 import { db } from './firebase';
 import { collection, query, where, getDocs, orderBy, limit, Timestamp } from 'firebase/firestore';
+import { safeError } from '../utils/performance';
 
 export interface NewsItem {
   id: string;
