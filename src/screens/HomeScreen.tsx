@@ -4,7 +4,7 @@ import { Card, Text, Button, Chip, ActivityIndicator } from 'react-native-paper'
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
 import { theme, osloBranding } from '../constants/theme';
-import { OSLO_DISTRICTS } from '../constants/osloDistricts';
+import { OSLO_DISTRICTS, POLL_CATEGORIES } from '../constants/osloDistricts';
 import { getActivePolls, Poll } from '../services/pollsService';
 import { getLatestNews, NewsItem } from '../services/newsService';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -162,9 +162,9 @@ const HomeScreen = () => {
                 Alle innbyggere i Oslo er velkommen til å delta. Din stemme betyr noe!
               </Text>
               <View style={styles.chipContainer}>
-                {['Miljø', 'Transport', 'Byutvikling', 'Politikk'].map((cat) => (
+                {POLL_CATEGORIES.slice(0, 4).map((cat) => (
                   <Chip key={cat} style={styles.chip} textStyle={styles.chipText}>
-                    {cat}
+                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
                   </Chip>
                 ))}
               </View>
