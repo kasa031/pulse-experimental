@@ -237,12 +237,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginVertical: 4,
     minHeight: 48,
+    transition: 'background-color 0.2s ease, transform 0.1s ease',
+    cursor: 'pointer',
   },
   navItemActive: {
     backgroundColor: osloBranding.colors.primary + '15',
   },
   navItemHovered: {
     backgroundColor: osloBranding.colors.primary + '10',
+    transform: [{ translateX: 2 }],
   },
   navText: {
     marginLeft: 12,
@@ -283,8 +286,13 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e0e0e0',
   },
   menuButton: {
-    padding: 8,
+    padding: 12,
     marginRight: 8,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8,
   },
   mobileTitle: {
     fontWeight: 'bold',
@@ -296,6 +304,7 @@ const styles = StyleSheet.create({
   drawer: {
     backgroundColor: '#fff',
     width: 280,
+    maxWidth: '85%',
   },
   drawerHeader: {
     flexDirection: 'row',

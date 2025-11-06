@@ -291,6 +291,25 @@ const App = () => {
     },
     tabBarActiveTintColor: osloBranding.colors.primary,
     tabBarInactiveTintColor: osloBranding.colors.textSecondary,
+    tabBarStyle: {
+      height: 60,
+      paddingBottom: 8,
+      paddingTop: 8,
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.border || '#E0E0E0',
+      elevation: 8,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: -2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+    },
+    tabBarLabelStyle: {
+      fontSize: 12,
+      fontWeight: '500',
+    },
+    tabBarIconStyle: {
+      marginTop: 4,
+    },
     headerStyle: {
       backgroundColor: theme.colors.primary,
     },
