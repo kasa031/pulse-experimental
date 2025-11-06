@@ -408,7 +408,8 @@ const LocalHistoryScreen = React.memo(() => {
               ))
             )}
           </>
-        )}
+          );
+        })()}
       </View>
 
       <Snackbar

@@ -170,6 +170,7 @@ const HomeScreen = () => {
               </View>
             </Card.Content>
           </Card>
+        </Animated.View>
 
           {/* Active Polls Card */}
           <Animated.View entering={FadeInDown.duration(500).delay(300)}>
