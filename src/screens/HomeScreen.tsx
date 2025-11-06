@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { Card, Text, Button, Chip, ActivityIndicator } from 'react-native-paper';
+import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
 import { theme, osloBranding } from '../constants/theme';
 import { OSLO_DISTRICTS } from '../constants/osloDistricts';
@@ -53,7 +54,8 @@ const HomeScreen = () => {
         isDesktop && styles.contentDesktop
       ]}>
         {/* Welcome Card */}
-        <Card style={[styles.card, styles.welcomeCard]}>
+        <Animated.View entering={FadeInDown.duration(500).delay(100)}>
+          <Card style={[styles.card, styles.welcomeCard]}>
           <Card.Content>
             <View style={styles.headerRow}>
               <Image 
@@ -94,6 +96,7 @@ const HomeScreen = () => {
             </View>
           </Card.Content>
         </Card>
+        </Animated.View>
 
         {/* Cards Grid for Tablet/Desktop */}
         <View style={[
@@ -101,7 +104,8 @@ const HomeScreen = () => {
           isTablet && styles.cardsGridTablet,
           isDesktop && styles.cardsGridDesktop
         ]}>
-          {/* Quick Info Card */}
+        {/* Quick Info Card */}
+        <Animated.View entering={FadeInDown.duration(500).delay(200)}>
           <Card style={[
             styles.card, 
             isTablet && styles.cardTablet,
