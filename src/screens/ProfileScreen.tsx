@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Card, Text, Button, Avatar, TextInput, HelperText, Chip, ActivityIndicator } from 'react-native-paper';
+import { Card, Text, Button, Avatar, TextInput, HelperText, Chip, ActivityIndicator, Switch, List } from 'react-native-paper';
 import { auth } from '../services/firebase';
 import { signOut, updateProfile } from 'firebase/auth';
 import { theme, osloBranding } from '../constants/theme';
@@ -27,6 +27,9 @@ const ProfileScreen = () => {
   const [voteCount, setVoteCount] = useState(0);
   const [commentCount, setCommentCount] = useState(0);
   const [discussionCount, setDiscussionCount] = useState(0);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [emailNotifications, setEmailNotifications] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     loadProfile();
