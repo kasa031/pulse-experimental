@@ -30,7 +30,12 @@
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro",
-      "output": "static"
+      "output": "static",
+      "build": {
+        "babel": {
+          "include": ["react-native-paper"]
+        }
+      }
     },
     "plugins": [
       "expo-secure-store"
