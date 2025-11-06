@@ -232,6 +232,72 @@ const LocalHistoryScreen = React.memo(() => {
           </Card.Content>
         </Card>
 
+        {/* Participation Stats Card */}
+        {activeTab === 'my-votes' && userVotes.length > 0 && (
+          <Card style={styles.card}>
+            <Card.Content>
+              <Text variant="titleMedium" style={styles.sectionTitle}>
+                Deltakelsesstatistikk
+              </Text>
+              <View style={styles.statsRow}>
+                <View style={styles.statItem}>
+                  <Text variant="headlineSmall" style={styles.statValue}>
+                    {participationStats.totalVotes}
+                  </Text>
+                  <Text variant="bodySmall" style={styles.statLabel}>
+                    Totalt stemmer
+                  </Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Text variant="headlineSmall" style={styles.statValue}>
+                    {completedPolls.length}
+                  </Text>
+                  <Text variant="bodySmall" style={styles.statLabel}>
+                    Avsluttede avstemninger
+                  </Text>
+                </View>
+              </View>
+            </Card.Content>
+          </Card>
+        )}
+
+        {/* Filter Card */}
+        {activeTab === 'results' && completedPolls.length > 0 && (
+          <Card style={styles.card}>
+            <Card.Content>
+              <Text variant="titleMedium" style={styles.sectionTitle}>
+                Filtrer resultater
+              </Text>
+              <View style={styles.filterRow}>
+                <Text variant="bodySmall" style={styles.filterLabel}>
+                  Kategori:
+                </Text>
+                <View style={styles.chipContainer}>
+                  <Chip
+                    selected={selectedCategory === null}
+                    onPress={() => setSelectedCategory(null)}
+                    style={styles.filterChip}
+                    compact
+                  >
+                    Alle
+                  </Chip>
+                  {POLL_CATEGORIES.slice(0, 5).map((cat) => (
+                    <Chip
+                      key={cat}
+                      selected={selectedCategory === cat}
+                      onPress={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
+                      style={styles.filterChip}
+                      compact
+                    >
+                      {cat}
+                    </Chip>
+                  ))}
+                </View>
+              </View>
+            </Card.Content>
+          </Card>
+        )}
+
         {/* My Votes Tab */}
         {activeTab === 'my-votes' && (
           <>
