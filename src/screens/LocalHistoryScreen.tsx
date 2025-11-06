@@ -267,18 +267,23 @@ const LocalHistoryScreen = React.memo(() => {
         )}
 
         {/* Results Tab */}
-        {activeTab === 'results' && (
-          <>
-            {completedPolls.length === 0 ? (
-              <Card style={styles.card}>
-                <Card.Content>
-                  <Text variant="bodyMedium" style={styles.emptyText}>
-                    Ingen avsluttede avstemninger enda.
-                  </Text>
-                </Card.Content>
-              </Card>
+        {activeTab === 'results' && (() => {
+          const filteredResults = selectedCategory
+            ? completedPolls.filter(result => result.poll.category === selectedCategory)
+            : completedPolls;
+
+          return (
+            <>
+              {filteredResults.length === 0 ? (
+                <Card style={styles.card}>
+                  <Card.Content>
+                    <Text variant="bodyMedium" style={styles.emptyText}>
+                      {selectedCategory ? 'Ingen resultater for valgt kategori.' : 'Ingen avsluttede avstemninger enda.'}
+                    </Text>
+                  </Card.Content>
+                </Card>
               ) : (
-              filteredResults.map((result) => (
+                filteredResults.map((result) => (
                 <Card key={result.poll.id} style={styles.card}>
                   <Card.Content>
                     <Text variant="titleMedium" style={styles.pollTitle}>
