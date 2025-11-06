@@ -19,6 +19,7 @@ import VoteScreen from './screens/VoteScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import CommunityScreen from './screens/CommunityScreen';
 import NewsScreen from './screens/NewsScreen';
+import ContactScreen from './screens/ContactScreen';
 import LocalHistoryScreen from './screens/LocalHistoryScreen';
 import CreatePollScreen from './screens/CreatePollScreen';
 // Firebase setup
@@ -226,6 +227,8 @@ const App = () => {
         iconName = focused ? 'newspaper' : 'newspaper-outline';
       } else if (route.name === 'Profil') {
         iconName = focused ? 'account' : 'account-outline';
+      } else if (route.name === 'Kontakt') {
+        iconName = focused ? 'email' : 'email-outline';
       } else if (route.name === 'Lokalhistorie') {
         iconName = 'history';
       } else if (route.name === 'Opprett') {
@@ -278,6 +281,11 @@ const App = () => {
                 name="Profil" 
                 component={ProfileScreen}
                 options={{ title: 'Min profil' }}
+              />
+              <Tab.Screen 
+                name="Kontakt" 
+                component={ContactScreen}
+                options={{ title: 'Kontakt' }}
               />
               <Tab.Screen 
                 name="Lokalhistorie" 
