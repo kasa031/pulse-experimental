@@ -161,11 +161,12 @@ const HomeScreen = () => {
           </Card>
 
           {/* Active Polls Card */}
-          <Card style={[
-            styles.card, 
-            isTablet && styles.cardTablet,
-            isDesktop && styles.cardDesktop
-          ]}>
+          <Animated.View entering={FadeInDown.duration(500).delay(300)}>
+            <Card style={[
+              styles.card, 
+              isTablet && styles.cardTablet,
+              isDesktop && styles.cardDesktop
+            ]}>
             <Card.Content>
               <Text variant="titleMedium" style={styles.sectionTitle}>
                 Aktive avstemninger
@@ -220,10 +221,12 @@ const HomeScreen = () => {
               )}
             </Card.Content>
           </Card>
+          </Animated.View>
         </View>
 
         {/* News Card */}
-        <Card style={styles.card}>
+        <Animated.View entering={FadeInDown.duration(500).delay(400)}>
+          <Card style={styles.card}>
           <Card.Content>
             <Text variant="titleMedium" style={styles.sectionTitle}>
               Nyheter fra Oslo
@@ -268,6 +271,7 @@ const HomeScreen = () => {
             </Button>
           </Card.Content>
         </Card>
+        </Animated.View>
       </View>
     </ScrollView>
   );
