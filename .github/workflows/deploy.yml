@@ -185,35 +185,72 @@ jobs:
             echo "Found $SCRIPT_COUNT script tags in index.html"
             
             if [ "$SCRIPT_COUNT" -eq "0" ]; then
-              echo "⚠️ WARNING: No script tags found! Checking _expo directory..."
+              echo "⚠️ WARNING: No script tags found! Searching for JS files..."
+              
+              # Find all possible JS file locations
+              MAIN_JS=""
               if [ -d "$OUTPUT_DIR/_expo" ]; then
                 echo "✅ _expo directory exists"
-                JS_FILES=$(find "$OUTPUT_DIR/_expo" -name "*.js" -type f | head -3)
-                if [ -n "$JS_FILES" ]; then
-                  echo "Found JS files:"
-                  echo "$JS_FILES"
-                  # Manually inject script tag if Expo didn't
-                  MAIN_JS=$(find "$OUTPUT_DIR/_expo" -path "*/js/web/index.js" -type f | head -1)
-                  if [ -n "$MAIN_JS" ]; then
-                    RELATIVE_PATH=$(echo "$MAIN_JS" | sed "s|^$OUTPUT_DIR/||")
-                    echo "Injecting script tag for: $RELATIVE_PATH"
-                    # Add script tag before closing body tag
-                    sed -i "s|</body>|<script src=\"$BASE_PATH/$RELATIVE_PATH\"></script></body>|" "$OUTPUT_DIR/index.html"
-                  fi
+                # Try different possible paths
+                MAIN_JS=$(find "$OUTPUT_DIR/_expo" -path "*/js/web/index.js" -type f | head -1)
+                if [ -z "$MAIN_JS" ]; then
+                  MAIN_JS=$(find "$OUTPUT_DIR/_expo" -name "index.js" -type f | head -1)
                 fi
+                if [ -z "$MAIN_JS" ]; then
+                  MAIN_JS=$(find "$OUTPUT_DIR/_expo" -name "*.js" -type f | grep -E "(index|main|app)" | head -1)
+                fi
+                if [ -z "$MAIN_JS" ]; then
+                  MAIN_JS=$(find "$OUTPUT_DIR/_expo" -name "*.js" -type f | head -1)
+                fi
+              fi
+              
+              # Also check static directory
+              if [ -z "$MAIN_JS" ] && [ -d "$OUTPUT_DIR/static" ]; then
+                echo "✅ static directory exists"
+                MAIN_JS=$(find "$OUTPUT_DIR/static" -path "*/js/web/index.js" -type f | head -1)
+                if [ -z "$MAIN_JS" ]; then
+                  MAIN_JS=$(find "$OUTPUT_DIR/static" -name "index.js" -type f | head -1)
+                fi
+              fi
+              
+              # List all JS files found for debugging
+              echo "Searching for JS files..."
+              find "$OUTPUT_DIR" -name "*.js" -type f | head -10
+              
+              if [ -n "$MAIN_JS" ]; then
+                RELATIVE_PATH=$(echo "$MAIN_JS" | sed "s|^$OUTPUT_DIR/||")
+                echo "✅ Found main JS file: $RELATIVE_PATH"
+                echo "Injecting script tag with base path: $BASE_PATH/$RELATIVE_PATH"
+                # Add script tag before closing body tag
+                sed -i "s|</body>|<script src=\"$BASE_PATH/$RELATIVE_PATH\"></script></body>|" "$OUTPUT_DIR/index.html"
               else
-                echo "❌ _expo directory not found!"
+                echo "❌ ERROR: Could not find main JS file!"
+                echo "Directory structure:"
+                ls -la "$OUTPUT_DIR" | head -20
+                if [ -d "$OUTPUT_DIR/_expo" ]; then
+                  echo "_expo directory contents:"
+                  find "$OUTPUT_DIR/_expo" -type f | head -20
+                fi
               fi
             fi
             
-            # Fix all paths in index.html
+            # Fix all paths in index.html (including empty src attributes)
             echo "Fixing paths in index.html..."
+            # Fix script src attributes
             sed -i "s|src=\"/_expo|src=\"$BASE_PATH/_expo|g" "$OUTPUT_DIR/index.html"
             sed -i "s|src=\"/static|src=\"$BASE_PATH/static|g" "$OUTPUT_DIR/index.html"
+            sed -i "s|src=\"_expo|src=\"$BASE_PATH/_expo|g" "$OUTPUT_DIR/index.html"
+            sed -i "s|src=\"static|src=\"$BASE_PATH/static|g" "$OUTPUT_DIR/index.html"
+            # Fix link href attributes
             sed -i "s|href=\"/_expo|href=\"$BASE_PATH/_expo|g" "$OUTPUT_DIR/index.html"
             sed -i "s|href=\"/static|href=\"$BASE_PATH/static|g" "$OUTPUT_DIR/index.html"
+            sed -i "s|href=\"_expo|href=\"$BASE_PATH/_expo|g" "$OUTPUT_DIR/index.html"
+            sed -i "s|href=\"static|href=\"$BASE_PATH/static|g" "$OUTPUT_DIR/index.html"
+            # Fix CSS url() references
             sed -i "s|url('/_expo|url('$BASE_PATH/_expo|g" "$OUTPUT_DIR/index.html"
             sed -i "s|url(\"/_expo|url(\"$BASE_PATH/_expo|g" "$OUTPUT_DIR/index.html"
+            sed -i "s|url('_expo|url('$BASE_PATH/_expo|g" "$OUTPUT_DIR/index.html"
+            sed -i "s|url(\"_expo|url(\"$BASE_PATH/_expo|g" "$OUTPUT_DIR/index.html"
             
             # Inject error handling script before closing body tag (but after Expo's scripts)
             echo "Injecting error handling script..."
