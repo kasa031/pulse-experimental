@@ -217,7 +217,8 @@ jobs:
             
             # Inject error handling script before closing body tag (but after Expo's scripts)
             echo "Injecting error handling script..."
-            ERROR_SCRIPT='<script>
+            cat > /tmp/error_script.js << 'ERROR_SCRIPT_EOF'
+<script>
     // Error handling and load detection
     console.log("OsloPuls - Environment info:", {
       userAgent: navigator.userAgent,
@@ -251,10 +252,12 @@ jobs:
         root.innerHTML = "<div class=\"error-container\" style=\"padding: 40px; text-align: center; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;\"><h2 style=\"color: #d32f2f; margin-bottom: 16px;\">Appen lastet ikke</h2><p style=\"margin-bottom: 8px; color: #666;\">Det ser ut til at appen ikke lastet etter 10 sekunder.</p><p style=\"margin-bottom: 8px; color: #999; font-size: 12px;\">Sjekk browser console (F12) for detaljer.</p><button onclick=\"window.location.reload()\" style=\"padding: 12px 24px; background-color: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer;\">Last på nytt</button></div>";
       }
     }, 10000);
-  </script>'
+</script>
+ERROR_SCRIPT_EOF
             
             # Insert error script before closing body tag
-            sed -i "s|</body>|$ERROR_SCRIPT</body>|" "$OUTPUT_DIR/index.html"
+            ERROR_SCRIPT=$(cat /tmp/error_script.js)
+            sed -i "s|</body>|$ERROR_SCRIPT</body|" "$OUTPUT_DIR/index.html"
             
             # Verify final result
             FINAL_SCRIPT_COUNT=$(grep -c '<script' "$OUTPUT_DIR/index.html" || echo "0")
