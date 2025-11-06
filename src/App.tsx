@@ -4,9 +4,10 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Provider as PaperProvider, ActivityIndicator, Text, Button } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { View } from 'react-native';
+import { View, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { auth, firebaseInitialized, getFirebaseError } from './services/firebase';
+import WebNavigation from './components/WebNavigation';
 import { saveUserToStorage, clearAuthStorage } from './services/authPersistence';
 import { createOrUpdateUserProfile } from './services/userService';
 import { ErrorBoundary } from './utils/errorBoundary';
@@ -249,14 +250,9 @@ const App = () => {
     },
   }), []);
 
-  return (
-    <ErrorBoundary>
-      <SafeAreaProvider>
-        <PaperProvider theme={theme}>
-          <NavigationContainer
-            onStateChange={(state) => safeLog('Navigation state changed:', state)}
-          >
-            <Tab.Navigator screenOptions={screenOptions}>
+  const renderNavigation = () => {
+    const tabNavigator = (
+      <Tab.Navigator screenOptions={screenOptions}>
               <Tab.Screen 
                 name="Hjem" 
                 component={HomeScreen}
@@ -298,7 +294,35 @@ const App = () => {
                 options={{ title: 'Opprett avstemning' }}
               />
             </Tab.Navigator>
+    );
+
+    // Use WebNavigation on web, regular Tab.Navigator on mobile
+    if (Platform.OS === 'web') {
+      return (
+        <WebNavigation>
+          <NavigationContainer
+            onStateChange={(state) => safeLog('Navigation state changed:', state)}
+          >
+            {tabNavigator}
           </NavigationContainer>
+        </WebNavigation>
+      );
+    }
+
+    return (
+      <NavigationContainer
+        onStateChange={(state) => safeLog('Navigation state changed:', state)}
+      >
+        {tabNavigator}
+      </NavigationContainer>
+    );
+  };
+
+  return (
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <PaperProvider theme={theme}>
+          {renderNavigation()}
         </PaperProvider>
       </SafeAreaProvider>
     </ErrorBoundary>

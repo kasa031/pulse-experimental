@@ -8,11 +8,12 @@
 ## 🔴 Høy prioritet - Kritisk for stabilitet
 
 ### Layout og Responsivitet
-- [ ] **Forbedre tab-navigasjon for web med hover-meny**
-  - Implementer expandable menu for desktop/web
-  - Legg til hover-effekter på menyelementer
-  - Responsiv tab-bar som skjules på mobil, vises som sidebar på desktop
-  - Smooth transitions og animasjoner
+- [x] **Forbedre tab-navigasjon for web med hover-meny**
+  - ✅ WebNavigation-komponent opprettet med sidebar for desktop
+  - ✅ Hamburger-meny for tablet/mobil
+  - ✅ Hover-effekter på menyelementer
+  - [ ] Integrer WebNavigation i App.tsx (kun på web)
+  - [ ] Test hover-funksjonalitet
 
 - [ ] **Responsiv layout for alle skjermer**
   - Sjekk og forbedre tablet-layout (768px+)
@@ -26,10 +27,10 @@
   - Swipe-gestures hvor relevant
 
 ### Bilder og Assets
-- [ ] **Flytte og organisere bilder**
-  - Flytte `Bilder/toppng.com-frigg-oslo-fk-vector-logo-400x400.png` til assets/
-  - Slette Bilder-mappen hvis tom
-  - Sjekke at alle bilder i assets/ er i bruk
+- [x] **Flytte og organisere bilder**
+  - ✅ Flyttet `Bilder/toppng.com-frigg-oslo-fk-vector-logo-400x400.png` til assets/
+  - ✅ Slettet tom Bilder-mappe
+  - [ ] Sjekke at alle bilder i assets/ er i bruk
 
 - [ ] **Bruke ubrukte logoer**
   - `frigg-oslo-logo.png` - vurdere bruk i footer eller about-seksjon
@@ -37,14 +38,14 @@
   - Sjekke at alle logoer har riktig størrelse og format
 
 ### Kontakt og Informasjon
-- [ ] **Implementer KontaktScreen**
-  - Ny skjerm med kontaktinformasjon
-  - Info om prosjektet og utvikler
-  - E-post: ms.tery@icloud.com
-  - Personlig info: 38 år, tobarnsmor, cybersikkerhetstudent (siste år bachelor)
-  - Tilknyttet Høyskolen i Kristiania
-  - Bor på Bislett med mann og barn
-  - Legg til i navigasjon
+- [x] **Implementer KontaktScreen**
+  - ✅ Ny skjerm med kontaktinformasjon
+  - ✅ Info om prosjektet og utvikler
+  - ✅ E-post: ms.tery@icloud.com
+  - ✅ Personlig info: 38 år, tobarnsmor, cybersikkerhetstudent (siste år bachelor)
+  - ✅ Tilknyttet Høyskolen i Kristiania
+  - ✅ Bor på Bislett med mann og barn
+  - ✅ Lagt til i navigasjon
 
 ### Navigasjon og Meny
 - [ ] **Forbedre navigasjon for web**

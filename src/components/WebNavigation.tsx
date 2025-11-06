@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Platform, useWindowDimensions, TouchableOpacity } from 'react-native';
 import { Drawer, Portal, Text, Surface } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, NavigationContainer } from '@react-navigation/native';
 import { osloBranding } from '../constants/theme';
 
 interface NavItem {
@@ -28,7 +28,11 @@ const navItems: NavItem[] = [
   { name: 'Opprett', title: 'Opprett', icon: 'plus-circle-outline', iconFocused: 'plus-circle' },
 ];
 
-const WebNavigation = ({ children }: { children: React.ReactNode }) => {
+interface WebNavigationProps {
+  children: React.ReactNode;
+}
+
+const WebNavigation = ({ children }: WebNavigationProps) => {
   const navigation = useNavigation<any>();
   const route = useRoute();
   const { width } = useWindowDimensions();

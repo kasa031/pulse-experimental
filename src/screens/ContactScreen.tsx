@@ -160,6 +160,14 @@ const ContactScreen = () => {
               Prosjektet er bygget med React Native, Expo, Firebase og TypeScript. 
               Appen er designet for å fungere på mobil, nettbrett og web.
             </Text>
+            
+            <View style={styles.logoContainer}>
+              <Image 
+                source={require('../../assets/frigg-oslo-logo.png')} 
+                style={styles.logo}
+                resizeMode="contain"
+              />
+            </View>
           </Card.Content>
         </Card>
       </View>
@@ -261,6 +269,19 @@ const styles = StyleSheet.create({
     color: osloBranding.colors.textSecondary,
     lineHeight: 20,
     fontStyle: 'italic',
+    marginBottom: 16,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginTop: 16,
+    padding: 16,
+    backgroundColor: osloBranding.colors.background,
+    borderRadius: 8,
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    opacity: 0.8,
   },
 });
 
