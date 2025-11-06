@@ -85,67 +85,70 @@ const HomeScreen = () => {
           </Card.Content>
         </Card>
 
-        {/* Quick Info Card */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <Text variant="titleMedium" style={styles.sectionTitle}>
-              Hva er OsloPuls?
-            </Text>
-            <Text variant="bodyMedium" style={styles.infoText}>
-              OsloPuls er en plattform hvor innbyggerne i Oslo kan delta i lokale avstemninger 
-              om temaer som påvirker byen. Fra transport og miljø til byutvikling og politikk - 
-              din mening betyr noe.
-            </Text>
-            <View style={styles.chipContainer}>
-              {['Miljø', 'Transport', 'Byutvikling', 'Politikk'].map((cat) => (
-                <Chip key={cat} style={styles.chip} textStyle={styles.chipText}>
-                  {cat}
-                </Chip>
-              ))}
-            </View>
-          </Card.Content>
-        </Card>
+        {/* Cards Grid for Tablet */}
+        <View style={[styles.cardsGrid, isTablet && styles.cardsGridTablet]}>
+          {/* Quick Info Card */}
+          <Card style={[styles.card, isTablet && styles.cardTablet]}>
+            <Card.Content>
+              <Text variant="titleMedium" style={styles.sectionTitle}>
+                Hva er OsloPuls?
+              </Text>
+              <Text variant="bodyMedium" style={styles.infoText}>
+                OsloPuls er en plattform hvor innbyggerne i Oslo kan delta i lokale avstemninger 
+                om temaer som påvirker byen. Fra transport og miljø til byutvikling og politikk - 
+                din mening betyr noe.
+              </Text>
+              <View style={styles.chipContainer}>
+                {['Miljø', 'Transport', 'Byutvikling', 'Politikk'].map((cat) => (
+                  <Chip key={cat} style={styles.chip} textStyle={styles.chipText}>
+                    {cat}
+                  </Chip>
+                ))}
+              </View>
+            </Card.Content>
+          </Card>
 
-        {/* Active Polls Card */}
-        <Card style={styles.card}>
-          <Card.Content>
-            <Text variant="titleMedium" style={styles.sectionTitle}>
-              Aktive avstemninger
-            </Text>
-            {loading ? (
-              <ActivityIndicator style={styles.loader} />
-            ) : activePollsCount > 0 ? (
-              <>
-                <Text variant="bodyMedium" style={styles.infoText}>
-                  Det er for øyeblikket {activePollsCount} {activePollsCount === 1 ? 'aktiv avstemning' : 'aktive avstemninger'} som du kan delta på.
-                </Text>
-                <Button 
-                  mode="contained" 
-                  icon="vote" 
-                  style={styles.actionButton}
-                  onPress={() => navigation.navigate('Stem')}
-                >
-                  Se alle avstemninger
-                </Button>
-              </>
-            ) : (
-              <>
-                <Text variant="bodyMedium" style={styles.emptyText}>
-                  Det er ingen aktive avstemninger for øyeblikket. 
-                  Sjekk tilbake senere for nye avstemninger!
-                </Text>
-                <Button 
-                  mode="outlined" 
-                  icon="vote" 
-                  style={styles.actionButton}
-                  onPress={() => navigation.navigate('Stem')}
-                >
-                  Se alle avstemninger
-                </Button>
-              </>
-            )}
-          </Card.Content>
-        </Card>
+          {/* Active Polls Card */}
+          <Card style={[styles.card, isTablet && styles.cardTablet]}>
+            <Card.Content>
+              <Text variant="titleMedium" style={styles.sectionTitle}>
+                Aktive avstemninger
+              </Text>
+              {loading ? (
+                <ActivityIndicator style={styles.loader} />
+              ) : activePollsCount > 0 ? (
+                <>
+                  <Text variant="bodyMedium" style={styles.infoText}>
+                    Det er for øyeblikket {activePollsCount} {activePollsCount === 1 ? 'aktiv avstemning' : 'aktive avstemninger'} som du kan delta på.
+                  </Text>
+                  <Button 
+                    mode="contained" 
+                    icon="vote" 
+                    style={styles.actionButton}
+                    onPress={() => navigation.navigate('Stem')}
+                  >
+                    Se alle avstemninger
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Text variant="bodyMedium" style={styles.emptyText}>
+                    Det er ingen aktive avstemninger for øyeblikket. 
+                    Sjekk tilbake senere for nye avstemninger!
+                  </Text>
+                  <Button 
+                    mode="outlined" 
+                    icon="vote" 
+                    style={styles.actionButton}
+                    onPress={() => navigation.navigate('Stem')}
+                  >
+                    Se alle avstemninger
+                  </Button>
+                </>
+              )}
+            </Card.Content>
+          </Card>
+        </View>
 
         {/* News Card */}
         <Card style={styles.card}>
@@ -192,6 +195,18 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: SPACING.cardMargin.mobile,
     elevation: 2,
+  },
+  cardTablet: {
+    flex: 1,
+    marginBottom: 0,
+  },
+  cardsGrid: {
+    flexDirection: 'column',
+  },
+  cardsGridTablet: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+    marginBottom: SPACING.cardMargin.tablet,
   },
   welcomeCard: {
     backgroundColor: theme.colors.surface,

@@ -23,8 +23,8 @@ export const useResponsive = (): ResponsiveBreakpoints => {
   const isWeb = Platform.OS === 'web';
   
   return {
-    isMobile: width < 480,
-    isTablet: width >= 480 && width <= 1024,
+    isMobile: width < 768,
+    isTablet: width >= 768 && width <= 1024,
     isDesktop: isWeb && width > 1024,
     isSmallMobile: width < 360,
     width,
