@@ -282,6 +282,61 @@ const ProfileScreen = () => {
         </Card.Content>
       </Card>
 
+      {/* Settings Card */}
+      <Card style={styles.card}>
+        <Card.Content>
+          <View style={styles.settingsHeader}>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Innstillinger
+            </Text>
+            <Button
+              mode="text"
+              icon={showSettings ? "chevron-up" : "chevron-down"}
+              onPress={() => setShowSettings(!showSettings)}
+              compact
+            >
+              {showSettings ? 'Skjul' : 'Vis'}
+            </Button>
+          </View>
+          {showSettings && (
+            <>
+              <List.Item
+                title="Push-varsler"
+                description="Motta varsler om nye avstemninger og viktige nyheter"
+                left={(props) => <List.Icon {...props} icon="bell" />}
+                right={() => (
+                  <Switch
+                    value={notificationsEnabled}
+                    onValueChange={setNotificationsEnabled}
+                  />
+                )}
+              />
+              <List.Item
+                title="E-post-varsler"
+                description="Motta viktige oppdateringer på e-post"
+                left={(props) => <List.Icon {...props} icon="email" />}
+                right={() => (
+                  <Switch
+                    value={emailNotifications}
+                    onValueChange={setEmailNotifications}
+                    disabled={!notificationsEnabled}
+                  />
+                )}
+              />
+              <List.Item
+                title="Privatliv"
+                description="Administrer dine privatinnstillinger"
+                left={(props) => <List.Icon {...props} icon="shield" />}
+                right={(props) => <List.Icon {...props} icon="chevron-right" />}
+                onPress={() => {
+                  // TODO: Naviger til privatlivsinnstillinger
+                }}
+              />
+            </>
+          )}
+        </Card.Content>
+      </Card>
+
       <Button
         mode="contained"
         onPress={handleLogout}
@@ -466,6 +521,12 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
     marginBottom: SPACING.xl,
     minHeight: BUTTON_MIN_HEIGHT,
+  },
+  settingsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
   },
 });
 
