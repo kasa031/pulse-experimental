@@ -182,11 +182,23 @@ const LoginScreen = () => {
           )}
         </View>
 
+        {!isSignUp && (
+          <Button
+            mode="text"
+            onPress={() => setShowForgotPassword(true)}
+            disabled={loading}
+            style={styles.forgotPasswordButton}
+            compact
+          >
+            Glemt passord?
+          </Button>
+        )}
+
         <Button
           mode="contained"
           onPress={handleSubmit}
           loading={loading}
-          disabled={loading}
+          disabled={loading || !!emailError || !!passwordError || !email.trim() || !password.trim()}
           style={styles.button}
         >
           {isSignUp ? 'Opprett konto' : 'Logg inn'}
