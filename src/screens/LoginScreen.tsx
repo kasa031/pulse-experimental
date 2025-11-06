@@ -117,23 +117,40 @@ const LoginScreen = () => {
       }
     } catch (err: unknown) {
       safeError('Auth feil:', err);
-      // Bedre feilmeldinger
-      let errorMessage = 'Noe gikk galt';
+      // Forbedrede feilmeldinger med mer spesifikke beskrivelser
+      let errorMessage = 'Noe gikk galt. Prøv igjen.';
+      let errorTitle = 'Feil';
       const error = err as { code?: string; message?: string };
+      
       if (error.code === 'auth/user-not-found') {
-        errorMessage = 'Bruker ikke funnet';
+        errorMessage = 'Det finnes ingen konto med denne e-postadressen. Sjekk at e-postadressen er riktig, eller opprett en ny konto.';
+        errorTitle = 'Bruker ikke funnet';
       } else if (error.code === 'auth/wrong-password') {
-        errorMessage = 'Feil passord';
+        errorMessage = 'Passordet er feil. Prøv igjen eller bruk "Glemt passord" for å tilbakestille det.';
+        errorTitle = 'Feil passord';
       } else if (error.code === 'auth/email-already-in-use') {
-        errorMessage = 'E-post er allerede i bruk';
+        errorMessage = 'Denne e-postadressen er allerede registrert. Prøv å logge inn i stedet, eller bruk en annen e-postadresse.';
+        errorTitle = 'E-post allerede i bruk';
       } else if (error.code === 'auth/weak-password') {
-        errorMessage = 'Passordet er for svakt';
+        errorMessage = 'Passordet er for svakt. Passordet må være minst 6 tegn langt.';
+        errorTitle = 'For svakt passord';
       } else if (error.code === 'auth/invalid-email') {
-        errorMessage = 'Ugyldig e-postadresse';
+        errorMessage = 'E-postadressen er ikke gyldig. Sjekk at du har skrevet den riktig.';
+        errorTitle = 'Ugyldig e-post';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'For mange mislykkede innloggingsforsøk. Vent litt før du prøver igjen, eller tilbakestill passordet.';
+        errorTitle = 'For mange forsøk';
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = 'Nettverksfeil. Sjekk internettforbindelsen din og prøv igjen.';
+        errorTitle = 'Nettverksfeil';
+      } else if (error.code === 'auth/invalid-credential') {
+        errorMessage = 'E-post eller passord er feil. Sjekk at du har skrevet riktig informasjon.';
+        errorTitle = 'Ugyldige innloggingsdetaljer';
       } else if (error.message) {
         errorMessage = error.message;
       }
-      setError(errorMessage);
+      
+      setError(`${errorTitle}: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -163,9 +180,12 @@ const LoginScreen = () => {
         </Text>
 
         {error && (
-          <Text style={styles.error} variant="bodySmall">
-            {error}
-          </Text>
+          <View style={styles.errorContainer}>
+            <Icon name="alert-circle" size={20} color="#d32f2f" style={styles.errorIcon} />
+            <Text style={styles.error} variant="bodySmall">
+              {error}
+            </Text>
+          </View>
         )}
 
         <View>
