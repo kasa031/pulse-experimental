@@ -44,7 +44,7 @@ const formatDate = (date: Date | Timestamp | any): string => {
 };
 
 const CommunityScreen = () => {
-  const { isMobile, isTablet, width } = useResponsive();
+  const { isMobile, isTablet, isDesktop, width } = useResponsive();
   const padding = getResponsivePadding(width);
   const [discussions, setDiscussions] = useState<Discussion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -176,7 +176,7 @@ const CommunityScreen = () => {
     }
   };
 
-  const isAuthenticated = !!auth.currentUser;
+  const isAuthenticated = !!auth?.currentUser;
 
   return (
     <ScrollView 
@@ -428,7 +428,7 @@ const CommunityScreen = () => {
                 </Text>
               ) : (
                 comments.map((comment) => {
-                  const user = auth.currentUser;
+                  const user = auth?.currentUser;
                   const isLiked = user && comment.likedBy?.includes(user.uid);
                   const isDisliked = user && comment.dislikedBy?.includes(user.uid);
                   const isLiking = likingComments[comment.id] || false;

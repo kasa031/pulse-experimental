@@ -8,14 +8,13 @@ export const theme: typeof DefaultTheme = {
     primary: OSLO_COLORS.primary, // Oslo blå
     background: OSLO_COLORS.background,
     surface: OSLO_COLORS.surface,
-    text: OSLO_COLORS.text,
     onSurface: OSLO_COLORS.text,
     disabled: '#CCCCCC',
     placeholder: OSLO_COLORS.textSecondary,
     backdrop: 'rgba(0, 0, 0, 0.5)',
     error: '#B00020',
     notification: OSLO_COLORS.secondary,
-  },
+  } as any,
   roundness: 8,
 };
 
