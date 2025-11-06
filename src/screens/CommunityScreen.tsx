@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { Card, Text, Button, Chip, ActivityIndicator, Dialog, Portal, TextInput, Menu, Divider } from 'react-native-paper';
 import { theme, osloBranding } from '../constants/theme';
-import { getDiscussions, createDiscussion, Discussion, getComments, addComment, Comment } from '../services/discussionService';
+import { getDiscussions, createDiscussion, Discussion, getComments, addComment, likeComment, dislikeComment, Comment } from '../services/discussionService';
 import { auth } from '../services/firebase';
 import { OSLO_DISTRICTS } from '../constants/osloDistricts';
 import { POLL_CATEGORIES } from '../constants/osloDistricts';
@@ -688,6 +688,11 @@ const styles = StyleSheet.create({
   },
   commentHeaderLeft: {
     flex: 1,
+  },
+  commentActions: {
+    flexDirection: 'row',
+    marginTop: SPACING.sm,
+    gap: SPACING.xs,
   },
   commentAuthor: {
     fontWeight: '600',
