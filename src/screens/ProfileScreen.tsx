@@ -4,8 +4,7 @@ import { Card, Text, Button, Avatar, TextInput, HelperText, Chip, ActivityIndica
 import { auth } from '../services/firebase';
 import { signOut, updateProfile } from 'firebase/auth';
 import { theme, osloBranding } from '../constants/theme';
-import { getUserProfile, updateUserProfile, createOrUpdateUserProfile, UserProfile } from '../services/userService';
-import { getUserVoteCount } from '../services/userService';
+import { getUserProfile, updateUserProfile, createOrUpdateUserProfile, UserProfile, getUserVoteCount, getUserCommentCount, getUserDiscussionCount } from '../services/userService';
 import { OSLO_DISTRICTS } from '../constants/osloDistricts';
 import { isUserAdmin } from '../utils/adminCheck';
 import { safeError, safeLog } from '../utils/performance';
@@ -15,7 +14,7 @@ import { SPACING } from '../constants/spacing';
 import { BUTTON_MIN_HEIGHT, CHIP_MIN_HEIGHT } from '../constants/touchTargets';
 
 const ProfileScreen = () => {
-  const { isMobile, isTablet, width } = useResponsive();
+  const { isMobile, isTablet, isDesktop, width } = useResponsive();
   const padding = getResponsivePadding(width);
   const user = auth.currentUser;
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -26,6 +25,8 @@ const ProfileScreen = () => {
   const [district, setDistrict] = useState<string>('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [voteCount, setVoteCount] = useState(0);
+  const [commentCount, setCommentCount] = useState(0);
+  const [discussionCount, setDiscussionCount] = useState(0);
 
   useEffect(() => {
     loadProfile();
@@ -56,9 +57,15 @@ const ProfileScreen = () => {
         setDistrict('');
       }
 
-      // Hent stemmetall
-      const votes = await getUserVoteCount(user.uid);
+      // Hent statistikker
+      const [votes, comments, discussions] = await Promise.all([
+        getUserVoteCount(user.uid),
+        getUserCommentCount(user.uid),
+        getUserDiscussionCount(user.uid),
+      ]);
       setVoteCount(votes);
+      setCommentCount(comments);
+      setDiscussionCount(discussions);
 
       // Sjekk admin-status
       const admin = await isUserAdmin();
@@ -229,17 +236,37 @@ const ProfileScreen = () => {
           <Text variant="titleMedium" style={styles.sectionTitle}>
             Statistikker
           </Text>
-          <View style={styles.statRow}>
-            <Icon name="vote" size={20} color={osloBranding.colors.primary} />
-            <Text variant="bodyMedium" style={styles.statLabel}>
-              Avstemninger deltatt:
-            </Text>
-            <Text variant="bodyMedium" style={styles.statValue}>
-              {voteCount}
-            </Text>
+          <View style={styles.statsGrid}>
+            <View style={styles.statCard}>
+              <Icon name="vote" size={24} color={osloBranding.colors.primary} />
+              <Text variant="headlineSmall" style={styles.statValue}>
+                {voteCount}
+              </Text>
+              <Text variant="bodySmall" style={styles.statLabel}>
+                Avstemninger
+              </Text>
+            </View>
+            <View style={styles.statCard}>
+              <Icon name="comment" size={24} color={osloBranding.colors.primary} />
+              <Text variant="headlineSmall" style={styles.statValue}>
+                {commentCount}
+              </Text>
+              <Text variant="bodySmall" style={styles.statLabel}>
+                Kommentarer
+              </Text>
+            </View>
+            <View style={styles.statCard}>
+              <Icon name="forum" size={24} color={osloBranding.colors.primary} />
+              <Text variant="headlineSmall" style={styles.statValue}>
+                {discussionCount}
+              </Text>
+              <Text variant="bodySmall" style={styles.statLabel}>
+                Diskusjoner
+              </Text>
+            </View>
           </View>
           {isAdmin && (
-            <View style={styles.statRow}>
+            <View style={styles.adminStatRow}>
               <Icon name="file-document" size={20} color={osloBranding.colors.secondary} />
               <Text variant="bodyMedium" style={styles.statLabel}>
                 Avstemninger opprettet:
@@ -392,6 +419,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: osloBranding.colors.primary,
   },
+  statsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 16,
+    paddingVertical: 16,
+  },
+  statCard: {
+    alignItems: 'center',
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+  },
   statRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -399,13 +438,26 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingVertical: 8,
   },
+  adminStatRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: osloBranding.colors.border || '#E0E0E0',
+  },
   statLabel: {
     flex: 1,
     marginLeft: 8,
+    textAlign: 'center',
+    color: osloBranding.colors.textSecondary,
+    marginTop: 4,
   },
   statValue: {
     fontWeight: 'bold',
     color: osloBranding.colors.primary,
+    marginTop: 8,
   },
   logoutButton: {
     marginTop: SPACING.md,

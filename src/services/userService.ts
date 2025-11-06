@@ -201,3 +201,37 @@ export const incrementUserPollCount = async (userId: string): Promise<void> => {
   }
 };
 
+/**
+ * Hent antall kommentarer for en bruker
+ */
+export const getUserCommentCount = async (userId: string): Promise<number> => {
+  try {
+    const commentsQuery = query(
+      collection(db, 'comments'),
+      where('authorId', '==', userId)
+    );
+    const commentsSnapshot = await getDocs(commentsQuery);
+    return commentsSnapshot.size;
+  } catch (error) {
+    safeError('Feil ved henting av kommentartall:', error);
+    return 0;
+  }
+};
+
+/**
+ * Hent antall diskusjoner opprettet av en bruker
+ */
+export const getUserDiscussionCount = async (userId: string): Promise<number> => {
+  try {
+    const discussionsQuery = query(
+      collection(db, 'discussions'),
+      where('authorId', '==', userId)
+    );
+    const discussionsSnapshot = await getDocs(discussionsQuery);
+    return discussionsSnapshot.size;
+  } catch (error) {
+    safeError('Feil ved henting av diskusjonstall:', error);
+    return 0;
+  }
+};
+
