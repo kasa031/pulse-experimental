@@ -14,7 +14,11 @@ import {
   serverTimestamp,
   onSnapshot,
   doc,
-  getDoc
+  getDoc,
+  updateDoc,
+  increment,
+  arrayUnion,
+  arrayRemove
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { auth } from './firebase';
@@ -42,6 +46,10 @@ export interface Comment {
   authorName: string;
   createdAt: Timestamp | Date;
   updatedAt?: Timestamp | Date;
+  likes?: number;
+  dislikes?: number;
+  likedBy?: string[];
+  dislikedBy?: string[];
 }
 
 /**
@@ -192,6 +200,10 @@ export const getComments = async (discussionId: string): Promise<Comment[]> => {
         authorName: data.authorName || 'Anonym',
         createdAt: data.createdAt || Timestamp.now(),
         updatedAt: data.updatedAt,
+        likes: data.likes || 0,
+        dislikes: data.dislikes || 0,
+        likedBy: data.likedBy || [],
+        dislikedBy: data.dislikedBy || [],
       });
     });
     
@@ -281,4 +293,106 @@ export const subscribeToDiscussions = (
     });
     callback(discussions);
   });
+};
+
+/**
+ * Like en kommentar
+ */
+export const likeComment = async (discussionId: string, commentId: string): Promise<void> => {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('Du må være logget inn for å like en kommentar');
+    }
+
+    const commentRef = doc(db, 'discussions', discussionId, 'comments', commentId);
+    const commentSnap = await getDoc(commentRef);
+    
+    if (!commentSnap.exists()) {
+      throw new Error('Kommentar ikke funnet');
+    }
+
+    const data = commentSnap.data();
+    const likedBy = data.likedBy || [];
+    const dislikedBy = data.dislikedBy || [];
+    const userId = user.uid;
+
+    // Hvis brukeren allerede har likt, fjern like
+    if (likedBy.includes(userId)) {
+      await updateDoc(commentRef, {
+        likes: increment(-1),
+        likedBy: arrayRemove(userId),
+      });
+    } else {
+      // Hvis brukeren har disliket, fjern dislike og legg til like
+      if (dislikedBy.includes(userId)) {
+        await updateDoc(commentRef, {
+          dislikes: increment(-1),
+          likes: increment(1),
+          dislikedBy: arrayRemove(userId),
+          likedBy: arrayUnion(userId),
+        });
+      } else {
+        // Legg til like
+        await updateDoc(commentRef, {
+          likes: increment(1),
+          likedBy: arrayUnion(userId),
+        });
+      }
+    }
+  } catch (error: unknown) {
+    safeError('Feil ved like av kommentar:', error);
+    throw error;
+  }
+};
+
+/**
+ * Dislike en kommentar
+ */
+export const dislikeComment = async (discussionId: string, commentId: string): Promise<void> => {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('Du må være logget inn for å dislike en kommentar');
+    }
+
+    const commentRef = doc(db, 'discussions', discussionId, 'comments', commentId);
+    const commentSnap = await getDoc(commentRef);
+    
+    if (!commentSnap.exists()) {
+      throw new Error('Kommentar ikke funnet');
+    }
+
+    const data = commentSnap.data();
+    const likedBy = data.likedBy || [];
+    const dislikedBy = data.dislikedBy || [];
+    const userId = user.uid;
+
+    // Hvis brukeren allerede har disliket, fjern dislike
+    if (dislikedBy.includes(userId)) {
+      await updateDoc(commentRef, {
+        dislikes: increment(-1),
+        dislikedBy: arrayRemove(userId),
+      });
+    } else {
+      // Hvis brukeren har likt, fjern like og legg til dislike
+      if (likedBy.includes(userId)) {
+        await updateDoc(commentRef, {
+          likes: increment(-1),
+          dislikes: increment(1),
+          likedBy: arrayRemove(userId),
+          dislikedBy: arrayUnion(userId),
+        });
+      } else {
+        // Legg til dislike
+        await updateDoc(commentRef, {
+          dislikes: increment(1),
+          dislikedBy: arrayUnion(userId),
+        });
+      }
+    }
+  } catch (error: unknown) {
+    safeError('Feil ved dislike av kommentar:', error);
+    throw error;
+  }
 };

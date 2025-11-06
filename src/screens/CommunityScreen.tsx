@@ -57,6 +57,7 @@ const CommunityScreen = () => {
   const [creating, setCreating] = useState(false);
   const [selectedDiscussion, setSelectedDiscussion] = useState<string | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [likingComments, setLikingComments] = useState<Record<string, boolean>>({});
   const [loadingComments, setLoadingComments] = useState(false);
   const [showCommentsDialog, setShowCommentsDialog] = useState(false);
   const [newComment, setNewComment] = useState('');
@@ -418,23 +419,82 @@ const CommunityScreen = () => {
                   Ingen kommentarer ennå. Vær den første!
                 </Text>
               ) : (
-                comments.map((comment) => (
-                  <Card key={comment.id} style={styles.commentCard}>
-                    <Card.Content>
-                      <View style={styles.commentHeader}>
-                        <Text variant="titleSmall" style={styles.commentAuthor}>
-                          {comment.authorName}
+                comments.map((comment) => {
+                  const user = auth.currentUser;
+                  const isLiked = user && comment.likedBy?.includes(user.uid);
+                  const isDisliked = user && comment.dislikedBy?.includes(user.uid);
+                  const isLiking = likingComments[comment.id] || false;
+
+                  return (
+                    <Card key={comment.id} style={styles.commentCard}>
+                      <Card.Content>
+                        <View style={styles.commentHeader}>
+                          <View style={styles.commentHeaderLeft}>
+                            <Text variant="titleSmall" style={styles.commentAuthor}>
+                              {comment.authorName || 'Anonym'}
+                            </Text>
+                            <Text variant="bodySmall" style={styles.commentDate}>
+                              {formatDate(comment.createdAt)}
+                            </Text>
+                          </View>
+                        </View>
+                        <Text variant="bodyMedium" style={styles.commentContent}>
+                          {comment.content}
                         </Text>
-                        <Text variant="bodySmall" style={styles.commentDate}>
-                          {formatDate(comment.createdAt)}
-                        </Text>
-                      </View>
-                      <Text variant="bodyMedium" style={styles.commentContent}>
-                        {comment.content}
-                      </Text>
-                    </Card.Content>
-                  </Card>
-                ))
+                        {isAuthenticated && (
+                          <View style={styles.commentActions}>
+                            <Button
+                              mode="text"
+                              icon={isLiked ? "thumb-up" : "thumb-up-outline"}
+                              onPress={async () => {
+                                if (!selectedDiscussion || isLiking) return;
+                                setLikingComments(prev => ({ ...prev, [comment.id]: true }));
+                                try {
+                                  await likeComment(selectedDiscussion, comment.id);
+                                  // Oppdater kommentarer
+                                  const updatedComments = await getComments(selectedDiscussion);
+                                  setComments(updatedComments);
+                                } catch (error) {
+                                  safeError('Feil ved like av kommentar:', error);
+                                } finally {
+                                  setLikingComments(prev => ({ ...prev, [comment.id]: false }));
+                                }
+                              }}
+                              textColor={isLiked ? osloBranding.colors.primary : osloBranding.colors.textSecondary}
+                              compact
+                              disabled={isLiking}
+                            >
+                              {comment.likes || 0}
+                            </Button>
+                            <Button
+                              mode="text"
+                              icon={isDisliked ? "thumb-down" : "thumb-down-outline"}
+                              onPress={async () => {
+                                if (!selectedDiscussion || isLiking) return;
+                                setLikingComments(prev => ({ ...prev, [comment.id]: true }));
+                                try {
+                                  await dislikeComment(selectedDiscussion, comment.id);
+                                  // Oppdater kommentarer
+                                  const updatedComments = await getComments(selectedDiscussion);
+                                  setComments(updatedComments);
+                                } catch (error) {
+                                  safeError('Feil ved dislike av kommentar:', error);
+                                } finally {
+                                  setLikingComments(prev => ({ ...prev, [comment.id]: false }));
+                                }
+                              }}
+                              textColor={isDisliked ? osloBranding.colors.secondary : osloBranding.colors.textSecondary}
+                              compact
+                              disabled={isLiking}
+                            >
+                              {comment.dislikes || 0}
+                            </Button>
+                          </View>
+                        )}
+                      </Card.Content>
+                    </Card>
+                  );
+                })
               )}
             </ScrollView>
           </Dialog.ScrollArea>
