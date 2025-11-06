@@ -2,9 +2,9 @@
  * ContactScreen - Kontaktinformasjon og om prosjektet
  */
 
-import React from 'react';
-import { View, StyleSheet, ScrollView, Linking } from 'react-native';
-import { Card, Text, Button, Surface, Divider } from 'react-native-paper';
+import React, { useState } from 'react';
+import { View, StyleSheet, ScrollView, Linking, Image } from 'react-native';
+import { Card, Text, Button, Surface, Divider, TextInput, HelperText, Snackbar } from 'react-native-paper';
 import { theme, osloBranding } from '../constants/theme';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
@@ -12,11 +12,63 @@ import { SPACING } from '../constants/spacing';
 import { BUTTON_MIN_HEIGHT } from '../constants/touchTargets';
 
 const ContactScreen = () => {
-  const { isMobile, isTablet, width } = useResponsive();
+  const { isMobile, isTablet, isDesktop, width } = useResponsive();
   const padding = getResponsivePadding(width);
+  const [contactName, setContactName] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactMessage, setContactMessage] = useState('');
+  const [contactErrors, setContactErrors] = useState<Record<string, string>>({});
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const handleEmailPress = () => {
     Linking.openURL('mailto:ms.tery@icloud.com?subject=Kontakt fra OsloPuls');
+  };
+
+  const validateContactForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!contactName.trim()) {
+      newErrors.name = 'Navn er påkrevd';
+    }
+
+    if (!contactEmail.trim()) {
+      newErrors.email = 'E-post er påkrevd';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+      newErrors.email = 'Ugyldig e-postadresse';
+    }
+
+    if (!contactMessage.trim()) {
+      newErrors.message = 'Melding er påkrevd';
+    } else if (contactMessage.trim().length < 10) {
+      newErrors.message = 'Melding må være minst 10 tegn';
+    }
+
+    setContactErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmitContact = () => {
+    if (!validateContactForm()) {
+      setSnackbarMessage('Vennligst fyll ut alle felter korrekt');
+      setSnackbarVisible(true);
+      return;
+    }
+
+    const subject = encodeURIComponent(`Kontakt fra ${contactName}`);
+    const body = encodeURIComponent(
+      `Navn: ${contactName}\nE-post: ${contactEmail}\n\nMelding:\n${contactMessage}`
+    );
+    Linking.openURL(`mailto:ms.tery@icloud.com?subject=${subject}&body=${body}`);
+
+    setSnackbarMessage('E-post-klient åpnes...');
+    setSnackbarVisible(true);
+
+    // Reset form
+    setContactName('');
+    setContactEmail('');
+    setContactMessage('');
+    setContactErrors({});
   };
 
   return (
@@ -107,12 +159,77 @@ const ContactScreen = () => {
             </View>
 
             <Button
-              mode="contained"
+              mode="outlined"
               icon="email"
               onPress={handleEmailPress}
               style={styles.emailButton}
             >
-              Send e-post
+              Åpne e-post-klient
+            </Button>
+          </Card.Content>
+        </Card>
+
+        {/* Contact Form Card */}
+        <Card style={styles.card}>
+          <Card.Content>
+            <Text variant="titleLarge" style={styles.sectionTitle}>
+              Send melding
+            </Text>
+            <Divider style={styles.divider} />
+            
+            <TextInput
+              label="Navn *"
+              value={contactName}
+              onChangeText={setContactName}
+              mode="outlined"
+              error={!!contactErrors.name}
+              style={styles.formInput}
+            />
+            {contactErrors.name && (
+              <HelperText type="error" visible={!!contactErrors.name}>
+                {contactErrors.name}
+              </HelperText>
+            )}
+
+            <TextInput
+              label="E-post *"
+              value={contactEmail}
+              onChangeText={setContactEmail}
+              mode="outlined"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              error={!!contactErrors.email}
+              style={styles.formInput}
+            />
+            {contactErrors.email && (
+              <HelperText type="error" visible={!!contactErrors.email}>
+                {contactErrors.email}
+              </HelperText>
+            )}
+
+            <TextInput
+              label="Melding *"
+              value={contactMessage}
+              onChangeText={setContactMessage}
+              mode="outlined"
+              multiline
+              numberOfLines={5}
+              error={!!contactErrors.message}
+              style={styles.formInput}
+            />
+            {contactErrors.message && (
+              <HelperText type="error" visible={!!contactErrors.message}>
+                {contactErrors.message}
+              </HelperText>
+            )}
+
+            <Button
+              mode="contained"
+              icon="send"
+              onPress={handleSubmitContact}
+              style={styles.submitButton}
+            >
+              Send melding
             </Button>
           </Card.Content>
         </Card>
@@ -182,7 +299,79 @@ const ContactScreen = () => {
             </View>
           </Card.Content>
         </Card>
+
+        {/* FAQ Card */}
+        <Card style={styles.card}>
+          <Card.Content>
+            <Text variant="titleLarge" style={styles.sectionTitle}>
+              Ofte stilte spørsmål (FAQ)
+            </Text>
+            <Divider style={styles.divider} />
+            
+            <View style={styles.faqItem}>
+              <Text variant="titleSmall" style={styles.faqQuestion}>
+                Hva er OsloPuls?
+              </Text>
+              <Text variant="bodyMedium" style={styles.faqAnswer}>
+                OsloPuls er en digital plattform for lokaldemokrati i Oslo. 
+                Innbyggere kan delta i avstemninger, diskutere lokale saker og følge med på nyheter.
+              </Text>
+            </View>
+
+            <View style={styles.faqItem}>
+              <Text variant="titleSmall" style={styles.faqQuestion}>
+                Hvem kan delta i avstemninger?
+              </Text>
+              <Text variant="bodyMedium" style={styles.faqAnswer}>
+                Alle innloggede brukere kan delta i aktive avstemninger. 
+                Du må opprette en konto for å stemme.
+              </Text>
+            </View>
+
+            <View style={styles.faqItem}>
+              <Text variant="titleSmall" style={styles.faqQuestion}>
+                Hvordan oppretter jeg en avstemning?
+              </Text>
+              <Text variant="bodyMedium" style={styles.faqAnswer}>
+                Kun administratorer kan opprette avstemninger. 
+                Kontakt oss hvis du har forslag til nye avstemninger.
+              </Text>
+            </View>
+
+            <View style={styles.faqItem}>
+              <Text variant="titleSmall" style={styles.faqQuestion}>
+                Er appen gratis å bruke?
+              </Text>
+              <Text variant="bodyMedium" style={styles.faqAnswer}>
+                Ja, OsloPuls er helt gratis å bruke. 
+                Det er ingen skjulte kostnader eller abonnementer.
+              </Text>
+            </View>
+
+            <View style={styles.faqItem}>
+              <Text variant="titleSmall" style={styles.faqQuestion}>
+                Hvor kan jeg rapportere feil eller gi tilbakemelding?
+              </Text>
+              <Text variant="bodyMedium" style={styles.faqAnswer}>
+                Du kan bruke kontaktformularen over eller sende en e-post direkte til 
+                ms.tery@icloud.com. Vi setter pris på all tilbakemelding!
+              </Text>
+            </View>
+          </Card.Content>
+        </Card>
       </View>
+
+      <Snackbar
+        visible={snackbarVisible}
+        onDismiss={() => setSnackbarVisible(false)}
+        duration={3000}
+        action={{
+          label: 'Lukk',
+          onPress: () => setSnackbarVisible(false),
+        }}
+      >
+        {snackbarMessage}
+      </Snackbar>
     </ScrollView>
   );
 };
@@ -304,6 +493,28 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     opacity: 0.8,
+  },
+  formInput: {
+    marginBottom: 8,
+  },
+  submitButton: {
+    marginTop: SPACING.md,
+    minHeight: BUTTON_MIN_HEIGHT,
+  },
+  faqItem: {
+    marginBottom: SPACING.lg,
+    paddingBottom: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: osloBranding.colors.border || '#E0E0E0',
+  },
+  faqQuestion: {
+    fontWeight: '600',
+    color: osloBranding.colors.primary,
+    marginBottom: SPACING.sm,
+  },
+  faqAnswer: {
+    color: osloBranding.colors.text,
+    lineHeight: 22,
   },
 });
 
