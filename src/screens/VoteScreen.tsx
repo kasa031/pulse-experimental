@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
-import { Card, Text, Button, RadioButton, ProgressBar, ActivityIndicator, Snackbar, Searchbar, Chip } from 'react-native-paper';
+import { Card, Text, Button, RadioButton, ProgressBar, ActivityIndicator, Snackbar, Searchbar, Chip, Menu, Divider } from 'react-native-paper';
 import { theme, osloBranding } from '../constants/theme';
 import { getActivePolls, submitVote, subscribeToPolls, Poll } from '../services/pollsService';
 import { auth } from '../services/firebase';
@@ -10,6 +10,7 @@ import { OSLO_DISTRICTS } from '../constants/osloDistricts';
 import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
 import { SPACING } from '../constants/spacing';
 import { BUTTON_MIN_HEIGHT, CHIP_MIN_HEIGHT } from '../constants/touchTargets';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const VoteScreen = React.memo(() => {
   const [polls, setPolls] = useState<Poll[]>([]);
@@ -23,13 +24,39 @@ const VoteScreen = React.memo(() => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<'newest' | 'popular' | 'endingSoon'>('newest');
+  const [sortMenuVisible, setSortMenuVisible] = useState(false);
   const { isMobile, isTablet, width } = useResponsive();
   const padding = getResponsivePadding(width);
 
-  // Filtrerte polls basert på søk og filter
+  // Filtrerte og sorterte polls
   const filteredPolls = useMemo(() => {
-    return searchAndFilterPolls(polls, searchQuery, selectedCategory, selectedDistrict);
-  }, [polls, searchQuery, selectedCategory, selectedDistrict]);
+    let filtered = searchAndFilterPolls(polls, searchQuery, selectedCategory, selectedDistrict);
+    
+    // Sortering
+    const now = new Date().getTime();
+    filtered = [...filtered].sort((a, b) => {
+      if (sortBy === 'newest') {
+        // Sorter etter startDate (nyeste først)
+        const aStart = a.startDate?.toMillis?.() || a.startDate?.getTime?.() || 0;
+        const bStart = b.startDate?.toMillis?.() || b.startDate?.getTime?.() || 0;
+        return bStart - aStart;
+      } else if (sortBy === 'popular') {
+        // Sorter etter totalt antall stemmer (mest populære først)
+        const aVotes = a.options.reduce((sum, opt) => sum + opt.votes, 0);
+        const bVotes = b.options.reduce((sum, opt) => sum + opt.votes, 0);
+        return bVotes - aVotes;
+      } else if (sortBy === 'endingSoon') {
+        // Sorter etter endDate (slutter snart først)
+        const aEnd = a.endDate?.toMillis?.() || a.endDate?.getTime?.() || Infinity;
+        const bEnd = b.endDate?.toMillis?.() || b.endDate?.getTime?.() || Infinity;
+        return aEnd - bEnd;
+      }
+      return 0;
+    });
+    
+    return filtered;
+  }, [polls, searchQuery, selectedCategory, selectedDistrict, sortBy]);
 
   // Unike kategorier fra polls
   const availableCategories = useMemo(() => {
