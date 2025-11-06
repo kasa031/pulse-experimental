@@ -25,20 +25,55 @@ const getFirebaseConfig = () => {
 
 const firebaseConfig = getFirebaseConfig();
 
+// Valider Firebase config
+const isValidConfig = (config: any): boolean => {
+  if (!config || !config.apiKey || !config.projectId) {
+    return false;
+  }
+  
+  const invalidKeys = [
+    'your-api-key',
+    'DIN_FIREBASE_API_KEY_HER',
+    'PLACEHOLDER',
+    'DIN_MESSAGING_SENDER_ID_HER',
+    'DIN_APP_ID_HER'
+  ];
+  
+  return !invalidKeys.some(key => 
+    config.apiKey === key || 
+    config.messagingSenderId === key || 
+    config.appId === key
+  );
+};
+
 // Initialiser Firebase (kun hvis den ikke allerede er initialisert)
-let app: FirebaseApp;
-if (getApps().length === 0) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApps()[0];
+let app: FirebaseApp | null = null;
+let firebaseError: Error | null = null;
+
+try {
+  if (!isValidConfig(firebaseConfig)) {
+    throw new Error('Firebase konfigurasjon er ugyldig. Sjekk at API-nøkler er satt riktig.');
+  }
+
+  if (getApps().length === 0) {
+    app = initializeApp(firebaseConfig);
+  } else {
+    app = getApps()[0];
+  }
+} catch (error) {
+  firebaseError = error as Error;
+  console.error('Firebase initialisering feilet:', error);
+  // App vil håndtere dette i App.tsx
 }
 
-// Eksporter Firebase services
-export const auth: Auth = getAuth(app);
-export const db: Firestore = getFirestore(app);
+// Eksporter Firebase services (kun hvis initialisert)
+export const auth: Auth | null = app ? getAuth(app) : null;
+export const db: Firestore | null = app ? getFirestore(app) : null;
+export const firebaseInitialized = app !== null;
+export const getFirebaseError = () => firebaseError;
 
 // Aktiver offline persistence for Firestore (caching)
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && db) {
   enableIndexedDbPersistence(db).catch((err) => {
     if (err.code === 'failed-precondition') {
       console.warn('Firestore persistence kan bare aktiveres i én tab om gangen');

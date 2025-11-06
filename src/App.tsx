@@ -6,7 +6,7 @@ import { Provider as PaperProvider, ActivityIndicator, Text, Button } from 'reac
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { View } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { auth } from './services/firebase';
+import { auth, firebaseInitialized, getFirebaseError } from './services/firebase';
 import { saveUserToStorage, clearAuthStorage } from './services/authPersistence';
 import { createOrUpdateUserProfile } from './services/userService';
 import { ErrorBoundary } from './utils/errorBoundary';
@@ -38,8 +38,22 @@ const App = () => {
         setLoading(true);
         safeLog('Initialiserer autentisering...');
         
+        // Sjekk om Firebase er initialisert
+        const { firebaseInitialized, getFirebaseError } = await import('./services/firebase');
+        if (!firebaseInitialized) {
+          const error = getFirebaseError();
+          throw new Error(
+            error?.message || 
+            'Firebase er ikke initialisert. Sjekk at API-nøkler er satt riktig i GitHub Secrets.'
+          );
+        }
+        
+        if (!auth) {
+          throw new Error('Firebase Auth er ikke tilgjengelig. Sjekk konfigurasjon.');
+        }
+        
         // Lytt til Firebase auth state changes
-        const unsubscribe = auth.onAuthStateChanged(
+        const unsubscribe = auth!.onAuthStateChanged(
           async (firebaseUser) => {
             safeLog('Firebase auth state endret:', firebaseUser?.email);
             
@@ -100,6 +114,47 @@ const App = () => {
       setAuthInitialized(true);
     }, 100);
   };
+
+  // Sjekk Firebase initialisering først
+  if (!firebaseInitialized) {
+    const firebaseError = getFirebaseError();
+    return (
+      <SafeAreaProvider>
+        <PaperProvider theme={theme}>
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+            <Text variant="headlineSmall" style={{ marginBottom: 16, textAlign: 'center', color: '#c62828' }}>
+              Konfigurasjonsfeil
+            </Text>
+            <Text variant="bodyMedium" style={{ marginBottom: 24, textAlign: 'center', color: '#666' }}>
+              {firebaseError?.message || 'Firebase er ikke konfigurert riktig. Sjekk at API-nøkler er satt i GitHub Secrets.'}
+            </Text>
+            <Text variant="bodySmall" style={{ marginBottom: 16, textAlign: 'center', color: '#999' }}>
+              For å fikse dette:
+            </Text>
+            <Text variant="bodySmall" style={{ marginBottom: 8, textAlign: 'center', color: '#999' }}>
+              1. Gå til GitHub repository Settings → Secrets
+            </Text>
+            <Text variant="bodySmall" style={{ marginBottom: 8, textAlign: 'center', color: '#999' }}>
+              2. Sjekk at alle Firebase Secrets er satt
+            </Text>
+            <Text variant="bodySmall" style={{ marginBottom: 24, textAlign: 'center', color: '#999' }}>
+              3. Trigger en ny deployment
+            </Text>
+            <Button 
+              mode="contained" 
+              onPress={() => {
+                if (typeof window !== 'undefined') {
+                  window.location.reload();
+                }
+              }}
+            >
+              Last på nytt
+            </Button>
+          </View>
+        </PaperProvider>
+      </SafeAreaProvider>
+    );
+  }
 
   if (loading) {
     return (
