@@ -35,6 +35,12 @@ Pulse Oslo er en digital plattform hvor innbyggerne i Oslo kan delta i lokale av
 - Opprett nye avstemninger (kun admin)
 - Administrer avstemninger og resultater
 
+### 🔹 Feilrapportering & Tilbakemelding
+- Rapporter feil eller problemer
+- Foreslå nye funksjoner
+- Gi generell tilbakemelding
+- Automatisk feilrapportering ved kritiske feil
+
 ## 🚀 Komme i gang
 
 ### Forutsetninger
@@ -73,7 +79,26 @@ npm start
 3. Kopier Firebase-konfigurasjonen til `app.local.json`
 4. Opprett Firestore-database
 5. Sett opp Security Rules (se `FIRESTORE_SECURITY_RULES_ADVANCED.txt`)
-6. Seed initial data med `node seedPolls.js` (hvis du har service account key)
+6. Opprett Firestore indekser (se `FIRESTORE_INDEXES.md`)
+7. Seed initial data med `node seedPolls.js` (hvis du har service account key)
+
+### EmailJS Setup (for Feilrapportering)
+
+1. Opprett EmailJS konto på [EmailJS](https://www.emailjs.com/)
+2. Følg instruksjonene i `EMAILJS_SETUP_GUIDE.md`
+3. Legg til EmailJS nøkler i `app.local.json`:
+   ```json
+   {
+     "expo": {
+       "extra": {
+         "emailjsPublicKey": "din-public-key",
+         "emailjsServiceId": "din-service-id",
+         "emailjsTemplateId": "din-template-id"
+       }
+     }
+   }
+   ```
+4. For produksjon: Legg til nøkler i GitHub Secrets
 
 ## 📁 Prosjektstruktur
 
@@ -110,6 +135,7 @@ Appen deployes automatisk til GitHub Pages ved push til `main`-branchen.
 - **React Native** - Cross-platform app
 - **Expo** - Utviklings- og build-plattform
 - **Firebase** - Backend (Authentication, Firestore)
+- **EmailJS** - E-post sending (feilrapportering)
 - **React Navigation** - Navigasjon
 - **React Native Paper** - UI-komponenter
 - **TypeScript** - Type safety

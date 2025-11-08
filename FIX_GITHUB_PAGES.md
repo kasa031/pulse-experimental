@@ -1,98 +1,119 @@
-# 🔧 Fix GitHub Pages 404 Error
+# 🔧 Fiks GitHub Pages Deployment
 
 ## Problem
-Du får 404-feil når du åpner: https://kasa031.github.io/pulse-experimental/
+Appen lastes ikke på GitHub Pages. Feilmelding: "Appen lastet ikke" etter 10 sekunder.
 
-## Mulige årsaker og løsninger
+## Mulige Årsaker
 
-### 1. GitHub Pages er ikke aktivert
+1. **Build feilet** - GitHub Actions workflow feilet
+2. **JavaScript-filer lastes ikke** - Feil paths i index.html
+3. **BaseUrl ikke riktig** - Paths er ikke korrekt konfigurert
+4. **Firebase secrets mangler** - Appen kan ikke initialisere
 
-**Sjekk:**
-1. Gå til: https://github.com/kasa031/pulse-experimental/settings/pages
-2. Under **"Source"**, skal det stå **"GitHub Actions"**
-3. Hvis ikke, velg **"GitHub Actions"** og klikk **"Save"**
+## Løsning
 
-### 2. Deploy workflow har ikke kjørt eller feilet
+### Steg 1: Sjekk GitHub Actions
+1. Gå til GitHub repository
+2. Klikk på "Actions" tab
+3. Sjekk siste deployment
+4. Se om det er noen feilmeldinger
 
-**Sjekk:**
-1. Gå til: https://github.com/kasa031/pulse-experimental/actions
-2. Se om det er en deploy workflow som har kjørt
-3. Hvis den feilet, klikk på den og se feilmeldingen
+### Steg 2: Verifiser Secrets
+Sjekk at alle Firebase secrets er satt i GitHub:
+- Settings → Secrets and variables → Actions
+- Sjekk at disse er satt:
+  - `FIREBASE_API_KEY`
+  - `FIREBASE_AUTH_DOMAIN`
+  - `FIREBASE_PROJECT_ID`
+  - `FIREBASE_STORAGE_BUCKET`
+  - `FIREBASE_MESSAGING_SENDER_ID`
+  - `FIREBASE_APP_ID`
 
-**Manuell deploy:**
-1. Gå til: https://github.com/kasa031/pulse-experimental/actions
-2. Klikk på "Deploy to GitHub Pages" workflow
-3. Klikk "Run workflow" → "Run workflow" (manuell trigger)
-
-### 3. Build output er feil
-
-**Sjekk:**
-- Workflow bruker nå `--output-dir web-build` for å sikre riktig output
-- Verifiserer at `index.html` eksisterer før deploy
-
-### 4. Repository navn stemmer ikke
-
-**Sjekk:**
-- Repository navn: `pulse-experimental`
-- URL skal være: `https://kasa031.github.io/pulse-experimental/`
-- Hvis repository navn er annerledes, oppdater URL
-
-## Steg-for-steg fix
-
-### Steg 1: Aktiver GitHub Pages (hvis ikke gjort)
-
-1. Gå til: https://github.com/kasa031/pulse-experimental/settings/pages
-2. Under **"Source"**, velg **"GitHub Actions"**
-3. Klikk **"Save"**
-
-### Steg 2: Trigger deploy manuelt
-
-1. Gå til: https://github.com/kasa031/pulse-experimental/actions
-2. Klikk på "Deploy to GitHub Pages" workflow
-3. Klikk "Run workflow" (høyre side)
-4. Velg branch: `main`
+### Steg 3: Trigger Ny Deployment
+1. Gå til "Actions"
+2. Velg "Deploy to GitHub Pages" workflow
+3. Klikk "Run workflow"
+4. Velg "main" branch
 5. Klikk "Run workflow"
 
-### Steg 3: Vent på deploy
+### Steg 4: Sjekk Build Output
+Etter deployment, sjekk:
+1. Gå til "Actions" → Siste deployment
+2. Se "Build web" step
+3. Sjekk om det er noen feilmeldinger
+4. Se "Verify build output" step
 
-1. Vent 2-3 minutter
-2. Se deploy-status i Actions-fanen
-3. Når den er grønn (✅), prøv å åpne URL igjen
+### Steg 5: Sjekk Browser Console
+1. Åpne https://kasa031.github.io/pulse-experimental/
+2. Trykk F12 (Developer Tools)
+3. Gå til Console tab
+4. Se etter feilmeldinger:
+   - 404 errors for JS/CSS filer
+   - Firebase initialisering feil
+   - Network errors
 
-### Steg 4: Test URL
+## Vanlige Problemer
 
-1. Åpne: https://kasa031.github.io/pulse-experimental/
-2. Hvis det fortsatt ikke fungerer, sjekk Actions log for feil
+### Problem 1: JavaScript-filer lastes ikke
+**Symptom**: 404 errors for `/_expo/static/js/web/index.js`
 
-## Hvis det fortsatt ikke fungerer
+**Løsning**: 
+- Sjekk at baseUrl er `/pulse-experimental` i app.json
+- Sjekk at GitHub Actions workflow fikser paths i index.html
 
-### Sjekk Actions log:
+### Problem 2: Firebase ikke initialisert
+**Symptom**: "Firebase er ikke konfigurert" feil
 
-1. Gå til Actions-fanen
-2. Klikk på siste deploy
-3. Se gjennom alle steg for feilmeldinger
-4. Spesielt sjekk:
-   - "Build web" steget
-   - "Verify build output" steget
-   - "Upload artifact" steget
+**Løsning**:
+- Sjekk at alle Firebase secrets er satt
+- Sjekk at secrets har riktige verdier
 
-### Vanlige feil:
+### Problem 3: Build feiler
+**Symptom**: GitHub Actions workflow feiler
 
-**Feil 1: "web-build not found"**
-- Løsning: Workflow er oppdatert med `--output-dir web-build`
+**Løsning**:
+- Sjekk build logs i Actions tab
+- Se etter spesifikke feilmeldinger
+- Prøv å kjøre build lokalt: `npm run build:web`
 
-**Feil 2: "index.html not found"**
-- Løsning: Verifisering er lagt til i workflow
+## Test Lokalt
 
-**Feil 3: "GitHub Pages not enabled"**
-- Løsning: Aktiver GitHub Pages i Settings → Pages
-
-## Test lokalt først
+Test at build fungerer lokalt:
 
 ```bash
+# Bygg for web
 npm run build:web
-ls web-build/
+
+# Sjekk at dist/ eller web-build/ mappen er opprettet
+ls -la dist/ || ls -la web-build/
+
+# Sjekk at index.html eksisterer
+cat dist/index.html || cat web-build/index.html
 ```
 
-Hvis `web-build/index.html` eksisterer, skal deploy fungere.
+## Hvis Alt Feiler
 
+1. **Sjekk GitHub Pages Settings**:
+   - Settings → Pages
+   - Source: "GitHub Actions"
+   - Branch: "main"
+
+2. **Prøv å bygge manuelt**:
+   ```bash
+   npm run build:web
+   # Push dist/ eller web-build/ til gh-pages branch
+   ```
+
+3. **Kontakt support** hvis problemet vedvarer
+
+## Debug Info
+
+Hvis appen fortsatt ikke laster, sjekk console for:
+- Network tab: Se hvilke filer som feiler å laste
+- Console tab: Se JavaScript errors
+- Application tab: Se om Firebase er initialisert
+
+---
+
+**Status**: Klar for fiksing
+**Neste steg**: Sjekk GitHub Actions og secrets

@@ -152,7 +152,7 @@ const CreatePollScreen = () => {
       return;
     }
 
-    const user = auth.currentUser;
+    const user = auth?.currentUser;
     if (!user || !user.email) {
       setSnackbarMessage('Du må være innlogget');
       setSnackbarVisible(true);
@@ -702,7 +702,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
   },
   previewMetaChip: {
-    backgroundColor: osloBranding.colors.backgroundSecondary,
+    backgroundColor: osloBranding.colors.background,
   },
   previewDates: {
     marginTop: SPACING.md,

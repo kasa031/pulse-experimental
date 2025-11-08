@@ -28,13 +28,18 @@ const HomeScreen = () => {
     loadStats();
   }, []);
 
-  const loadStats = async () => {
+  const loadStats = async (isRefresh = false) => {
     try {
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       const polls = await getActivePolls();
       setActivePollsCount(polls.length);
       // Hent de 3 nyeste avstemningene for preview
       setRecentPolls(polls.slice(0, 3));
-      
+
       // Hent de 3 nyeste nyhetene for preview
       const news = await getLatestNews(3);
       setLatestNews(news);
@@ -42,8 +47,13 @@ const HomeScreen = () => {
       safeError('Feil ved henting av statistikk:', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
+
+  const onRefresh = React.useCallback(() => {
+    loadStats(true);
+  }, []);
 
   return (
     <ScrollView 
@@ -375,7 +385,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
     paddingTop: SPACING.md,
     borderTopWidth: 1,
-    borderTopColor: theme.colors.border || '#E0E0E0',
+    borderTopColor: osloBranding.colors.border || '#E0E0E0',
   },
   stat: {
     flexDirection: 'row',
@@ -457,6 +467,30 @@ const styles = StyleSheet.create({
   previewChipText: {
     fontSize: 10,
     color: osloBranding.colors.primary,
+  },
+  aboutHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  featureList: {
+    marginTop: SPACING.sm,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: SPACING.sm,
+  },
+  featureText: {
+    flex: 1,
+    marginLeft: SPACING.sm,
+    color: osloBranding.colors.textSecondary,
+  },
+  aboutFooter: {
+    marginTop: SPACING.md,
+    paddingTop: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: osloBranding.colors.border || '#E0E0E0',
   },
 });
 

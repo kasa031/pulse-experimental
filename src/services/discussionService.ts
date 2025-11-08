@@ -57,6 +57,9 @@ export interface Comment {
  */
 export const getDiscussions = async (limitCount: number = 20): Promise<Discussion[]> => {
   try {
+    if (!db) {
+      throw new Error('Database er ikke tilgjengelig');
+    }
     const discussionsRef = collection(db, 'discussions');
     const q = query(
       discussionsRef,
@@ -99,6 +102,9 @@ export const getDiscussionsByCategory = async (
   limitCount: number = 20
 ): Promise<Discussion[]> => {
   try {
+    if (!db) {
+      throw new Error('Database er ikke tilgjengelig');
+    }
     const discussionsRef = collection(db, 'discussions');
     const q = query(
       discussionsRef,
@@ -144,9 +150,13 @@ export const createDiscussion = async (
   district?: string
 ): Promise<string> => {
   try {
-    const user = auth.currentUser;
+    const user = auth?.currentUser;
     if (!user) {
       throw new Error('Du må være logget inn for å opprette en diskusjon');
+    }
+
+    if (!db) {
+      throw new Error('Database er ikke tilgjengelig');
     }
 
     // Hent brukerens navn
@@ -181,6 +191,9 @@ export const createDiscussion = async (
  */
 export const getComments = async (discussionId: string): Promise<Comment[]> => {
   try {
+    if (!db) {
+      throw new Error('Database er ikke tilgjengelig');
+    }
     const commentsRef = collection(db, 'discussions', discussionId, 'comments');
     const q = query(
       commentsRef,
@@ -222,9 +235,13 @@ export const addComment = async (
   content: string
 ): Promise<string> => {
   try {
-    const user = auth.currentUser;
+    const user = auth?.currentUser;
     if (!user) {
       throw new Error('Du må være logget inn for å legge til en kommentar');
+    }
+
+    if (!db) {
+      throw new Error('Database er ikke tilgjengelig');
     }
 
     // Hent brukerens navn
@@ -266,6 +283,10 @@ export const addComment = async (
 export const subscribeToDiscussions = (
   callback: (discussions: Discussion[]) => void
 ): (() => void) => {
+  if (!db) {
+    safeError('Database er ikke tilgjengelig');
+    return () => {};
+  }
   const discussionsRef = collection(db, 'discussions');
   const q = query(
     discussionsRef,
@@ -300,9 +321,13 @@ export const subscribeToDiscussions = (
  */
 export const likeComment = async (discussionId: string, commentId: string): Promise<void> => {
   try {
-    const user = auth.currentUser;
+    const user = auth?.currentUser;
     if (!user) {
       throw new Error('Du må være logget inn for å like en kommentar');
+    }
+
+    if (!db) {
+      throw new Error('Database er ikke tilgjengelig');
     }
 
     const commentRef = doc(db, 'discussions', discussionId, 'comments', commentId);
@@ -351,9 +376,13 @@ export const likeComment = async (discussionId: string, commentId: string): Prom
  */
 export const dislikeComment = async (discussionId: string, commentId: string): Promise<void> => {
   try {
-    const user = auth.currentUser;
+    const user = auth?.currentUser;
     if (!user) {
       throw new Error('Du må være logget inn for å dislike en kommentar');
+    }
+
+    if (!db) {
+      throw new Error('Database er ikke tilgjengelig');
     }
 
     const commentRef = doc(db, 'discussions', discussionId, 'comments', commentId);
@@ -396,3 +425,4 @@ export const dislikeComment = async (discussionId: string, commentId: string): P
     throw error;
   }
 };
+

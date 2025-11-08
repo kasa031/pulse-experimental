@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, KeyboardAvoidingView, Platform, Image } from 'react-native';
-import { TextInput, Button, Text, Surface, HelperText, Checkbox } from 'react-native-paper';
+import { TextInput, Button, Text, Surface, HelperText, Checkbox, Portal, Dialog } from 'react-native-paper';
 import { auth } from '../services/firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail } from 'firebase/auth';
 import { theme, osloBranding } from '../constants/theme';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { validateEmail, validatePassword } from '../utils/validation';
 import { checkRateLimit } from '../utils/rateLimiter';
 import { safeError } from '../utils/performance';
+import { BUTTON_MIN_HEIGHT, BUTTON_PADDING_VERTICAL } from '../constants/touchTargets';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const REMEMBER_ME_KEY = '@pulse_oslo_remember_me';
@@ -103,8 +104,23 @@ const LoginScreen = () => {
     setPasswordError(null);
 
     try {
+      if (!auth) {
+        setError('Autentisering er ikke tilgjengelig');
+        return;
+      }
       if (isSignUp) {
-        await createUserWithEmailAndPassword(auth, email.trim(), password);
+        const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+        // Send e-post verifisering automatisk ved registrering
+        if (userCredential.user) {
+          try {
+            await sendEmailVerification(userCredential.user);
+            setShowVerificationDialog(true);
+            setVerificationSent(true);
+          } catch (verificationError) {
+            safeError('Feil ved sending av verifiseringslenke:', verificationError);
+            // Fortsett selv om verifisering feiler - bruker kan be om ny lenke senere
+          }
+        }
       } else {
         await signInWithEmailAndPassword(auth, email.trim(), password);
         // Lagre e-post hvis "Husk meg" er valgt
@@ -226,7 +242,7 @@ const LoginScreen = () => {
             </HelperText>
           )}
           {isSignUp && password.length > 0 && !passwordError && passwordStrength && (
-            <HelperText type={passwordStrength === 'strong' ? 'info' : 'warning'}>
+            <HelperText type={passwordStrength === 'strong' ? 'info' : 'error'}>
               Passord styrke: {passwordStrength === 'strong' ? 'Sterk' : passwordStrength === 'medium' ? 'Middels' : 'Svak'}
             </HelperText>
           )}
@@ -394,12 +410,12 @@ const LoginScreen = () => {
             }}>
               Lukk
             </Button>
-            {!verificationSent && auth.currentUser && (
+            {!verificationSent && auth?.currentUser && (
               <Button
                 mode="contained"
                 onPress={async () => {
                   try {
-                    if (auth.currentUser) {
+                    if (auth?.currentUser) {
                       await sendEmailVerification(auth.currentUser);
                       setVerificationSent(true);
                     }

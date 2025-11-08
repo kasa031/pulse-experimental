@@ -4,6 +4,7 @@ import { Text, Button, Surface } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { theme, osloBranding } from '../constants/theme';
 import { safeError } from './performance';
+import { reportBug } from '../services/feedbackService';
 
 interface Props {
   children: ReactNode;
@@ -40,7 +41,16 @@ export class ErrorBoundary extends Component<Props, State> {
       this.props.onError(error, errorInfo);
     }
     
-    // TODO: Send til error reporting service (f.eks. Sentry) når det er implementert
+    // Send automatisk feilrapport (hvis EmailJS er konfigurert)
+    try {
+      const componentStack = errorInfo.componentStack || '';
+      const additionalInfo = `Component Stack:\n${componentStack.substring(0, 500)}`;
+      reportBug(error, 'ErrorBoundary', additionalInfo).catch((reportError) => {
+        safeError('Kunne ikke sende automatisk feilrapport:', reportError);
+      });
+    } catch (reportError) {
+      safeError('Feil ved automatisk feilrapportering:', reportError);
+    }
   }
 
   handleReset = () => {
@@ -67,8 +77,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <Icon 
               name="alert-circle" 
               size={64} 
-              color={osloBranding.colors.error || '#d32f2f'} 
-              style={styles.icon}
+              color="#d32f2f"
             />
             <Text variant="headlineSmall" style={styles.title}>
               Noe gikk galt
@@ -81,6 +90,9 @@ export class ErrorBoundary extends Component<Props, State> {
                 {this.state.errorInfo.componentStack?.split('\n')[0]}
               </Text>
             )}
+            <Text variant="bodySmall" style={styles.hint}>
+              En automatisk feilrapport er sendt. Du kan også rapportere dette manuelt i "Rapporter"-fanen.
+            </Text>
             <View style={styles.buttonContainer}>
               <Button
                 mode="contained"
@@ -117,7 +129,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     backgroundColor: theme.colors.background,
-    minHeight: Platform.OS === 'web' ? '100vh' : undefined,
+    ...(Platform.OS === 'web' ? { flex: 1 } : {}),
   },
   surface: {
     padding: 24,
@@ -132,7 +144,7 @@ const styles = StyleSheet.create({
   title: {
     marginBottom: 12,
     fontWeight: 'bold',
-    color: osloBranding.colors.error || '#d32f2f',
+    color: '#d32f2f',
     textAlign: 'center',
   },
   message: {
@@ -142,11 +154,19 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   errorDetails: {
-    marginBottom: 24,
+    marginBottom: 16,
     textAlign: 'center',
     color: osloBranding.colors.textSecondary,
     fontFamily: Platform.OS === 'web' ? 'monospace' : 'monospace',
     fontSize: 12,
+  },
+  hint: {
+    marginBottom: 16,
+    textAlign: 'center',
+    color: osloBranding.colors.textSecondary,
+    fontSize: 11,
+    fontStyle: 'italic',
+    paddingHorizontal: 16,
   },
   buttonContainer: {
     flexDirection: 'row',

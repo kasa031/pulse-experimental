@@ -39,6 +39,9 @@ export interface UserProfile {
  */
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
   try {
+    if (!db) {
+      throw new Error('Firebase Firestore er ikke initialisert');
+    }
     const userRef = doc(db, 'users', userId);
     const userSnap = await getDoc(userRef);
     
@@ -65,6 +68,10 @@ export const createOrUpdateUserProfile = async (
   try {
     if (!user.email) {
       throw new Error('E-post er påkrevd');
+    }
+
+    if (!db) {
+      throw new Error('Firebase Firestore er ikke initialisert');
     }
 
     const userRef = doc(db, 'users', user.uid);
@@ -109,9 +116,13 @@ export const updateUserProfile = async (
   updates: Partial<Pick<UserProfile, 'displayName' | 'district'>>
 ): Promise<void> => {
   try {
-    const user = auth.currentUser;
+    const user = auth?.currentUser;
     if (!user || user.uid !== userId) {
-      throw new Error('Ikke autorisert til å oppdatere denne profilen');
+      throw new Error('Ikke autorisert til å oppdatere denne profilen');       
+    }
+
+    if (!db) {
+      throw new Error('Firebase Firestore er ikke initialisert');
     }
 
     const userRef = doc(db, 'users', userId);
@@ -130,6 +141,9 @@ export const updateUserProfile = async (
  */
 export const getUserVoteCount = async (userId: string): Promise<number> => {
   try {
+    if (!db) {
+      throw new Error('Firebase Firestore er ikke initialisert');
+    }
     // Telle faktiske votes fra votes collection
     const votesQuery = query(
       collection(db, 'votes'),
@@ -166,6 +180,9 @@ export const getUserVoteCount = async (userId: string): Promise<number> => {
  */
 export const incrementUserVoteCount = async (userId: string): Promise<void> => {
   try {
+    if (!db) {
+      return; // Ikke kritisk, bare returner
+    }
     const userRef = doc(db, 'users', userId);
     const userSnap = await getDoc(userRef);
     
@@ -186,6 +203,9 @@ export const incrementUserVoteCount = async (userId: string): Promise<void> => {
  */
 export const incrementUserPollCount = async (userId: string): Promise<void> => {
   try {
+    if (!db) {
+      return; // Ikke kritisk, bare returner
+    }
     const userRef = doc(db, 'users', userId);
     const userSnap = await getDoc(userRef);
     
@@ -206,6 +226,9 @@ export const incrementUserPollCount = async (userId: string): Promise<void> => {
  */
 export const getUserCommentCount = async (userId: string): Promise<number> => {
   try {
+    if (!db) {
+      return 0;
+    }
     const commentsQuery = query(
       collection(db, 'comments'),
       where('authorId', '==', userId)
@@ -223,6 +246,9 @@ export const getUserCommentCount = async (userId: string): Promise<number> => {
  */
 export const getUserDiscussionCount = async (userId: string): Promise<number> => {
   try {
+    if (!db) {
+      return 0;
+    }
     const discussionsQuery = query(
       collection(db, 'discussions'),
       where('authorId', '==', userId)

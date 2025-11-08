@@ -20,6 +20,7 @@ import { validatePollId, validateOptionIndex } from '../utils/validation';
 import { checkRateLimit } from '../utils/rateLimiter';
 import { safeError } from '../utils/performance';
 import { incrementUserVoteCount } from './userService';
+import { toDate } from '../utils/dateHelpers';
 
 const POLLS_CACHE_KEY = '@pulse_oslo_polls_cache';
 const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutter
@@ -55,6 +56,10 @@ export const getActivePolls = async (): Promise<Poll[]> => {
       return cached;
     }
 
+    if (!db) {
+      throw new Error('Firebase Firestore er ikke initialisert');
+    }
+
     const pollsRef = collection(db, 'polls');
     const q = query(
       pollsRef,
@@ -77,7 +82,7 @@ export const getActivePolls = async (): Promise<Poll[]> => {
     
     return polls;
   } catch (error) {
-    console.error('Feil ved henting av avstemninger:', error);
+    safeError('Feil ved henting av avstemninger:', error);
     // Fallback til cache hvis nettverk feiler
     const cached = await getCachedPolls();
     return cached || [];
@@ -89,6 +94,9 @@ export const getActivePolls = async (): Promise<Poll[]> => {
  */
 export const getPoll = async (pollId: string): Promise<Poll | null> => {
   try {
+    if (!db) {
+      throw new Error('Firebase Firestore er ikke initialisert');
+    }
     const pollRef = doc(db, 'polls', pollId);
     const pollSnap = await getDoc(pollRef);
     
@@ -100,7 +108,7 @@ export const getPoll = async (pollId: string): Promise<Poll | null> => {
     }
     return null;
   } catch (error) {
-    console.error('Feil ved henting av avstemning:', error);
+    safeError('Feil ved henting av avstemning:', error);
     return null;
   }
 };
@@ -126,7 +134,11 @@ export const submitVote = async (
       const remaining = rateLimitCheck.resetAt 
         ? Math.ceil((rateLimitCheck.resetAt - Date.now()) / 1000)
         : 60;
-      throw new Error(`For mange stemmer. Prøv igjen om ${remaining} sekunder.`);
+      throw new Error(`For mange stemmer. Prøv igjen om ${remaining} sekunder.`);                                                                              
+    }
+
+    if (!db) {
+      throw new Error('Firebase Firestore er ikke initialisert');
     }
 
     const pollRef = doc(db, 'polls', pollId);
@@ -155,8 +167,12 @@ export const submitVote = async (
 
     // Sjekk om poll er aktiv
     const now = new Date();
-    const startDate = pollData.startDate?.toDate?.() || new Date(pollData.startDate);
-    const endDate = pollData.endDate?.toDate?.() || new Date(pollData.endDate);
+    const startDate = toDate(pollData.startDate);
+    const endDate = toDate(pollData.endDate);
+    
+    if (!startDate || !endDate) {
+      throw new Error('Ugyldig dato for avstemning');
+    }
     
     if (!pollData.isActive || now < startDate || now > endDate) {
       throw new Error('Denne avstemningen er ikke lenger aktiv');
@@ -175,7 +191,8 @@ export const submitVote = async (
         pollId,
         userId,
         optionIndex,
-        timestamp: serverTimestamp(),
+        votedAt: serverTimestamp(),
+        timestamp: serverTimestamp(), // Behold for bakoverkompatibilitet
       }),
       updateDoc(pollRef, {
         options: updatedOptions,
@@ -207,6 +224,10 @@ export const submitVote = async (
 export const subscribeToPolls = (
   callback: (polls: Poll[]) => void
 ): (() => void) => {
+  if (!db) {
+    safeError('Firebase Firestore er ikke initialisert');
+    return () => {};
+  }
   const pollsRef = collection(db, 'polls');
   const q = query(
     pollsRef,
@@ -238,7 +259,7 @@ const cachePolls = async (polls: Poll[]): Promise<void> => {
       timestamp: Date.now(),
     }));
   } catch (error) {
-    console.error('Feil ved caching av avstemninger:', error);
+    safeError('Feil ved caching av avstemninger:', error);
   }
 };
 
@@ -257,7 +278,7 @@ const getCachedPolls = async (): Promise<Poll[] | null> => {
 
     return data;
   } catch (error) {
-    console.error('Feil ved henting av cache:', error);
+    safeError('Feil ved henting av cache:', error);
     return null;
   }
 };
@@ -266,7 +287,7 @@ const invalidateCache = async (): Promise<void> => {
   try {
     await AsyncStorage.removeItem(POLLS_CACHE_KEY);
   } catch (error) {
-    console.error('Feil ved invalidering av cache:', error);
+    safeError('Feil ved invalidering av cache:', error);
   }
 };
 
@@ -332,6 +353,10 @@ export const createPoll = async (
 
     if (pollData.endDate <= pollData.startDate) {
       throw new Error('Sluttdato må være etter startdato');
+    }
+
+    if (!db) {
+      throw new Error('Firebase Firestore er ikke initialisert');
     }
 
     // Opprett poll

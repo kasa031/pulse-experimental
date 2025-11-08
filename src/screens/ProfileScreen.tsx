@@ -12,11 +12,12 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
 import { SPACING } from '../constants/spacing';
 import { BUTTON_MIN_HEIGHT, CHIP_MIN_HEIGHT } from '../constants/touchTargets';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ProfileScreen = () => {
   const { isMobile, isTablet, isDesktop, width } = useResponsive();
   const padding = getResponsivePadding(width);
-  const user = auth.currentUser;
+  const user = auth?.currentUser;
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -115,6 +116,19 @@ const ProfileScreen = () => {
 
   const handleLogout = async () => {
     try {
+      if (!auth) {
+        return;
+      }
+      
+      // Fjern "Husk meg" data ved logout
+      try {
+        await AsyncStorage.removeItem('@pulse_oslo_remember_me');
+        await AsyncStorage.removeItem('@pulse_oslo_remembered_email');
+      } catch (storageError) {
+        safeError('Feil ved fjerning av lagret data:', storageError);
+        // Fortsett med logout selv om dette feiler
+      }
+      
       await signOut(auth);
     } catch (error) {
       safeError('Logout feil:', error);

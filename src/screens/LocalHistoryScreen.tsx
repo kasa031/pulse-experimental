@@ -9,29 +9,10 @@ import { Timestamp } from 'firebase/firestore';
 import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
 import { SPACING } from '../constants/spacing';
 import { CHIP_MIN_HEIGHT } from '../constants/touchTargets';
+import { POLL_CATEGORIES } from '../constants/osloDistricts';
 
-// Simple date formatter
-const formatDate = (date: Date | Timestamp | any): string => {
-  try {
-    let dateObj: Date;
-    if (date instanceof Date) {
-      dateObj = date;
-    } else if (date?.toDate) {
-      dateObj = date.toDate();
-    } else if (typeof date === 'string') {
-      dateObj = new Date(date);
-    } else {
-      return 'Ukjent dato';
-    }
-    
-    const day = dateObj.getDate();
-    const month = dateObj.toLocaleDateString('nb-NO', { month: 'short' });
-    const year = dateObj.getFullYear();
-    return `${day}. ${month} ${year}`;
-  } catch {
-    return 'Ukjent dato';
-  }
-};
+// Bruk formatDateNorwegian fra dateHelpers
+const formatDate = formatDateNorwegian;
 
 const LocalHistoryScreen = React.memo(() => {
   const { isMobile, isTablet, isDesktop, width } = useResponsive();
@@ -55,7 +36,7 @@ const LocalHistoryScreen = React.memo(() => {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const user = auth.currentUser;
+      const user = auth?.currentUser;
       
       if (user) {
         const votes = await getUserVotingHistory(user.uid);
@@ -388,7 +369,7 @@ const LocalHistoryScreen = React.memo(() => {
                                   isUserChoice && styles.userChoice
                                 ]}
                               >
-                                {isUserChoice && '✓ '}{option}
+                                {isUserChoice && '✓ '}{option.text}
                               </Text>
                               <Text variant="bodySmall" style={styles.resultStats}>
                                 {count} stemmer ({percentage}%)
@@ -440,7 +421,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    color: theme.colors.textSecondary,
+    color: osloBranding.colors.textSecondary,
   },
   content: {
     padding: SPACING.screenPadding.mobile,
@@ -470,7 +451,7 @@ const styles = StyleSheet.create({
   },
   description: {
     marginTop: 8,
-    color: theme.colors.textSecondary,
+    color: osloBranding.colors.textSecondary,
   },
   tabContainer: {
     flexDirection: 'row',
@@ -490,11 +471,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   dateText: {
-    color: theme.colors.textSecondary,
+    color: osloBranding.colors.textSecondary,
     marginBottom: 8,
   },
   totalVotes: {
-    color: theme.colors.textSecondary,
+    color: osloBranding.colors.textSecondary,
     marginBottom: 12,
     fontWeight: '500',
   },
@@ -509,7 +490,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   emptyText: {
-    color: theme.colors.textSecondary,
+    color: osloBranding.colors.textSecondary,
     fontStyle: 'italic',
     textAlign: 'center',
     padding: 16,
@@ -542,12 +523,55 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   resultStats: {
-    color: theme.colors.textSecondary,
+    color: osloBranding.colors.textSecondary,
   },
   progressBar: {
     height: 8,
     borderRadius: 4,
     marginTop: 4,
+  },
+  sectionTitle: {
+    marginBottom: SPACING.md,
+    color: osloBranding.colors.text,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: SPACING.md,
+  },
+  statItem: {
+    flex: 1,
+    minWidth: 120,
+    marginRight: SPACING.md,
+    marginBottom: SPACING.sm,
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: osloBranding.colors.primary,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: osloBranding.colors.textSecondary,
+    marginTop: 4,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  filterLabel: {
+    marginRight: SPACING.sm,
+    color: osloBranding.colors.textSecondary,
+  },
+  chipContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.xs,
+  },
+  filterChip: {
+    marginRight: SPACING.xs,
+    marginBottom: SPACING.xs,
   },
 });
 

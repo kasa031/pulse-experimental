@@ -23,6 +23,7 @@ import NewsScreen from './screens/NewsScreen';
 import ContactScreen from './screens/ContactScreen';
 import LocalHistoryScreen from './screens/LocalHistoryScreen';
 import CreatePollScreen from './screens/CreatePollScreen';
+import FeedbackScreen from './screens/FeedbackScreen';
 // Firebase setup
 import './services/firebase';
 // Theme
@@ -284,6 +285,8 @@ const App = () => {
         iconName = 'history';
       } else if (route.name === 'Opprett') {
         iconName = focused ? 'plus-circle' : 'plus-circle-outline';
+      } else if (route.name === 'Rapporter') {
+        iconName = focused ? 'bug' : 'bug-outline';
       } else {
         iconName = 'help';
       }
@@ -361,6 +364,11 @@ const App = () => {
                 name="Opprett" 
                 component={CreatePollScreen}
                 options={{ title: 'Opprett avstemning' }}
+              />
+              <Tab.Screen 
+                name="Rapporter" 
+                component={FeedbackScreen}
+                options={{ title: 'Rapporter feil' }}
               />
             </Tab.Navigator>
     );

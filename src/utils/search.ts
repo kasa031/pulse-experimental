@@ -19,8 +19,8 @@ export const searchPolls = (polls: Poll[], searchTerm: string): Poll[] => {
     const descriptionMatch = poll.description?.toLowerCase().includes(term) || false;
     const categoryMatch = poll.category?.toLowerCase().includes(term) || false;
     const districtMatch = poll.district?.toLowerCase().includes(term) || false;
-    const optionsMatch = poll.options.some(option => 
-      option.toLowerCase().includes(term)
+    const optionsMatch = poll.options.some(option =>
+      (typeof option === 'string' ? option : option.text).toLowerCase().includes(term)
     );
 
     return titleMatch || descriptionMatch || categoryMatch || districtMatch || optionsMatch;

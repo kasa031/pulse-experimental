@@ -79,7 +79,8 @@ export const checkRateLimit = async (
     };
   } catch (error) {
     // Ved feil, tillat handling (fail-open)
-    console.error('Rate limit check feilet:', error);
+    const { safeError } = require('./performance');
+    safeError('Rate limit check feilet:', error);
     return { allowed: true };
   }
 };
@@ -92,7 +93,8 @@ export const resetRateLimit = async (type: RateLimitType, identifier?: string): 
     const key = `${RATE_LIMIT_PREFIX}${type}_${identifier || 'global'}`;
     await AsyncStorage.removeItem(key);
   } catch (error) {
-    console.error('Rate limit reset feilet:', error);
+    const { safeError } = require('./performance');
+    safeError('Rate limit reset feilet:', error);
   }
 };
 
@@ -124,7 +126,8 @@ export const getRateLimitInfo = async (
       resetAt: entry.resetAt,
     };
   } catch (error) {
-    console.error('Rate limit info feilet:', error);
+    const { safeError } = require('./performance');
+    safeError('Rate limit info feilet:', error);
     return null;
   }
 };

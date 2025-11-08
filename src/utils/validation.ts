@@ -64,11 +64,16 @@ export const validatePassword = (password: string): { valid: boolean; error?: st
 export const sanitizeText = (text: string, maxLength: number = 1000): string => {
   if (!text) return '';
   
-  // Fjern HTML tags
+  // Fjern HTML tags først (komplett sanitization)
   let sanitized = text.replace(/<[^>]*>/g, '');
   
-  // Fjern potensielt farlige tegn
-  sanitized = sanitized.replace(/[<>]/g, '');
+  // Escape HTML entities (må gjøres før vi fjerner tegn)
+  sanitized = sanitized
+    .replace(/&/g, '&amp;')  // Må gjøres først for å unngå dobbel escaping
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
   
   // Trim og begrens lengde
   sanitized = sanitized.trim().substring(0, maxLength);
@@ -163,31 +168,4 @@ export const validatePollId = (pollId: string): { valid: boolean; error?: string
   return { valid: true };
 };
 
-/**
- * Rate limiting helper (client-side)
- * Lagrer timestamp for siste handling og sjekker om det er for kort tid siden
- */
-export const checkRateLimit = (
-  key: string,
-  minIntervalMs: number = 1000
-): { allowed: boolean; remainingMs?: number } => {
-  const storageKey = `@rate_limit_${key}`;
-  const lastAction = localStorage.getItem(storageKey);
-  
-  if (!lastAction) {
-    localStorage.setItem(storageKey, Date.now().toString());
-    return { allowed: true };
-  }
-
-  const lastActionTime = parseInt(lastAction, 10);
-  const now = Date.now();
-  const elapsed = now - lastActionTime;
-
-  if (elapsed < minIntervalMs) {
-    return { allowed: false, remainingMs: minIntervalMs - elapsed };
-  }
-
-  localStorage.setItem(storageKey, now.toString());
-  return { allowed: true };
-};
 

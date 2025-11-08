@@ -17,40 +17,12 @@ import { getUserProfile } from '../services/userService';
 import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
 import { SPACING } from '../constants/spacing';
 import { BUTTON_MIN_HEIGHT, CHIP_MIN_HEIGHT } from '../constants/touchTargets';
+import { formatRelativeTime, formatDateNorwegian } from '../utils/dateHelpers';
 
 const CATEGORIES = POLL_CATEGORIES || ['politikk', 'transport', 'miljø', 'byutvikling', 'nyheter'];
 
-const formatDate = (date: Date | Timestamp | unknown): string => {
-  try {
-    let dateObj: Date;
-    if (date instanceof Date) {
-      dateObj = date;
-    } else if (date && typeof date === 'object' && 'toDate' in date) {
-      dateObj = (date as Timestamp).toDate();
-    } else {
-      return 'Ukjent dato';
-    }
-    
-    const now = new Date();
-    const diffMs = now.getTime() - dateObj.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-    
-    if (diffMins < 1) return 'Nettopp';
-    if (diffMins < 60) return `${diffMins} min siden`;
-    if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? 'time' : 'timer'} siden`;
-    if (diffDays < 7) return `${diffDays} ${diffDays === 1 ? 'dag' : 'dager'} siden`;
-    
-    return dateObj.toLocaleDateString('nb-NO', { 
-      day: 'numeric', 
-      month: 'short',
-      year: dateObj.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
-    });
-  } catch {
-    return 'Ukjent dato';
-  }
-};
+// Bruk formatRelativeTime fra dateHelpers
+const formatDate = formatRelativeTime;
 
 const getPriorityColor = (priority: NewsItem['priority']): string => {
   switch (priority) {
@@ -64,7 +36,7 @@ const getPriorityColor = (priority: NewsItem['priority']): string => {
 };
 
 const NewsScreen = () => {
-  const { isMobile, isTablet, width } = useResponsive();
+  const { isMobile, isTablet, isDesktop, width } = useResponsive();
   const padding = getResponsivePadding(width);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,7 +57,7 @@ const NewsScreen = () => {
 
   const loadUserDistrict = async () => {
     try {
-      const user = auth.currentUser;
+      const user = auth?.currentUser;
       if (user) {
         const profile = await getUserProfile(user.uid);
         if (profile?.district) {
@@ -596,7 +568,7 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 8,
     marginBottom: SPACING.md,
-    backgroundColor: osloBranding.colors.backgroundSecondary,
+    backgroundColor: osloBranding.colors.background,
   },
   newsActions: {
     flexDirection: 'row',
@@ -635,7 +607,7 @@ const styles = StyleSheet.create({
     height: 250,
     borderRadius: 8,
     marginBottom: SPACING.md,
-    backgroundColor: osloBranding.colors.backgroundSecondary,
+    backgroundColor: osloBranding.colors.background,
   },
   fullNewsSummary: {
     fontWeight: '600',

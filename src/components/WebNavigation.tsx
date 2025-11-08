@@ -26,6 +26,7 @@ const navItems: NavItem[] = [
   { name: 'Kontakt', title: 'Kontakt', icon: 'email-outline', iconFocused: 'email' },
   { name: 'Lokalhistorie', title: 'Lokalhistorie', icon: 'history', iconFocused: 'history' },
   { name: 'Opprett', title: 'Opprett', icon: 'plus-circle-outline', iconFocused: 'plus-circle' },
+  { name: 'Rapporter', title: 'Rapporter', icon: 'bug-outline', iconFocused: 'bug' },
 ];
 
 interface WebNavigationProps {
@@ -42,7 +43,15 @@ const WebNavigation = ({ children }: WebNavigationProps) => {
     route = useRoute();
   } catch (error) {
     // Navigation context not available yet - return children
-    console.warn('Navigation not ready in WebNavigation:', error);
+    // Bruk safeError hvis tilgjengelig, ellers console.warn
+    try {
+      const { safeError } = require('../utils/performance');
+      safeError('Navigation not ready in WebNavigation:', error);
+    } catch {
+      if (typeof console !== 'undefined' && console.warn) {
+        console.warn('Navigation not ready in WebNavigation:', error);
+      }
+    }
     return <>{children}</>;
   }
 
@@ -62,7 +71,14 @@ const WebNavigation = ({ children }: WebNavigationProps) => {
         });
         return unsubscribe;
       } catch (error) {
-        console.warn('Error setting up navigation listener:', error);
+        try {
+          const { safeError } = require('../utils/performance');
+          safeError('Error setting up navigation listener:', error);
+        } catch {
+          if (typeof console !== 'undefined' && console.warn) {
+            console.warn('Error setting up navigation listener:', error);
+          }
+        }
       }
     }
   }, [navigation, drawerOpen, isDesktop]);
@@ -80,7 +96,14 @@ const WebNavigation = ({ children }: WebNavigationProps) => {
           setDrawerOpen(false);
         }
       } catch (error) {
-        console.error('Navigation error:', error);
+        try {
+          const { safeError } = require('../utils/performance');
+          safeError('Navigation error:', error);
+        } catch {
+          if (typeof console !== 'undefined' && console.error) {
+            console.error('Navigation error:', error);
+          }
+        }
       }
     }
   };

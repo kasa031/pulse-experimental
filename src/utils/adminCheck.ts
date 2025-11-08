@@ -5,19 +5,20 @@
 
 import { auth } from '../services/firebase';
 import { getIdTokenResult } from 'firebase/auth';
+import { safeError } from './performance';
 
 /**
  * Sjekk om nåværende bruker er admin
  */
 export const isUserAdmin = async (): Promise<boolean> => {
   try {
-    const user = auth.currentUser;
+    const user = auth?.currentUser;
     if (!user) return false;
 
     const tokenResult = await getIdTokenResult(user);
     return tokenResult.claims.admin === true;
   } catch (error) {
-    console.error('Feil ved sjekk av admin-status:', error);
+    safeError('Feil ved sjekk av admin-status:', error);
     return false;
   }
 };
@@ -28,7 +29,7 @@ export const isUserAdmin = async (): Promise<boolean> => {
  */
 export const getUserAdminStatus = (): boolean => {
   try {
-    const user = auth.currentUser;
+    const user = auth?.currentUser;
     if (!user) return false;
 
     // Token claims kan hentes fra getIdTokenResult

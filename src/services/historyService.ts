@@ -16,6 +16,8 @@ import {
 } from 'firebase/firestore';
 import { auth } from './firebase';
 import { Poll } from './pollsService';
+import { safeError } from '../utils/performance';
+import { toDate } from '../utils/dateHelpers';
 
 export interface UserVote {
   pollId: string;
@@ -37,6 +39,9 @@ export interface PollResult {
  */
 export const getUserVotingHistory = async (userId: string): Promise<UserVote[]> => {
   try {
+    if (!db) {
+      throw new Error('Database er ikke tilgjengelig');
+    }
     const votesRef = collection(db, 'votes');
     const q = query(
       votesRef,
@@ -59,7 +64,7 @@ export const getUserVotingHistory = async (userId: string): Promise<UserVote[]> 
           pollTitle: pollData.title || 'Ukjent avstemning',
           selectedOption: pollData.options?.[voteData.optionIndex] || 'Ukjent',
           optionIndex: voteData.optionIndex,
-          votedAt: voteData.votedAt || voteData.createdAt || Timestamp.now(),
+          votedAt: voteData.votedAt || voteData.timestamp || voteData.createdAt || Timestamp.now(),
         });
       }
     }
@@ -76,6 +81,9 @@ export const getUserVotingHistory = async (userId: string): Promise<UserVote[]> 
  */
 export const getCompletedPollResults = async (limitCount: number = 10): Promise<PollResult[]> => {
   try {
+    if (!db) {
+      throw new Error('Database er ikke tilgjengelig');
+    }
     const pollsRef = collection(db, 'polls');
     const now = Timestamp.now();
     const q = query(
@@ -87,7 +95,7 @@ export const getCompletedPollResults = async (limitCount: number = 10): Promise<
     
     const snapshot = await getDocs(q);
     const results: PollResult[] = [];
-    const currentUser = auth.currentUser;
+    const currentUser = auth?.currentUser;
     
     for (const pollDoc of snapshot.docs) {
       const pollData = pollDoc.data();
@@ -96,12 +104,13 @@ export const getCompletedPollResults = async (limitCount: number = 10): Promise<
         title: pollData.title,
         description: pollData.description,
         options: pollData.options || [],
-        startDate: pollData.startDate?.toDate() || new Date(),
-        endDate: pollData.endDate?.toDate() || new Date(),
+        startDate: toDate(pollData.startDate) || new Date(),
+        endDate: toDate(pollData.endDate) || new Date(),
         category: pollData.category || 'generelt',
         district: pollData.district,
-        createdAt: pollData.createdAt?.toDate() || new Date(),
+        createdAt: toDate(pollData.createdAt) || new Date(),
         createdBy: pollData.createdBy,
+        isActive: pollData.isActive !== undefined ? pollData.isActive : true,
       };
       
       // Hent stemmer for denne avstemningen
@@ -128,12 +137,13 @@ export const getCompletedPollResults = async (limitCount: number = 10): Promise<
         
         // Sjekk om dette er brukerens stemme
         if (currentUser && voteData.userId === currentUser.uid) {
+          const selectedOption = poll.options[optionIndex];
           userVote = {
             pollId: pollDoc.id,
             pollTitle: poll.title,
-            selectedOption: poll.options[optionIndex],
+            selectedOption: typeof selectedOption === 'string' ? selectedOption : selectedOption?.text || '',
             optionIndex,
-            votedAt: voteData.votedAt || voteData.createdAt || Timestamp.now(),
+            votedAt: voteData.votedAt || voteData.timestamp || voteData.createdAt || Timestamp.now(), 
           };
         }
       });
@@ -158,6 +168,9 @@ export const getCompletedPollResults = async (limitCount: number = 10): Promise<
  */
 export const getPollResult = async (pollId: string): Promise<PollResult | null> => {
   try {
+    if (!db) {
+      throw new Error('Database er ikke tilgjengelig');
+    }
     const pollDoc = await getDoc(doc(db, 'polls', pollId));
     
     if (!pollDoc.exists()) {
@@ -170,12 +183,13 @@ export const getPollResult = async (pollId: string): Promise<PollResult | null> 
       title: pollData.title,
       description: pollData.description,
       options: pollData.options || [],
-      startDate: pollData.startDate?.toDate() || new Date(),
-      endDate: pollData.endDate?.toDate() || new Date(),
+      startDate: toDate(pollData.startDate) || new Date(),
+      endDate: toDate(pollData.endDate) || new Date(),
       category: pollData.category || 'generelt',
       district: pollData.district,
-      createdAt: pollData.createdAt?.toDate() || new Date(),
+      createdAt: toDate(pollData.createdAt) || new Date(),
       createdBy: pollData.createdBy,
+      isActive: pollData.isActive !== undefined ? pollData.isActive : true,
     };
     
     // Hent stemmer
@@ -188,7 +202,7 @@ export const getPollResult = async (pollId: string): Promise<PollResult | null> 
     
     const optionCounts: Record<number, number> = {};
     let totalVotes = 0;
-    const currentUser = auth.currentUser;
+    const currentUser = auth?.currentUser;
     let userVote: UserVote | undefined;
     
     votesSnapshot.docs.forEach(voteDoc => {
@@ -202,12 +216,13 @@ export const getPollResult = async (pollId: string): Promise<PollResult | null> 
       totalVotes++;
       
       if (currentUser && voteData.userId === currentUser.uid) {
+        const selectedOption = poll.options[optionIndex];
         userVote = {
           pollId,
           pollTitle: poll.title,
-          selectedOption: poll.options[optionIndex],
+          selectedOption: typeof selectedOption === 'string' ? selectedOption : selectedOption?.text || '',
           optionIndex,
-          votedAt: voteData.votedAt || voteData.createdAt || Timestamp.now(),
+          votedAt: voteData.votedAt || voteData.timestamp || voteData.createdAt || Timestamp.now(),   
         };
       }
     });

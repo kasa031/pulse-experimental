@@ -38,8 +38,8 @@ const VoteScreen = React.memo(() => {
     filtered = [...filtered].sort((a, b) => {
       if (sortBy === 'newest') {
         // Sorter etter startDate (nyeste først)
-        const aStart = a.startDate?.toMillis?.() || a.startDate?.getTime?.() || 0;
-        const bStart = b.startDate?.toMillis?.() || b.startDate?.getTime?.() || 0;
+        const aStart = toTimestamp(a.startDate);
+        const bStart = toTimestamp(b.startDate);
         return bStart - aStart;
       } else if (sortBy === 'popular') {
         // Sorter etter totalt antall stemmer (mest populære først)
@@ -48,8 +48,8 @@ const VoteScreen = React.memo(() => {
         return bVotes - aVotes;
       } else if (sortBy === 'endingSoon') {
         // Sorter etter endDate (slutter snart først)
-        const aEnd = a.endDate?.toMillis?.() || a.endDate?.getTime?.() || Infinity;
-        const bEnd = b.endDate?.toMillis?.() || b.endDate?.getTime?.() || Infinity;
+        const aEnd = toTimestamp(a.endDate) || Infinity;
+        const bEnd = toTimestamp(b.endDate) || Infinity;
         return aEnd - bEnd;
       }
       return 0;
@@ -111,7 +111,7 @@ const VoteScreen = React.memo(() => {
   }, []);
 
   const submitVoteHandler = useCallback(async (poll: Poll, optionIndex: number) => {
-    const user = auth.currentUser;
+    const user = auth?.currentUser;
     if (!user) {
       setError('Du må være innlogget for å stemme');
       setSnackbarVisible(true);
@@ -579,7 +579,7 @@ const styles = StyleSheet.create({
   },
   filterLabel: {
     marginBottom: 8,
-    color: theme.colors.textSecondary,
+    color: osloBranding.colors.textSecondary,
     fontWeight: '500',
   },
   sortButton: {
@@ -603,8 +603,20 @@ const styles = StyleSheet.create({
   resultCount: {
     marginBottom: 8,
     paddingHorizontal: 16,
-    color: theme.colors.textSecondary,
+    color: osloBranding.colors.textSecondary,
     fontWeight: '500',
+  },
+  searchContainer: {
+    marginBottom: SPACING.md,
+  },
+  clearSearchButton: {
+    marginLeft: SPACING.sm,
+    minHeight: BUTTON_MIN_HEIGHT,
+  },
+  searchHint: {
+    marginTop: SPACING.xs,
+    color: osloBranding.colors.textSecondary,
+    fontSize: 12,
   },
 });
 

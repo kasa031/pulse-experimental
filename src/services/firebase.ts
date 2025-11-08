@@ -63,7 +63,10 @@ try {
   }
 } catch (error) {
   firebaseError = error as Error;
-  console.error('Firebase initialisering feilet:', error);
+  // Log error - dette er kritisk så vi logger alltid
+  if (typeof console !== 'undefined' && console.error) {
+    console.error('Firebase initialisering feilet:', error);
+  }
   // App vil håndtere dette i App.tsx
 }
 

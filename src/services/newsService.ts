@@ -26,6 +26,9 @@ export interface NewsItem {
  */
 export const getLatestNews = async (limitCount: number = 10): Promise<NewsItem[]> => {
   try {
+    if (!db) {
+      throw new Error('Firebase Firestore er ikke initialisert');
+    }
     const newsRef = collection(db, 'news');
     const now = Timestamp.now();
     const q = query(
@@ -52,6 +55,9 @@ export const getLatestNews = async (limitCount: number = 10): Promise<NewsItem[]
  */
 export const getNewsByDistrict = async (district: string, limitCount: number = 10): Promise<NewsItem[]> => {
   try {
+    if (!db) {
+      throw new Error('Firebase Firestore er ikke initialisert');
+    }
     const newsRef = collection(db, 'news');
     const now = Timestamp.now();
     const q = query(
@@ -79,6 +85,9 @@ export const getNewsByDistrict = async (district: string, limitCount: number = 1
  */
 export const getNewsByCategory = async (category: NewsItem['category'], limitCount: number = 10): Promise<NewsItem[]> => {
   try {
+    if (!db) {
+      throw new Error('Firebase Firestore er ikke initialisert');
+    }
     const newsRef = collection(db, 'news');
     const now = Timestamp.now();
     const q = query(

@@ -9,39 +9,15 @@ import { POLL_CATEGORIES } from '../constants/osloDistricts';
 import { safeError, safeLog } from '../utils/performance';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Timestamp } from 'firebase/firestore';
+import { toTimestamp, formatRelativeTime } from '../utils/dateHelpers';
 import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
 import { SPACING } from '../constants/spacing';
 import { BUTTON_MIN_HEIGHT, CHIP_MIN_HEIGHT } from '../constants/touchTargets';
 
 const CATEGORIES = POLL_CATEGORIES || ['generelt', 'transport', 'miljø', 'byutvikling', 'politikk'];
 
-const formatDate = (date: Date | Timestamp | any): string => {
-  try {
-    let dateObj: Date;
-    if (date instanceof Date) {
-      dateObj = date;
-    } else if (date?.toDate) {
-      dateObj = date.toDate();
-    } else {
-      return 'Ukjent dato';
-    }
-    
-    const now = new Date();
-    const diffMs = now.getTime() - dateObj.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-    
-    if (diffMins < 1) return 'Nettopp';
-    if (diffMins < 60) return `${diffMins} min siden`;
-    if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? 'time' : 'timer'} siden`;
-    if (diffDays < 7) return `${diffDays} ${diffDays === 1 ? 'dag' : 'dager'} siden`;
-    
-    return dateObj.toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' });
-  } catch {
-    return 'Ukjent dato';
-  }
-};
+// Bruk formatRelativeTime fra dateHelpers
+const formatDate = formatRelativeTime;
 
 const CommunityScreen = () => {
   const { isMobile, isTablet, isDesktop, width } = useResponsive();
@@ -92,20 +68,12 @@ const CommunityScreen = () => {
   const sortedDiscussions = useMemo(() => {
     const sorted = [...discussions].sort((a, b) => {
       if (sortBy === 'newest') {
-        const aDate = (a.createdAt && 'toMillis' in a.createdAt) 
-          ? (a.createdAt as any).toMillis() 
-          : (a.createdAt instanceof Date ? a.createdAt.getTime() : new Date(a.createdAt as any).getTime()) || 0;
-        const bDate = (b.createdAt && 'toMillis' in b.createdAt) 
-          ? (b.createdAt as any).toMillis() 
-          : (b.createdAt instanceof Date ? b.createdAt.getTime() : new Date(b.createdAt as any).getTime()) || 0;
+        const aDate = toTimestamp(a.createdAt);
+        const bDate = toTimestamp(b.createdAt);
         return bDate - aDate;
       } else if (sortBy === 'oldest') {
-        const aDate = (a.createdAt && 'toMillis' in a.createdAt) 
-          ? (a.createdAt as any).toMillis() 
-          : (a.createdAt instanceof Date ? a.createdAt.getTime() : new Date(a.createdAt as any).getTime()) || 0;
-        const bDate = (b.createdAt && 'toMillis' in b.createdAt) 
-          ? (b.createdAt as any).toMillis() 
-          : (b.createdAt instanceof Date ? b.createdAt.getTime() : new Date(b.createdAt as any).getTime()) || 0;
+        const aDate = toTimestamp(a.createdAt);
+        const bDate = toTimestamp(b.createdAt);
         return aDate - bDate;
       } else if (sortBy === 'mostComments') {
         return (b.commentCount || 0) - (a.commentCount || 0);
@@ -659,7 +627,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: theme.colors.border || '#E0E0E0',
+    borderTopColor: osloBranding.colors.border || '#E0E0E0',
   },
   footerItem: {
     flexDirection: 'row',
@@ -715,6 +683,22 @@ const styles = StyleSheet.create({
   },
   commentInput: {
     marginTop: 8,
+  },
+  sortFilterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.md,
+  },
+  filterLabel: {
+    marginRight: SPACING.sm,
+    color: osloBranding.colors.textSecondary,
+  },
+  sortButton: {
+    minHeight: BUTTON_MIN_HEIGHT,
+  },
+  divider: {
+    marginVertical: SPACING.md,
   },
 });
 
