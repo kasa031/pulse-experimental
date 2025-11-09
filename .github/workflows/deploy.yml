@@ -79,19 +79,18 @@ jobs:
           if [ ! -f "public/index.html" ]; then
             echo "Creating public/index.html template..."
             mkdir -p public
-            cat > public/index.html << 'HTML_EOF'
-<!DOCTYPE html>
-<html lang="no">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>OsloPuls</title>
-</head>
-<body>
-  <div id="root"></div>
-</body>
-</html>
-HTML_EOF
+            printf '%s\n' \
+              '<!DOCTYPE html>' \
+              '<html lang="no">' \
+              '<head>' \
+              '  <meta charset="utf-8" />' \
+              '  <meta name="viewport" content="width=device-width, initial-scale=1" />' \
+              '  <title>OsloPuls</title>' \
+              '</head>' \
+              '<body>' \
+              '  <div id="root"></div>' \
+              '</body>' \
+              '</html>' > public/index.html
           fi
           
           npx expo export --platform web --no-minify 2>&1 | tee build.log || {
