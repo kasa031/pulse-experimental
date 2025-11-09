@@ -253,63 +253,35 @@ jobs:
             echo "✅ JS path: $JS_PATH"
             
             # Use Node.js to completely rewrite index.html with proper script tag
-            node << 'NODE_SCRIPT'
-const fs = require('fs');
-const path = require('path');
-
-const htmlPath = process.env.HTML_PATH;
-const jsPath = process.env.JS_PATH;
-
-if (!htmlPath || !jsPath) {
-  console.error('Missing environment variables');
-  process.exit(1);
-}
-
-let html = fs.readFileSync(htmlPath, 'utf8');
-
-// Remove ALL existing script tags (they're broken)
-html = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-
-// Find the closing body tag and inject script BEFORE it
-if (html.includes('</body>')) {
-  html = html.replace('</body>', `  <script src="${jsPath}"></script>\n</body>`);
-} else {
-  // If no body tag, add it
-  html += `\n  <script src="${jsPath}"></script>\n</body>`;
-}
-
-// Also fix all paths in the HTML
-html = html.replace(/src="\/_expo/g, `src="${process.env.BASE_PATH}/_expo`);
-html = html.replace(/src="\/static/g, `src="${process.env.BASE_PATH}/static`);
-html = html.replace(/href="\/_expo/g, `href="${process.env.BASE_PATH}/_expo`);
-html = html.replace(/href="\/static/g, `href="${process.env.BASE_PATH}/static`);
-
-fs.writeFileSync(htmlPath, html, 'utf8');
-console.log('✅ Fixed index.html with script:', jsPath);
-NODE_SCRIPT
-            
-            # Set environment variables for Node script
-            export HTML_PATH="$OUTPUT_DIR/index.html"
-            export JS_PATH="$JS_PATH"
-            export BASE_PATH="$BASE_PATH"
-            
-            # Run the Node script
+            # Pass variables directly to avoid environment variable issues
             node << NODE_SCRIPT
 const fs = require('fs');
-const htmlPath = process.env.HTML_PATH;
-const jsPath = process.env.JS_PATH;
-const basePath = process.env.BASE_PATH;
+
+const htmlPath = '$OUTPUT_DIR/index.html';
+const jsPath = '$JS_PATH';
+const basePath = '$BASE_PATH';
+
+console.log('Processing:', htmlPath);
+console.log('JS Path:', jsPath);
+console.log('Base Path:', basePath);
 
 let html = fs.readFileSync(htmlPath, 'utf8');
+console.log('Original HTML length:', html.length);
 
 // Remove ALL existing script tags (they're broken)
+const beforeScripts = html.match(/<script[^>]*>[\s\S]*?<\/script>/gi);
+if (beforeScripts) {
+  console.log('Found', beforeScripts.length, 'script tags to remove');
+}
 html = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
 
 // Find the closing body tag and inject script BEFORE it
 if (html.includes('</body>')) {
   html = html.replace('</body>', \`  <script src="\${jsPath}"></script>\\n</body>\`);
+  console.log('✅ Injected script before </body>');
 } else {
   html += \`\\n  <script src="\${jsPath}"></script>\\n</body>\`;
+  console.log('✅ Added script and </body>');
 }
 
 // Fix all paths
@@ -320,6 +292,7 @@ html = html.replace(/href="\\/static/g, \`href="\${basePath}/static\`);
 
 fs.writeFileSync(htmlPath, html, 'utf8');
 console.log('✅ Fixed index.html');
+console.log('Final HTML contains script:', html.includes(jsPath));
 NODE_SCRIPT
             
             echo "✅ index.html fixed!"
