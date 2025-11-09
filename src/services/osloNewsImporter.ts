@@ -51,9 +51,23 @@ const parseRSSFeed = async (feedUrl: string): Promise<RSSItem[]> => {
       const categoryMatch = itemContent.match(/<category[^>]*>([\s\S]*?)<\/category>/i);
       
       if (titleMatch && descMatch && linkMatch) {
+        // Sanitize HTML - fjern tags og escape entities
+        const sanitizeHtml = (html: string): string => {
+          // Fjern HTML tags først
+          let sanitized = html.replace(/<[^>]*>/g, '');
+          // Escape HTML entities for komplett sanitization
+          sanitized = sanitized
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#x27;');
+          return sanitized.trim();
+        };
+        
         items.push({
-          title: titleMatch[1].trim().replace(/<[^>]*>/g, ''),
-          description: descMatch[1].trim().replace(/<[^>]*>/g, ''),
+          title: sanitizeHtml(titleMatch[1]),
+          description: sanitizeHtml(descMatch[1]),
           link: linkMatch[1].trim(),
           pubDate: dateMatch ? dateMatch[1].trim() : new Date().toISOString(),
           category: categoryMatch ? categoryMatch[1].trim() : undefined,
