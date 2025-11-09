@@ -248,14 +248,19 @@ jobs:
               
               if [ -n "$MAIN_JS" ]; then
                 RELATIVE_PATH=$(echo "$MAIN_JS" | sed "s|^$OUTPUT_DIR/||")
+                JS_PATH="$BASE_PATH/$RELATIVE_PATH"
                 echo "✅ Found main JS file: $RELATIVE_PATH"
-                echo "Injecting script tag with base path: $BASE_PATH/$RELATIVE_PATH"
+                echo "✅ Injecting script tag with base path: $JS_PATH"
                 # Replace empty src or add script tag before closing body tag
                 if [ "$EMPTY_SCRIPTS" -gt "0" ]; then
-                  sed -i "s|src=\"\"|src=\"$BASE_PATH/$RELATIVE_PATH\"|g" "$OUTPUT_DIR/index.html"
-                  sed -i "s|src=''|src='$BASE_PATH/$RELATIVE_PATH'|g" "$OUTPUT_DIR/index.html"
+                  # Fix all empty src attributes
+                  sed -i "s|src=\"\"|src=\"$JS_PATH\"|g" "$OUTPUT_DIR/index.html"
+                  sed -i "s|src=''|src='$JS_PATH'|g" "$OUTPUT_DIR/index.html"
+                  # Also fix script tags that might have been created without src
+                  sed -i "s|<script\([^>]*\)>\([^<]*\)</script>|<script\1 src=\"$JS_PATH\">\2</script>|g" "$OUTPUT_DIR/index.html" || true
                 else
-                  sed -i "s|</body>|<script src=\"$BASE_PATH/$RELATIVE_PATH\"></script></body>|" "$OUTPUT_DIR/index.html"
+                  # Add script tag before closing body tag
+                  sed -i "s|</body>|<script src=\"$JS_PATH\"></script></body>|" "$OUTPUT_DIR/index.html"
                 fi
               else
                 echo "❌ ERROR: Could not find main JS file!"
@@ -304,11 +309,37 @@ jobs:
               JS_PATH="$BASE_PATH/$JS_RELATIVE"
               echo "✅ Found JS file: $JS_RELATIVE"
               echo "✅ Fixing empty src with: $JS_PATH"
-              # Fix empty src in existing script tags
-              sed -i "s|src=\"\"|src=\"$JS_PATH\"|g" "$OUTPUT_DIR/index.html"
-              sed -i "s|src=''|src='$JS_PATH'|g" "$OUTPUT_DIR/index.html"
-              # Fix script tags without src attribute (but keep other attributes)
-              sed -i "s|<script\([^>]*\)>|<script\1 src=\"$JS_PATH\">|g" "$OUTPUT_DIR/index.html"
+              
+              # Use Node.js to properly fix script tags (more reliable than sed)
+              node << NODE_SCRIPT
+const fs = require('fs');
+const path = require('path');
+
+const htmlPath = '$OUTPUT_DIR/index.html';
+const jsPath = '$JS_PATH';
+
+let html = fs.readFileSync(htmlPath, 'utf8');
+
+// Fix empty src attributes
+html = html.replace(/src=["']{2}/g, \`src="\${jsPath}"\`);
+html = html.replace(/src=''/g, \`src='\${jsPath}'\`);
+
+// Fix script tags without src attribute
+// Match <script> or <script with attributes but no src
+html = html.replace(/<script([^>]*?)(?<!src=)(?<!src=")(?<!src=')(>)/g, (match, attrs, closing) => {
+  // Only add src if it doesn't already have one
+  if (!attrs.includes('src=')) {
+    return \`<script\${attrs} src="\${jsPath}"\${closing}\`;
+  }
+  return match;
+});
+
+// Also handle any remaining empty script tags
+html = html.replace(/<script([^>]*?)src=["']{2}([^>]*?)>/g, \`<script\$1src="\${jsPath}"\$2>\`);
+
+fs.writeFileSync(htmlPath, html, 'utf8');
+console.log('✅ Fixed script tags in index.html');
+NODE_SCRIPT
             else
               echo "❌ ERROR: Could not find JS file to fix empty src!"
               echo "Listing all JS files found:"
