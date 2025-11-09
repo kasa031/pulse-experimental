@@ -200,15 +200,24 @@ jobs:
             SCRIPT_COUNT=$(grep -c '<script' "$OUTPUT_DIR/index.html" || echo "0")
             echo "Found $SCRIPT_COUNT script tags in index.html"
             
-            if [ "$SCRIPT_COUNT" -eq "0" ]; then
-              echo "⚠️ WARNING: No script tags found! Searching for JS files..."
+            # Check if scripts have valid src attributes
+            EMPTY_SCRIPTS=$(grep -c 'src=""' "$OUTPUT_DIR/index.html" || echo "0")
+            if [ "$EMPTY_SCRIPTS" -gt "0" ]; then
+              echo "⚠️ WARNING: Found $EMPTY_SCRIPTS script tags with empty src!"
+            fi
+            
+            if [ "$SCRIPT_COUNT" -eq "0" ] || [ "$EMPTY_SCRIPTS" -gt "0" ]; then
+              echo "⚠️ WARNING: Script tags missing or invalid! Searching for JS files..."
               
               # Find all possible JS file locations
               MAIN_JS=""
               if [ -d "$OUTPUT_DIR/_expo" ]; then
                 echo "✅ _expo directory exists"
-                # Try different possible paths
-                MAIN_JS=$(find "$OUTPUT_DIR/_expo" -path "*/js/web/index.js" -type f | head -1)
+                # Try different possible paths (most common first)
+                MAIN_JS=$(find "$OUTPUT_DIR/_expo" -path "*/static/js/web/index.js" -type f | head -1)
+                if [ -z "$MAIN_JS" ]; then
+                  MAIN_JS=$(find "$OUTPUT_DIR/_expo" -path "*/js/web/index.js" -type f | head -1)
+                fi
                 if [ -z "$MAIN_JS" ]; then
                   MAIN_JS=$(find "$OUTPUT_DIR/_expo" -name "index.js" -type f | head -1)
                 fi
@@ -237,8 +246,13 @@ jobs:
                 RELATIVE_PATH=$(echo "$MAIN_JS" | sed "s|^$OUTPUT_DIR/||")
                 echo "✅ Found main JS file: $RELATIVE_PATH"
                 echo "Injecting script tag with base path: $BASE_PATH/$RELATIVE_PATH"
-                # Add script tag before closing body tag
-                sed -i "s|</body>|<script src=\"$BASE_PATH/$RELATIVE_PATH\"></script></body>|" "$OUTPUT_DIR/index.html"
+                # Replace empty src or add script tag before closing body tag
+                if [ "$EMPTY_SCRIPTS" -gt "0" ]; then
+                  sed -i "s|src=\"\"|src=\"$BASE_PATH/$RELATIVE_PATH\"|g" "$OUTPUT_DIR/index.html"
+                  sed -i "s|src=''|src='$BASE_PATH/$RELATIVE_PATH'|g" "$OUTPUT_DIR/index.html"
+                else
+                  sed -i "s|</body>|<script src=\"$BASE_PATH/$RELATIVE_PATH\"></script></body>|" "$OUTPUT_DIR/index.html"
+                fi
               else
                 echo "❌ ERROR: Could not find main JS file!"
                 echo "Directory structure:"
@@ -247,6 +261,7 @@ jobs:
                   echo "_expo directory contents:"
                   find "$OUTPUT_DIR/_expo" -type f | head -20
                 fi
+                echo "⚠️ Build may have failed - check logs above"
               fi
             fi
             
