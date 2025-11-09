@@ -26,8 +26,8 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.pulse.oslo",
-      "compileSdkVersion": 34,
-      "targetSdkVersion": 34,
+      "compileSdkVersion": 33,
+      "targetSdkVersion": 33,
       "minSdkVersion": 23,
       "permissions": [
         "INTERNET",
