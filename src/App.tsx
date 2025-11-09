@@ -44,13 +44,13 @@ const App = () => {
         safeLog(`Initialiserer autentisering... (Platform: ${Platform.OS})`);
         
         // Timeout for Android - hvis Firebase tar for lang tid
+        let timeoutTriggered = false;
         const timeoutId = setTimeout(() => {
-          if (!authInitialized) {
-            safeError('Firebase initialisering timeout (10s)');
-            setError('Appen tar for lang tid å laste. Prøv å starte på nytt.');
-            setAuthInitialized(true);
-            setLoading(false);
-          }
+          timeoutTriggered = true;
+          safeError('Firebase initialisering timeout (10s)');
+          setError('Appen tar for lang tid å laste. Prøv å starte på nytt eller sjekk internettforbindelsen.');
+          setAuthInitialized(true);
+          setLoading(false);
         }, 10000); // 10 sekunder timeout
         
         // Sjekk om Firebase er initialisert
@@ -80,7 +80,9 @@ const App = () => {
         // Lytt til Firebase auth state changes
         const unsubscribe = auth!.onAuthStateChanged(
           async (firebaseUser) => {
-            clearTimeout(timeoutId);
+            if (!timeoutTriggered) {
+              clearTimeout(timeoutId);
+            }
             safeLog('Firebase auth state endret:', firebaseUser?.email);
             
             if (firebaseUser) {
@@ -111,7 +113,9 @@ const App = () => {
             setLoading(false);
           },
           (err) => {
-            clearTimeout(timeoutId);
+            if (!timeoutTriggered) {
+              clearTimeout(timeoutId);
+            }
             safeError('Firebase auth feil:', err);
             setError('Feil med autentisering: ' + err.message);
             setAuthInitialized(true);
@@ -120,7 +124,9 @@ const App = () => {
         );
 
         return () => {
-          clearTimeout(timeoutId);
+          if (!timeoutTriggered) {
+            clearTimeout(timeoutId);
+          }
           unsubscribe();
         };
       } catch (error) {
