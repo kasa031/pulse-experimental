@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Platform, useWindowDimensions, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Platform, useWindowDimensions, TouchableOpacity, Image } from 'react-native';
 import { Drawer, Portal, Text, Surface, Modal } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation, useRoute, NavigationContainer } from '@react-navigation/native';
@@ -155,7 +155,11 @@ const WebNavigation = ({ children }: WebNavigationProps) => {
       <View style={styles.desktopContainer}>
         <Surface style={styles.sidebar} elevation={2}>
           <View style={styles.sidebarHeader}>
-            <Icon name="city-variant" size={32} color={osloBranding.colors.primary} />
+            <Image 
+              source={require('../../assets/oslo-logo.png')} 
+              style={styles.sidebarLogo}
+              resizeMode="contain"
+            />
             <Text variant="titleMedium" style={styles.sidebarTitle}>
               OsloPuls
             </Text>
@@ -250,6 +254,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
     marginBottom: 16,
+  },
+  sidebarLogo: {
+    width: 40,
+    height: 40,
   },
   sidebarTitle: {
     marginLeft: 12,

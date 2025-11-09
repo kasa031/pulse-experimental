@@ -15,7 +15,7 @@ import {
 } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { theme, osloBranding } from '../constants/theme';
-import { OSLO_DISTRICTS, POLL_CATEGORIES } from '../constants/osloDistricts';
+import { OSLO_DISTRICTS, POLL_CATEGORIES, getCategoryColor } from '../constants/osloDistricts';
 import { createPoll, CreatePollData } from '../services/pollsService';
 import { auth } from '../services/firebase';
 import { isUserAdmin } from '../utils/adminCheck';
@@ -350,16 +350,24 @@ const CreatePollScreen = () => {
               Kategori
             </Text>
             <View style={styles.chipContainer}>
-              {POLL_CATEGORIES.map((cat) => (
-                <Chip
-                  key={cat}
-                  selected={category === cat}
-                  onPress={() => setCategory(cat)}
-                  style={styles.chip}
-                >
-                  {cat}
-                </Chip>
-              ))}
+              {POLL_CATEGORIES.map((cat) => {
+                const categoryColor = getCategoryColor(cat);
+                return (
+                  <Chip
+                    key={cat}
+                    selected={category === cat}
+                    onPress={() => setCategory(cat)}
+                    style={[
+                      styles.chip,
+                      category === cat && { backgroundColor: categoryColor + '20' }
+                    ]}
+                    selectedColor={categoryColor}
+                    textStyle={category === cat ? { color: categoryColor } : undefined}
+                  >
+                    {cat}
+                  </Chip>
+                );
+              })}
             </View>
           </View>
 

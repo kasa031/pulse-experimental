@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Image } from 'react-native';
 import { Card, Text, Button, Chip, ActivityIndicator, Dialog, Portal, TextInput, Menu, Divider } from 'react-native-paper';
 import { theme, osloBranding } from '../constants/theme';
 import { getDiscussions, createDiscussion, Discussion, getComments, addComment, likeComment, dislikeComment, Comment } from '../services/discussionService';
 import { auth } from '../services/firebase';
-import { OSLO_DISTRICTS } from '../constants/osloDistricts';
-import { POLL_CATEGORIES } from '../constants/osloDistricts';
+import { OSLO_DISTRICTS, POLL_CATEGORIES, getCategoryColor } from '../constants/osloDistricts';
 import { safeError, safeLog } from '../utils/performance';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Timestamp } from 'firebase/firestore';
@@ -234,17 +233,26 @@ const CommunityScreen = () => {
               >
                 Alle
               </Chip>
-              {CATEGORIES.map((cat) => (
-                <Chip
-                  key={cat}
-                  selected={selectedCategory === cat}
-                  onPress={() => setSelectedCategory(cat)}
-                  style={styles.chip}
-                  textStyle={styles.chipText}
-                >
-                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                </Chip>
-              ))}
+              {CATEGORIES.map((cat) => {
+                const categoryColor = getCategoryColor(cat as any);
+                return (
+                  <Chip
+                    key={cat}
+                    selected={selectedCategory === cat}
+                    onPress={() => setSelectedCategory(cat)}
+                    style={[
+                      styles.chip,
+                      selectedCategory === cat && { backgroundColor: categoryColor + '20' }
+                    ]}
+                    textStyle={[
+                      styles.chipText,
+                      selectedCategory === cat && { color: categoryColor }
+                    ]}
+                  >
+                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                  </Chip>
+                );
+              })}
             </View>
           </Card.Content>
         </Card>
@@ -270,7 +278,12 @@ const CommunityScreen = () => {
           <ActivityIndicator style={styles.loader} />
         ) : sortedDiscussions.length === 0 ? (
           <Card style={styles.card}>
-            <Card.Content>
+            <Card.Content style={styles.emptyCardContent}>
+              <Image 
+                source={require('../../assets/oslo-logo.png')} 
+                  style={styles.emptyImage}
+                  resizeMode="contain"
+              />
               <Text variant="bodyMedium" style={styles.emptyText}>
                 Ingen diskusjoner for øyeblikket. 
                 {isAuthenticated && ' Start den første diskusjonen!'}
@@ -300,7 +313,17 @@ const CommunityScreen = () => {
                       )}
                     </View>
                   </View>
-                  <Chip style={styles.categoryChip} textStyle={styles.categoryChipText}>
+                  <Chip
+                    style={[
+                      styles.categoryChip,
+                      { backgroundColor: getCategoryColor(discussion.category as any) + '20' }
+                    ]}
+                    textStyle={[
+                      styles.categoryChipText,
+                      { color: getCategoryColor(discussion.category as any) }
+                    ]}
+                    compact
+                  >
                     {discussion.category}
                   </Chip>
                 </View>
@@ -575,6 +598,17 @@ const styles = StyleSheet.create({
   },
   loader: {
     marginVertical: 32,
+  },
+  emptyCardContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.xl,
+  },
+  emptyImage: {
+    width: 120,
+    height: 120,
+    opacity: 0.3,
+    marginBottom: SPACING.lg,
   },
   emptyText: {
     color: osloBranding.colors.textSecondary,

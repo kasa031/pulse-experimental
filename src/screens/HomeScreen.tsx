@@ -4,7 +4,7 @@ import { Card, Text, Button, Chip, ActivityIndicator } from 'react-native-paper'
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
 import { theme, osloBranding } from '../constants/theme';
-import { OSLO_DISTRICTS, POLL_CATEGORIES } from '../constants/osloDistricts';
+import { OSLO_DISTRICTS, POLL_CATEGORIES, getCategoryColor } from '../constants/osloDistricts';
 import { getActivePolls, Poll } from '../services/pollsService';
 import { getLatestNews, NewsItem } from '../services/newsService';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -271,8 +271,14 @@ const HomeScreen = () => {
                       </Text>
                       {news.category && (
                         <Chip 
-                          style={styles.previewChip}
-                          textStyle={styles.previewChipText}
+                          style={[
+                            styles.previewChip,
+                            { backgroundColor: getCategoryColor(news.category as any) + '20' }
+                          ]}
+                          textStyle={[
+                            styles.previewChipText,
+                            { color: getCategoryColor(news.category as any) }
+                          ]}
                           compact
                         >
                           {news.category}

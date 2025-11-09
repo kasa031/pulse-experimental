@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Image } from 'react-native';
 import { Card, Text, Button, RadioButton, ProgressBar, ActivityIndicator, Snackbar, Searchbar, Chip, Menu, Divider } from 'react-native-paper';
 import { theme, osloBranding } from '../constants/theme';
 import { getActivePolls, submitVote, subscribeToPolls, Poll } from '../services/pollsService';
 import { auth } from '../services/firebase';
 import { safeError, safeLog } from '../utils/performance';
 import { searchAndFilterPolls } from '../utils/search';
-import { OSLO_DISTRICTS } from '../constants/osloDistricts';
+import { OSLO_DISTRICTS, getCategoryColor } from '../constants/osloDistricts';
 import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
 import { SPACING } from '../constants/spacing';
 import { BUTTON_MIN_HEIGHT, CHIP_MIN_HEIGHT } from '../constants/touchTargets';
@@ -190,9 +190,20 @@ const VoteScreen = React.memo(() => {
             <Text variant="bodyMedium" style={styles.pollDescription}>
               {poll.description}
             </Text>
-            <Text variant="bodySmall" style={styles.category}>
-              {poll.category} • {poll.district}
-            </Text>
+            <View style={styles.categoryContainer}>
+              {poll.category && (
+                <Chip
+                  style={[styles.categoryChip, { backgroundColor: getCategoryColor(poll.category as any) + '20' }]}
+                  textStyle={{ color: getCategoryColor(poll.category as any), fontSize: 11 }}
+                  compact
+                >
+                  {poll.category}
+                </Chip>
+              )}
+              <Text variant="bodySmall" style={styles.district}>
+                {poll.district}
+              </Text>
+            </View>
 
             <RadioButton.Group
               onValueChange={(value) => {
@@ -360,17 +371,24 @@ const VoteScreen = React.memo(() => {
                 Filtrer etter:
               </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
-              {availableCategories.map((cat) => (
-                <Chip
-                  key={`cat-${cat}`}
-                  selected={selectedCategory === cat}
-                  onPress={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
-                  style={styles.chip}
-                  selectedColor={osloBranding.colors.primary}
-                >
-                  {cat}
-                </Chip>
-              ))}
+              {availableCategories.map((cat) => {
+                const categoryColor = getCategoryColor(cat as any);
+                return (
+                  <Chip
+                    key={`cat-${cat}`}
+                    selected={selectedCategory === cat}
+                    onPress={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
+                    style={[
+                      styles.chip,
+                      selectedCategory === cat && { backgroundColor: categoryColor + '20' }
+                    ]}
+                    selectedColor={categoryColor}
+                    textStyle={selectedCategory === cat ? { color: categoryColor } : undefined}
+                  >
+                    {cat}
+                  </Chip>
+                );
+              })}
               {OSLO_DISTRICTS.slice(0, 10).map((district) => (
                 <Chip
                   key={`dist-${district}`}
@@ -410,7 +428,12 @@ const VoteScreen = React.memo(() => {
 
       {filteredPolls.length === 0 && polls.length > 0 ? (
         <Card style={styles.card}>
-          <Card.Content>
+          <Card.Content style={styles.emptyCardContent}>
+            <Image 
+              source={require('../../assets/oslo-logo.png')} 
+              style={styles.emptyImage}
+              resizeMode="contain"
+            />
             <Text variant="bodyMedium" style={styles.emptyText}>
               Ingen avstemninger funnet med de valgte filterne. Prøv å endre søket eller filterne.
             </Text>
@@ -418,7 +441,12 @@ const VoteScreen = React.memo(() => {
         </Card>
       ) : polls.length === 0 ? (
         <Card style={styles.card}>
-          <Card.Content>
+          <Card.Content style={styles.emptyCardContent}>
+            <Image 
+              source={require('../../assets/oslo-logo.png')} 
+              style={styles.emptyImage}
+              resizeMode="contain"
+            />
             <Text variant="bodyLarge" style={styles.emptyText}>
               Ingen aktive avstemninger for øyeblikket.
             </Text>
@@ -493,10 +521,20 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     color: '#666',
   },
-  category: {
-    marginBottom: 16,
-    color: '#999',
-    fontStyle: 'italic',
+  categoryContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 8,
+    gap: 8,
+  },
+  categoryChip: {
+    height: 24,
+    paddingHorizontal: 8,
+  },
+  district: {
+    color: osloBranding.colors.textSecondary,
+    fontSize: 12,
   },
   optionContainer: {
     marginBottom: 12,
@@ -541,6 +579,17 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: osloBranding.colors.textSecondary,
     opacity: 0.7,
+  },
+  emptyCardContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.xl,
+  },
+  emptyImage: {
+    width: 120,
+    height: 120,
+    opacity: 0.3,
+    marginBottom: SPACING.lg,
   },
   emptyText: {
     textAlign: 'center',

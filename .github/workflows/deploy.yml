@@ -74,31 +74,35 @@ jobs:
           export EXPO_PUBLIC_BASE_URL=/pulse-experimental
           echo "Building web app with base URL: /pulse-experimental"
           
-          # Temporarily rename public/index.html so Expo generates its own
-          # Expo will use public/index.html if it exists, but we want it to generate script tags
-          if [ -f "public/index.html" ]; then
-            echo "Temporarily moving public/index.html so Expo can generate its own..."
-            mv public/index.html public/index.html.template
+          # Expo will use public/index.html as template and inject scripts
+          # Make sure it exists and has the root div
+          if [ ! -f "public/index.html" ]; then
+            echo "Creating public/index.html template..."
+            mkdir -p public
+            cat > public/index.html << 'HTML_EOF'
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OsloPuls</title>
+</head>
+<body>
+  <div id="root"></div>
+</body>
+</html>
+HTML_EOF
           fi
           
           npx expo export --platform web --no-minify 2>&1 | tee build.log || {
             echo "Build failed, checking logs..."
             cat build.log || true
-            # Restore template if build failed
-            if [ -f "public/index.html.template" ]; then
-              mv public/index.html.template public/index.html
-            fi
             echo "Trying alternative build method..."
             npx expo export --platform web 2>&1 || {
               echo "Build completely failed"
               exit 1
             }
           }
-          
-          # Restore template after successful build
-          if [ -f "public/index.html.template" ]; then
-            mv public/index.html.template public/index.html
-          fi
           
           echo "✅ Build completed"
         env:

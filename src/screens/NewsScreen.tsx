@@ -5,10 +5,12 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, Linking, Share, Image, Platform } from 'react-native';
-import { Card, Text, Button, Chip, ActivityIndicator, Dialog, Portal } from 'react-native-paper';
+import { Card, Text, Button, Chip, ActivityIndicator, Dialog, Portal, Menu, Searchbar, Snackbar } from 'react-native-paper';
 import { theme, osloBranding } from '../constants/theme';
-import { getLatestNews, getNewsByCategory, getNewsByDistrict, NewsItem } from '../services/newsService';
-import { OSLO_DISTRICTS, POLL_CATEGORIES } from '../constants/osloDistricts';
+import { getLatestNews, getNewsByCategory, getNewsByDistrict, searchNews, sortNews, NewsItem } from '../services/newsService';
+import { importNewsFromRSS, generateAndImportAINews, getSuggestedTopics } from '../services/osloNewsImporter';
+import { isUserAdmin } from '../utils/adminCheck';
+import { OSLO_DISTRICTS, POLL_CATEGORIES, getCategoryColor } from '../constants/osloDistricts';
 import { safeError, safeLog } from '../utils/performance';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Timestamp } from 'firebase/firestore';
@@ -194,17 +196,26 @@ const NewsScreen = () => {
                 >
                   Alle
                 </Chip>
-                {CATEGORIES.map((cat) => (
-                  <Chip
-                    key={cat}
-                    selected={selectedCategory === cat}
-                    onPress={() => setSelectedCategory(cat)}
-                    style={styles.chip}
-                    textStyle={styles.chipText}
-                  >
-                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                  </Chip>
-                ))}
+                {CATEGORIES.map((cat) => {
+                  const categoryColor = getCategoryColor(cat as any);
+                  return (
+                    <Chip
+                      key={cat}
+                      selected={selectedCategory === cat}
+                      onPress={() => setSelectedCategory(cat)}
+                      style={[
+                        styles.chip,
+                        selectedCategory === cat && { backgroundColor: categoryColor + '20' }
+                      ]}
+                      textStyle={[
+                        styles.chipText,
+                        selectedCategory === cat && { color: categoryColor }
+                      ]}
+                    >
+                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    </Chip>
+                  );
+                })}
               </View>
             </ScrollView>
           </Card.Content>
@@ -259,7 +270,11 @@ const NewsScreen = () => {
           <Card style={styles.card}>
             <Card.Content>
               <View style={styles.emptyState}>
-                <Icon name="newspaper-variant-outline" size={64} color={osloBranding.colors.textSecondary} />
+                <Image 
+                  source={require('../../assets/oslo-logo.png')} 
+                  style={styles.emptyImage}
+                  resizeMode="contain"
+                />
                 <Text variant="titleMedium" style={styles.emptyTitle}>
                   Ingen nyheter funnet
                 </Text>
@@ -624,6 +639,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 48,
+  },
+  emptyImage: {
+    width: 120,
+    height: 120,
+    opacity: 0.3,
+    marginBottom: SPACING.lg,
   },
   emptyTitle: {
     marginTop: 16,

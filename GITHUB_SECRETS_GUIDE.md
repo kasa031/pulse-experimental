@@ -1,154 +1,103 @@
-# 🔐 GitHub Secrets - Komplett Guide
+# 🔐 GitHub Secrets Sjekkliste
 
-## 📍 Direkte lenker
+## Hvordan sjekke GitHub Secrets
 
-### GitHub Secrets (Actions)
-**URL:** https://github.com/kasa031/pulse-experimental/settings/secrets/actions
+### Steg 1: Gå til GitHub Repository
+1. Åpne: https://github.com/kasa031/pulse-experimental
+2. Klikk på **Settings** (øverst i repository)
+3. I venstre meny, klikk på **Secrets and variables** → **Actions**
 
-Klikk her for å legge til/redigere secrets: [Settings → Secrets and variables → Actions](https://github.com/kasa031/pulse-experimental/settings/secrets/actions)
+### Steg 2: Sjekk at disse Secrets finnes
 
-### GitHub Pages Settings
-**URL:** https://github.com/kasa031/pulse-experimental/settings/pages
+#### Firebase Secrets (Påkrevd)
+Sjekk at alle disse eksisterer:
 
-Klikk her for å konfigurere GitHub Pages: [Settings → Pages](https://github.com/kasa031/pulse-experimental/settings/pages)
+- [ ] `FIREBASE_API_KEY`
+- [ ] `FIREBASE_AUTH_DOMAIN`
+- [ ] `FIREBASE_PROJECT_ID`
+- [ ] `FIREBASE_STORAGE_BUCKET`
+- [ ] `FIREBASE_MESSAGING_SENDER_ID`
+- [ ] `FIREBASE_APP_ID`
 
-### GitHub Actions (Deployments)
-**URL:** https://github.com/kasa031/pulse-experimental/actions
+#### EmailJS Secrets (Valgfritt - for feedback-funksjon)
+- [ ] `EMAILJS_PUBLIC_KEY`
+- [ ] `EMAILJS_SERVICE_ID`
+- [ ] `EMAILJS_TEMPLATE_ID`
 
-Se deploy-status: [Actions](https://github.com/kasa031/pulse-experimental/actions)
+#### AI Secrets (Valgfritt - for AI-nyhetsgenerering)
+- [ ] `OPENROUTER_API_KEY`
 
----
+## Hvordan legge til/oppdatere Secrets
 
-## 🔑 Firebase Secrets du må legge til
+### Hvis et Secret mangler:
 
-Gå til: **https://github.com/kasa031/pulse-experimental/settings/secrets/actions**
+1. I **Secrets and variables** → **Actions**, klikk **New repository secret**
+2. Skriv inn **Name** (f.eks. `FIREBASE_API_KEY`)
+3. Skriv inn **Secret** (verdien fra Firebase Console)
+4. Klikk **Add secret**
 
-Klikk **"New repository secret"** for hver av disse:
+### Hvor finner jeg Firebase Secrets?
 
-### 1. FIREBASE_API_KEY
-- **Name:** `FIREBASE_API_KEY`
-- **Value:** Din Firebase API Key (fra Firebase Console → Project Settings → General → Your apps)
-- **Hvor:** Firebase Console → Project Settings → Your apps → Web app → apiKey
-
-### 2. FIREBASE_AUTH_DOMAIN
-- **Name:** `FIREBASE_AUTH_DOMAIN`
-- **Value:** `pulse-oslo.firebaseapp.com`
-- **Note:** Dette er vanligvis `[project-id].firebaseapp.com`
-
-### 3. FIREBASE_PROJECT_ID
-- **Name:** `FIREBASE_PROJECT_ID`
-- **Value:** `pulse-oslo`
-- **Note:** Dette er ditt Firebase Project ID
-
-### 4. FIREBASE_STORAGE_BUCKET
-- **Name:** `FIREBASE_STORAGE_BUCKET`
-- **Value:** `pulse-oslo.firebasestorage.app`
-- **Note:** Dette er vanligvis `[project-id].firebasestorage.app`
-
-### 5. FIREBASE_MESSAGING_SENDER_ID
-- **Name:** `FIREBASE_MESSAGING_SENDER_ID`
-- **Value:** Din Messaging Sender ID (fra Firebase Console)
-- **Hvor:** Firebase Console → Project Settings → Your apps → Web app → messagingSenderId
-
-### 6. FIREBASE_APP_ID
-- **Name:** `FIREBASE_APP_ID`
-- **Value:** Din App ID (fra Firebase Console)
-- **Hvor:** Firebase Console → Project Settings → Your apps → Web app → appId
-
-### 7. OPENROUTER_API_KEY (Valgfritt)
-- **Name:** `OPENROUTER_API_KEY`
-- **Value:** Din OpenRouter API Key (hvis du bruker AI-funksjonalitet)
-- **Hvor:** app.local.json eller OpenRouter dashboard
-
----
-
-## 📋 Hvor finner du Firebase Secrets?
-
-### Metode 1: Fra Firebase Console
-1. Gå til: https://console.firebase.google.com/
-2. Velg prosjektet ditt: **pulse-oslo**
+1. Gå til [Firebase Console](https://console.firebase.google.com/)
+2. Velg prosjektet ditt: `pulse-oslo`
 3. Klikk på ⚙️ (Settings) → **Project settings**
-4. Scroll ned til **"Your apps"** seksjonen
-5. Klikk på web-appen din (eller opprett en hvis den ikke finnes)
-6. Du vil se en `firebaseConfig` objekt med alle verdiene
+4. Scroll ned til **Your apps** seksjonen
+5. Klikk på web-app ikonet (</>) eller "Add app" hvis du ikke har en
+6. Du vil se Firebase config objektet:
 
-### Metode 2: Fra app.local.json (lokalt)
-Hvis du har `app.local.json` lokalt, kan du se verdiene der:
-```json
-{
-  "expo": {
-    "extra": {
-      "firebase": {
-        "apiKey": "DIN_API_KEY_HER",
-        "authDomain": "pulse-oslo.firebaseapp.com",
-        "projectId": "pulse-oslo",
-        "storageBucket": "pulse-oslo.firebasestorage.app",
-        "messagingSenderId": "DIN_SENDER_ID_HER",
-        "appId": "DIN_APP_ID_HER"
-      }
-    }
-  }
-}
+```javascript
+const firebaseConfig = {
+  apiKey: "AIza...",           // ← FIREBASE_API_KEY
+  authDomain: "...",           // ← FIREBASE_AUTH_DOMAIN
+  projectId: "...",            // ← FIREBASE_PROJECT_ID
+  storageBucket: "...",        // ← FIREBASE_STORAGE_BUCKET
+  messagingSenderId: "...",    // ← FIREBASE_MESSAGING_SENDER_ID
+  appId: "1:..."               // ← FIREBASE_APP_ID
+};
 ```
 
----
+## Verifisering
 
-## ✅ Steg-for-steg: Legge til Secrets
+### Etter at Secrets er satt:
 
-1. **Gå til Secrets-siden:**
-   - https://github.com/kasa031/pulse-experimental/settings/secrets/actions
+1. Gå til **Actions** i GitHub
+2. Klikk på siste "Deploy to GitHub Pages" workflow
+3. Sjekk at build ikke feiler på "Setup app.json with credentials from secrets"
+4. Hvis det feiler, sjekk at alle secrets er riktig navngitt (case-sensitive!)
 
-2. **Klikk "New repository secret"**
+## Troubleshooting
 
-3. **For hver secret:**
-   - Skriv inn **Name** (f.eks. `FIREBASE_API_KEY`)
-   - Lim inn **Value** (fra Firebase Console eller app.local.json)
-   - Klikk **"Add secret"**
+### "Secret not found" feil
+- Sjekk at navnet er eksakt riktig (case-sensitive)
+- Sjekk at du har lagt til secret i riktig repository
 
-4. **Gjenta for alle 7 secrets**
+### "Invalid credentials" feil
+- Sjekk at secret-verdiene er riktig kopiert fra Firebase
+- Ikke legg til ekstra mellomrom eller anførselstegn
 
-5. **Verifiser at alle er lagt til:**
-   - Du skal se alle 7 secrets i listen
+### Build feiler med "PLACEHOLDER"
+- Dette betyr at en secret mangler
+- Sjekk at alle Firebase secrets er satt
 
----
+## Quick Checklist
 
-## 🚀 Etter at Secrets er lagt til
+```
+□ FIREBASE_API_KEY
+□ FIREBASE_AUTH_DOMAIN
+□ FIREBASE_PROJECT_ID
+□ FIREBASE_STORAGE_BUCKET
+□ FIREBASE_MESSAGING_SENDER_ID
+□ FIREBASE_APP_ID
+□ EMAILJS_PUBLIC_KEY (valgfritt)
+□ EMAILJS_SERVICE_ID (valgfritt)
+□ EMAILJS_TEMPLATE_ID (valgfritt)
+□ OPENROUTER_API_KEY (valgfritt)
+```
 
-1. **Trigger en ny deployment:**
-   - Gå til: https://github.com/kasa031/pulse-experimental/actions
-   - Klikk **"Deploy to GitHub Pages"**
-   - Klikk **"Run workflow"** → **"Run workflow"**
-   - Vent 2-3 minutter
+## Neste steg
 
-2. **Test på mobil:**
-   - Åpne: https://kasa031.github.io/pulse-experimental/
-   - Appen skal nå laste riktig!
-
----
-
-## ⚠️ Viktig
-
-- **Ikke committ secrets til Git!** De skal kun være i GitHub Secrets
-- **Secrets er kun synlige for repository-eiere**
-- **Hvis du endrer secrets, må du trigger en ny deployment**
-
----
-
-## 🔍 Sjekk at Secrets er satt riktig
-
-Etter deployment, sjekk Actions-loggen:
-1. Gå til: https://github.com/kasa031/pulse-experimental/actions
-2. Klikk på siste deployment
-3. Se "Setup app.json with credentials from secrets" steget
-4. Hvis det står "PLACEHOLDER" i loggen, er secrets ikke satt riktig
-
----
-
-## 📞 Hjelp
-
-Hvis du har problemer:
-1. Sjekk at alle 7 secrets er lagt til
-2. Sjekk at verdiene er riktige (ingen mellomrom, riktig format)
-3. Trigger en ny deployment
-4. Sjekk Actions-loggen for feilmeldinger
-
+Etter at alle secrets er satt:
+1. Gå til **Actions**
+2. Klikk **Run workflow** på "Deploy to GitHub Pages"
+3. Vent på at build fullfører
+4. Test: https://kasa031.github.io/pulse-experimental/
