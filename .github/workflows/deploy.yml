@@ -277,12 +277,23 @@ jobs:
             sed -i "s|src=\"_expo|src=\"$BASE_PATH/_expo|g" "$OUTPUT_DIR/index.html"
             sed -i "s|src=\"static|src=\"$BASE_PATH/static|g" "$OUTPUT_DIR/index.html"
             # Fix empty src attributes (common issue) - find actual JS file first
+            echo "Searching for JS files to fix empty src..."
             ACTUAL_JS=""
-            if [ -d "$OUTPUT_DIR/_expo" ]; then
-              ACTUAL_JS=$(find "$OUTPUT_DIR/_expo" -name "*.js" -type f | grep -E "(index|main)" | head -1)
-              if [ -z "$ACTUAL_JS" ]; then
-                ACTUAL_JS=$(find "$OUTPUT_DIR/_expo" -name "*.js" -type f | head -1)
-              fi
+            # Try multiple possible locations
+            if [ -d "$OUTPUT_DIR/_expo/static/js/web" ]; then
+              ACTUAL_JS=$(find "$OUTPUT_DIR/_expo/static/js/web" -name "*.js" -type f | head -1)
+            fi
+            if [ -z "$ACTUAL_JS" ] && [ -d "$OUTPUT_DIR/_expo" ]; then
+              ACTUAL_JS=$(find "$OUTPUT_DIR/_expo" -path "*/js/web/*.js" -type f | head -1)
+            fi
+            if [ -z "$ACTUAL_JS" ] && [ -d "$OUTPUT_DIR/_expo" ]; then
+              ACTUAL_JS=$(find "$OUTPUT_DIR/_expo" -name "index.js" -type f | head -1)
+            fi
+            if [ -z "$ACTUAL_JS" ] && [ -d "$OUTPUT_DIR/_expo" ]; then
+              ACTUAL_JS=$(find "$OUTPUT_DIR/_expo" -name "*.js" -type f | grep -E "(index|main|app)" | head -1)
+            fi
+            if [ -z "$ACTUAL_JS" ] && [ -d "$OUTPUT_DIR/_expo" ]; then
+              ACTUAL_JS=$(find "$OUTPUT_DIR/_expo" -name "*.js" -type f | head -1)
             fi
             if [ -z "$ACTUAL_JS" ] && [ -d "$OUTPUT_DIR/static" ]; then
               ACTUAL_JS=$(find "$OUTPUT_DIR/static" -name "*.js" -type f | head -1)
@@ -291,14 +302,17 @@ jobs:
             if [ -n "$ACTUAL_JS" ]; then
               JS_RELATIVE=$(echo "$ACTUAL_JS" | sed "s|^$OUTPUT_DIR/||")
               JS_PATH="$BASE_PATH/$JS_RELATIVE"
-              echo "Fixing empty src with: $JS_PATH"
+              echo "✅ Found JS file: $JS_RELATIVE"
+              echo "✅ Fixing empty src with: $JS_PATH"
+              # Fix empty src in existing script tags
               sed -i "s|src=\"\"|src=\"$JS_PATH\"|g" "$OUTPUT_DIR/index.html"
               sed -i "s|src=''|src='$JS_PATH'|g" "$OUTPUT_DIR/index.html"
-              # Also fix script tags without src attribute
-              sed -i "s|<script>|<script src=\"$JS_PATH\">|g" "$OUTPUT_DIR/index.html"
-              sed -i "s|<script |<script src=\"$JS_PATH\" |g" "$OUTPUT_DIR/index.html" || true
+              # Fix script tags without src attribute (but keep other attributes)
+              sed -i "s|<script\([^>]*\)>|<script\1 src=\"$JS_PATH\">|g" "$OUTPUT_DIR/index.html"
             else
-              echo "⚠️ WARNING: Could not find JS file to fix empty src!"
+              echo "❌ ERROR: Could not find JS file to fix empty src!"
+              echo "Listing all JS files found:"
+              find "$OUTPUT_DIR" -name "*.js" -type f | head -20
             fi
             # Fix link href attributes
             sed -i "s|href=\"/_expo|href=\"$BASE_PATH/_expo|g" "$OUTPUT_DIR/index.html"
