@@ -95,10 +95,10 @@ jobs:
           
           # Build with explicit output directory and ensure scripts are generated
           # Use expo export:web which is more reliable for web builds
-          npx expo export:web --output-dir dist --no-minify 2>&1 | tee build.log || {
-            echo "Build failed, checking logs..."
+          # Note: expo export:web outputs to web-build by default
+          npx expo export:web --no-minify 2>&1 | tee build.log || {
+            echo "expo export:web failed, trying expo export..."
             cat build.log || true
-            echo "Trying alternative build method with expo export..."
             npx expo export --platform web --output-dir dist --no-minify 2>&1 || {
               echo "Trying without output-dir..."
               npx expo export --platform web --no-minify 2>&1 || {
@@ -108,16 +108,37 @@ jobs:
             }
           }
           
+          # expo export:web outputs to web-build by default, ensure we use the right directory
+          if [ -d "web-build" ] && [ ! -d "dist" ]; then
+            echo "expo export:web created web-build, will use that"
+          elif [ -d "dist" ]; then
+            echo "Build created dist directory"
+          fi
+          
           # Verify build output
           echo "Verifying build output..."
+          OUTPUT_CHECK=""
           if [ -d "dist" ]; then
+            OUTPUT_CHECK="dist"
             echo "✅ dist directory created"
             ls -la dist/ | head -10
             if [ -f "dist/index.html" ]; then
-              echo "✅ index.html exists"
+              echo "✅ index.html exists in dist"
               echo "Checking for script tags in index.html:"
               grep -c '<script' dist/index.html || echo "No script tags found"
             fi
+          elif [ -d "web-build" ]; then
+            OUTPUT_CHECK="web-build"
+            echo "✅ web-build directory created"
+            ls -la web-build/ | head -10
+            if [ -f "web-build/index.html" ]; then
+              echo "✅ index.html exists in web-build"
+              echo "Checking for script tags in index.html:"
+              grep -c '<script' web-build/index.html || echo "No script tags found"
+            fi
+          else
+            echo "❌ ERROR: No build output directory found!"
+            exit 1
           fi
           
           echo "✅ Build completed"
