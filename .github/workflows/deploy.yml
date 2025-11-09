@@ -213,13 +213,131 @@ jobs:
             exit 1
           fi
 
-      - name: Inject error handling and fix paths in index.html
+      - name: Fix index.html and inject scripts
         run: |
           OUTPUT_DIR="${{ steps.find_output.outputs.output_dir }}"
           BASE_PATH="/pulse-experimental"
           
-          echo "Processing index.html..."
+          echo "🔧 Processing index.html..."
           
+          if [ -f "$OUTPUT_DIR/index.html" ]; then
+            # First, find ALL JS files in the build
+            echo "🔍 Searching for JS files..."
+            ALL_JS_FILES=$(find "$OUTPUT_DIR" -name "*.js" -type f | grep -v node_modules | head -5)
+            echo "Found JS files:"
+            echo "$ALL_JS_FILES"
+            
+            # Find the main entry point JS file
+            MAIN_JS=""
+            for js_file in $ALL_JS_FILES; do
+              # Prefer files in _expo/static/js/web/ or similar
+              if echo "$js_file" | grep -qE "(index|main|app|web)" && echo "$js_file" | grep -qE "_expo|static"; then
+                MAIN_JS="$js_file"
+                break
+              fi
+            done
+            
+            # If not found, use the first JS file
+            if [ -z "$MAIN_JS" ]; then
+              MAIN_JS=$(echo "$ALL_JS_FILES" | head -1)
+            fi
+            
+            if [ -z "$MAIN_JS" ]; then
+              echo "❌ ERROR: No JS files found!"
+              exit 1
+            fi
+            
+            JS_RELATIVE=$(echo "$MAIN_JS" | sed "s|^$OUTPUT_DIR/||")
+            JS_PATH="$BASE_PATH/$JS_RELATIVE"
+            echo "✅ Using JS file: $JS_RELATIVE"
+            echo "✅ JS path: $JS_PATH"
+            
+            # Use Node.js to completely rewrite index.html with proper script tag
+            node << 'NODE_SCRIPT'
+const fs = require('fs');
+const path = require('path');
+
+const htmlPath = process.env.HTML_PATH;
+const jsPath = process.env.JS_PATH;
+
+if (!htmlPath || !jsPath) {
+  console.error('Missing environment variables');
+  process.exit(1);
+}
+
+let html = fs.readFileSync(htmlPath, 'utf8');
+
+// Remove ALL existing script tags (they're broken)
+html = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+
+// Find the closing body tag and inject script BEFORE it
+if (html.includes('</body>')) {
+  html = html.replace('</body>', `  <script src="${jsPath}"></script>\n</body>`);
+} else {
+  // If no body tag, add it
+  html += `\n  <script src="${jsPath}"></script>\n</body>`;
+}
+
+// Also fix all paths in the HTML
+html = html.replace(/src="\/_expo/g, `src="${process.env.BASE_PATH}/_expo`);
+html = html.replace(/src="\/static/g, `src="${process.env.BASE_PATH}/static`);
+html = html.replace(/href="\/_expo/g, `href="${process.env.BASE_PATH}/_expo`);
+html = html.replace(/href="\/static/g, `href="${process.env.BASE_PATH}/static`);
+
+fs.writeFileSync(htmlPath, html, 'utf8');
+console.log('✅ Fixed index.html with script:', jsPath);
+NODE_SCRIPT
+            
+            # Set environment variables for Node script
+            export HTML_PATH="$OUTPUT_DIR/index.html"
+            export JS_PATH="$JS_PATH"
+            export BASE_PATH="$BASE_PATH"
+            
+            # Run the Node script
+            node << NODE_SCRIPT
+const fs = require('fs');
+const htmlPath = process.env.HTML_PATH;
+const jsPath = process.env.JS_PATH;
+const basePath = process.env.BASE_PATH;
+
+let html = fs.readFileSync(htmlPath, 'utf8');
+
+// Remove ALL existing script tags (they're broken)
+html = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+
+// Find the closing body tag and inject script BEFORE it
+if (html.includes('</body>')) {
+  html = html.replace('</body>', \`  <script src="\${jsPath}"></script>\\n</body>\`);
+} else {
+  html += \`\\n  <script src="\${jsPath}"></script>\\n</body>\`;
+}
+
+// Fix all paths
+html = html.replace(/src="\\/_expo/g, \`src="\${basePath}/_expo\`);
+html = html.replace(/src="\\/static/g, \`src="\${basePath}/static\`);
+html = html.replace(/href="\\/_expo/g, \`href="\${basePath}/_expo\`);
+html = html.replace(/href="\\/static/g, \`href="\${basePath}/static\`);
+
+fs.writeFileSync(htmlPath, html, 'utf8');
+console.log('✅ Fixed index.html');
+NODE_SCRIPT
+            
+            echo "✅ index.html fixed!"
+            
+            # Verify the fix
+            if grep -q "src=\"$JS_PATH\"" "$OUTPUT_DIR/index.html"; then
+              echo "✅ Script tag verified in index.html"
+            else
+              echo "❌ WARNING: Script tag not found after fix!"
+              echo "index.html content:"
+              cat "$OUTPUT_DIR/index.html"
+            fi
+          else
+            echo "❌ ERROR: index.html not found in $OUTPUT_DIR"
+            exit 1
+          fi
+          
+          # Continue with existing path fixing...
           if [ -f "$OUTPUT_DIR/index.html" ]; then
             # Check if script tags exist (Expo should have added them)
             SCRIPT_COUNT=$(grep -c '<script' "$OUTPUT_DIR/index.html" || echo "0")
