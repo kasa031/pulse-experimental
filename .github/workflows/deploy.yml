@@ -384,18 +384,31 @@ NODE_SCRIPT
             fi
           
           # Fix remaining paths (CSS, images, etc.) - script is already fixed above
+          # IMPORTANT: Use Node.js to fix paths to avoid breaking the script tag we just injected
           if [ -f "$OUTPUT_DIR/index.html" ]; then
-            echo "Fixing remaining paths (CSS, images)..."
-            # Fix link href attributes
-            sed -i "s|href=\"/_expo|href=\"$BASE_PATH/_expo|g" "$OUTPUT_DIR/index.html"
-            sed -i "s|href=\"/static|href=\"$BASE_PATH/static|g" "$OUTPUT_DIR/index.html"
-            sed -i "s|href=\"_expo|href=\"$BASE_PATH/_expo|g" "$OUTPUT_DIR/index.html"
-            sed -i "s|href=\"static|href=\"$BASE_PATH/static|g" "$OUTPUT_DIR/index.html"
-            # Fix CSS url() references
-            sed -i "s|url('/_expo|url('$BASE_PATH/_expo|g" "$OUTPUT_DIR/index.html"
-            sed -i "s|url(\"/_expo|url(\"$BASE_PATH/_expo|g" "$OUTPUT_DIR/index.html"
-            sed -i "s|url('_expo|url('$BASE_PATH/_expo|g" "$OUTPUT_DIR/index.html"
-            sed -i "s|url(\"_expo|url(\"$BASE_PATH/_expo|g" "$OUTPUT_DIR/index.html"
+            echo "Fixing remaining paths (CSS, images) with Node.js..."
+            node << NODE_SCRIPT
+const fs = require('fs');
+const htmlPath = '$OUTPUT_DIR/index.html';
+const basePath = '$BASE_PATH';
+
+let html = fs.readFileSync(htmlPath, 'utf8');
+
+// Fix link href attributes (but preserve script src we just added)
+html = html.replace(/href="\\/_expo/g, \`href="\${basePath}/_expo\`);
+html = html.replace(/href="\\/static/g, \`href="\${basePath}/static\`);
+html = html.replace(/href="_expo/g, \`href="\${basePath}/_expo\`);
+html = html.replace(/href="static/g, \`href="\${basePath}/static\`);
+
+// Fix CSS url() references
+html = html.replace(/url\('\\/_expo/g, \`url('\${basePath}/_expo\`);
+html = html.replace(/url\("\\/_expo/g, \`url("\${basePath}/_expo\`);
+html = html.replace(/url\\('_expo/g, \`url('\${basePath}/_expo\`);
+html = html.replace(/url\\("_expo/g, \`url("\${basePath}/_expo\`);
+
+fs.writeFileSync(htmlPath, html, 'utf8');
+console.log('✅ Fixed remaining paths');
+NODE_SCRIPT
             
             # Inject error handling script before closing body tag (but after Expo's scripts)
             echo "Injecting error handling script..."
