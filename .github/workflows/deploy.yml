@@ -218,97 +218,170 @@ jobs:
           OUTPUT_DIR="${{ steps.find_output.outputs.output_dir }}"
           BASE_PATH="/pulse-experimental"
           
-          echo "🔧 Processing index.html..."
+          echo "🔧 Processing index.html in $OUTPUT_DIR..."
           
-          if [ -f "$OUTPUT_DIR/index.html" ]; then
-            # First, find ALL JS files in the build
-            echo "🔍 Searching for JS files..."
-            ALL_JS_FILES=$(find "$OUTPUT_DIR" -name "*.js" -type f | grep -v node_modules | head -5)
-            echo "Found JS files:"
-            echo "$ALL_JS_FILES"
-            
-            # Find the main entry point JS file
-            MAIN_JS=""
-            for js_file in $ALL_JS_FILES; do
-              # Prefer files in _expo/static/js/web/ or similar
-              if echo "$js_file" | grep -qE "(index|main|app|web)" && echo "$js_file" | grep -qE "_expo|static"; then
-                MAIN_JS="$js_file"
-                break
-              fi
-            done
-            
-            # If not found, use the first JS file
-            if [ -z "$MAIN_JS" ]; then
-              MAIN_JS=$(echo "$ALL_JS_FILES" | head -1)
+          if [ ! -f "$OUTPUT_DIR/index.html" ]; then
+            echo "❌ ERROR: index.html not found in $OUTPUT_DIR"
+            echo "Directory contents:"
+            ls -la "$OUTPUT_DIR" | head -20
+            exit 1
+          fi
+          
+          # Show original index.html
+          echo "📄 Original index.html (first 500 chars):"
+          head -c 500 "$OUTPUT_DIR/index.html"
+          echo ""
+          echo ""
+          
+          # Find ALL JS files in the build
+          echo "🔍 Searching for JS files in $OUTPUT_DIR..."
+          ALL_JS_FILES=$(find "$OUTPUT_DIR" -name "*.js" -type f | grep -v node_modules)
+          JS_COUNT=$(echo "$ALL_JS_FILES" | wc -l)
+          echo "Found $JS_COUNT JS files:"
+          echo "$ALL_JS_FILES" | head -10
+          
+          if [ -z "$ALL_JS_FILES" ] || [ "$JS_COUNT" -eq "0" ]; then
+            echo "❌ ERROR: No JS files found in build!"
+            echo "Directory structure:"
+            find "$OUTPUT_DIR" -type f | head -20
+            exit 1
+          fi
+          
+          # Find the main entry point JS file (prioritize _expo/static/js/web/)
+          MAIN_JS=""
+          
+          # Try most specific paths first
+          if [ -d "$OUTPUT_DIR/_expo/static/js/web" ]; then
+            MAIN_JS=$(find "$OUTPUT_DIR/_expo/static/js/web" -name "*.js" -type f | head -1)
+            if [ -n "$MAIN_JS" ]; then
+              echo "✅ Found JS in _expo/static/js/web/"
             fi
-            
-            if [ -z "$MAIN_JS" ]; then
-              echo "❌ ERROR: No JS files found!"
-              exit 1
-            fi
-            
-            JS_RELATIVE=$(echo "$MAIN_JS" | sed "s|^$OUTPUT_DIR/||")
-            JS_PATH="$BASE_PATH/$JS_RELATIVE"
-            echo "✅ Using JS file: $JS_RELATIVE"
-            echo "✅ JS path: $JS_PATH"
-            
-            # Use Node.js to completely rewrite index.html with proper script tag
-            # Pass variables directly to avoid environment variable issues
-            node << NODE_SCRIPT
+          fi
+          
+          # Try other common locations
+          if [ -z "$MAIN_JS" ]; then
+            MAIN_JS=$(find "$OUTPUT_DIR/_expo" -path "*/js/web/*.js" -type f | head -1)
+          fi
+          if [ -z "$MAIN_JS" ]; then
+            MAIN_JS=$(find "$OUTPUT_DIR/_expo" -name "index.js" -type f | head -1)
+          fi
+          if [ -z "$MAIN_JS" ]; then
+            MAIN_JS=$(find "$OUTPUT_DIR" -path "*/static/js/*.js" -type f | head -1)
+          fi
+          if [ -z "$MAIN_JS" ]; then
+            # Use first JS file as fallback
+            MAIN_JS=$(echo "$ALL_JS_FILES" | head -1)
+          fi
+          
+          if [ -z "$MAIN_JS" ] || [ ! -f "$MAIN_JS" ]; then
+            echo "❌ ERROR: Could not find valid JS file!"
+            exit 1
+          fi
+          
+          JS_RELATIVE=$(echo "$MAIN_JS" | sed "s|^$OUTPUT_DIR/||")
+          JS_PATH="$BASE_PATH/$JS_RELATIVE"
+          echo ""
+          echo "✅ Using JS file: $MAIN_JS"
+          echo "✅ Relative path: $JS_RELATIVE"
+          echo "✅ Full JS path: $JS_PATH"
+          echo ""
+          
+          # Use Node.js to completely rewrite index.html with proper script tag
+          node << NODE_SCRIPT
 const fs = require('fs');
+const path = require('path');
 
 const htmlPath = '$OUTPUT_DIR/index.html';
 const jsPath = '$JS_PATH';
 const basePath = '$BASE_PATH';
 
-console.log('Processing:', htmlPath);
-console.log('JS Path:', jsPath);
-console.log('Base Path:', basePath);
+console.log('🔧 Starting index.html fix...');
+console.log('HTML path:', htmlPath);
+console.log('JS path:', jsPath);
+console.log('Base path:', basePath);
 
+// Read original HTML
 let html = fs.readFileSync(htmlPath, 'utf8');
 console.log('Original HTML length:', html.length);
 
-// Remove ALL existing script tags (they're broken)
+// Show all script tags before removal
 const beforeScripts = html.match(/<script[^>]*>[\s\S]*?<\/script>/gi);
 if (beforeScripts) {
-  console.log('Found', beforeScripts.length, 'script tags to remove');
+  console.log('Found', beforeScripts.length, 'script tags to remove:');
+  beforeScripts.forEach((script, i) => {
+    console.log(\`  [\${i+1}] \${script.substring(0, 100)}...\`);
+  });
+} else {
+  console.log('No script tags found in original HTML');
 }
+
+// Remove ALL existing script tags (they're broken)
 html = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+console.log('✅ Removed all script tags');
 
 // Find the closing body tag and inject script BEFORE it
 if (html.includes('</body>')) {
-  html = html.replace('</body>', \`  <script src="\${jsPath}"></script>\\n</body>\`);
+  const scriptTag = \`  <script src="\${jsPath}"></script>\\n\`;
+  html = html.replace('</body>', scriptTag + '</body>');
   console.log('✅ Injected script before </body>');
+  console.log('Script tag:', scriptTag.trim());
 } else {
-  html += \`\\n  <script src="\${jsPath}"></script>\\n</body>\`;
+  const scriptTag = \`\\n  <script src="\${jsPath}"></script>\\n</body>\`;
+  html += scriptTag;
   console.log('✅ Added script and </body>');
 }
 
-// Fix all paths
+// Fix all paths (do this AFTER injecting script)
 html = html.replace(/src="\\/_expo/g, \`src="\${basePath}/_expo\`);
 html = html.replace(/src="\\/static/g, \`src="\${basePath}/static\`);
 html = html.replace(/href="\\/_expo/g, \`href="\${basePath}/_expo\`);
 html = html.replace(/href="\\/static/g, \`href="\${basePath}/static\`);
 
+// Write fixed HTML
 fs.writeFileSync(htmlPath, html, 'utf8');
-console.log('✅ Fixed index.html');
-console.log('Final HTML contains script:', html.includes(jsPath));
+console.log('✅ Wrote fixed HTML');
+
+// Verify
+const finalScripts = html.match(/<script[^>]*src="[^"]*"[^>]*>/gi);
+if (finalScripts) {
+  console.log('✅ Verification: Found', finalScripts.length, 'script tags with src:');
+  finalScripts.forEach((script, i) => {
+    console.log(\`  [\${i+1}] \${script}\`);
+  });
+  
+  const hasCorrectScript = html.includes(jsPath);
+  console.log('✅ Verification: HTML contains JS path:', hasCorrectScript);
+  if (!hasCorrectScript) {
+    console.error('❌ ERROR: Script path not found in final HTML!');
+    process.exit(1);
+  }
+} else {
+  console.error('❌ ERROR: No script tags found in final HTML!');
+  process.exit(1);
+}
+
+console.log('✅ All checks passed!');
 NODE_SCRIPT
             
-            echo "✅ index.html fixed!"
+            echo ""
+            echo "✅ Node.js script completed!"
             
-            # Verify the fix
+            # Final verification
+            echo ""
+            echo "🔍 Final verification:"
             if grep -q "src=\"$JS_PATH\"" "$OUTPUT_DIR/index.html"; then
-              echo "✅ Script tag verified in index.html"
+              echo "✅ Script tag with correct path found in index.html"
+              echo "Script tag:"
+              grep "src=\"$JS_PATH\"" "$OUTPUT_DIR/index.html"
             else
-              echo "❌ WARNING: Script tag not found after fix!"
-              echo "index.html content:"
+              echo "❌ ERROR: Script tag not found after fix!"
+              echo "Searching for any script tags:"
+              grep -i "<script" "$OUTPUT_DIR/index.html" || echo "No script tags found!"
+              echo ""
+              echo "Full index.html content:"
               cat "$OUTPUT_DIR/index.html"
+              exit 1
             fi
-          else
-            echo "❌ ERROR: index.html not found in $OUTPUT_DIR"
-            exit 1
-          fi
           
           # Fix remaining paths (CSS, images, etc.) - script is already fixed above
           if [ -f "$OUTPUT_DIR/index.html" ]; then
