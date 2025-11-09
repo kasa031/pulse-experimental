@@ -93,15 +93,28 @@ jobs:
               '</html>' > public/index.html
           fi
           
-          npx expo export --platform web --no-minify 2>&1 | tee build.log || {
+          # Build with explicit output directory
+          npx expo export --platform web --output-dir dist --no-minify 2>&1 | tee build.log || {
             echo "Build failed, checking logs..."
             cat build.log || true
             echo "Trying alternative build method..."
-            npx expo export --platform web 2>&1 || {
+            npx expo export --platform web --output-dir dist 2>&1 || {
               echo "Build completely failed"
               exit 1
             }
           }
+          
+          # Verify build output
+          echo "Verifying build output..."
+          if [ -d "dist" ]; then
+            echo "✅ dist directory created"
+            ls -la dist/ | head -10
+            if [ -f "dist/index.html" ]; then
+              echo "✅ index.html exists"
+              echo "Checking for script tags in index.html:"
+              grep -c '<script' dist/index.html || echo "No script tags found"
+            fi
+          fi
           
           echo "✅ Build completed"
         env:
@@ -239,11 +252,14 @@ jobs:
             
             # Fix all paths in index.html (including empty src attributes)
             echo "Fixing paths in index.html..."
-            # Fix script src attributes
+            # Fix script src attributes - handle both absolute and relative paths
             sed -i "s|src=\"/_expo|src=\"$BASE_PATH/_expo|g" "$OUTPUT_DIR/index.html"
             sed -i "s|src=\"/static|src=\"$BASE_PATH/static|g" "$OUTPUT_DIR/index.html"
             sed -i "s|src=\"_expo|src=\"$BASE_PATH/_expo|g" "$OUTPUT_DIR/index.html"
             sed -i "s|src=\"static|src=\"$BASE_PATH/static|g" "$OUTPUT_DIR/index.html"
+            # Fix empty src attributes (common issue)
+            sed -i "s|src=\"\"|src=\"$BASE_PATH/_expo/static/js/web/index.js\"|g" "$OUTPUT_DIR/index.html"
+            sed -i "s|src=''|src='$BASE_PATH/_expo/static/js/web/index.js'|g" "$OUTPUT_DIR/index.html"
             # Fix link href attributes
             sed -i "s|href=\"/_expo|href=\"$BASE_PATH/_expo|g" "$OUTPUT_DIR/index.html"
             sed -i "s|href=\"/static|href=\"$BASE_PATH/static|g" "$OUTPUT_DIR/index.html"
