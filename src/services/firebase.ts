@@ -53,19 +53,40 @@ let firebaseError: Error | null = null;
 
 try {
   if (!isValidConfig(firebaseConfig)) {
-    throw new Error('Firebase konfigurasjon er ugyldig. Sjekk at API-nøkler er satt riktig.');
+    const missingFields: string[] = [];
+    if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes('DIN_')) missingFields.push('apiKey');
+    if (!firebaseConfig.projectId || firebaseConfig.projectId.includes('DIN_')) missingFields.push('projectId');
+    if (!firebaseConfig.appId || firebaseConfig.appId.includes('DIN_')) missingFields.push('appId');
+    
+    throw new Error(
+      `Firebase konfigurasjon er ugyldig. Manglende eller ugyldige felter: ${missingFields.join(', ')}. ` +
+      `Sjekk at API-nøkler er satt riktig i app.local.json eller miljøvariabler.`
+    );
   }
 
   if (getApps().length === 0) {
     app = initializeApp(firebaseConfig);
+    // Log successful initialization
+    if (typeof console !== 'undefined' && console.log) {
+      console.log('✅ Firebase initialisert suksessfullt');
+    }
   } else {
     app = getApps()[0];
+    if (typeof console !== 'undefined' && console.log) {
+      console.log('✅ Firebase allerede initialisert');
+    }
   }
 } catch (error) {
   firebaseError = error as Error;
   // Log error - dette er kritisk så vi logger alltid
   if (typeof console !== 'undefined' && console.error) {
-    console.error('Firebase initialisering feilet:', error);
+    console.error('❌ Firebase initialisering feilet:', error);
+    console.error('Firebase config:', {
+      hasApiKey: !!firebaseConfig.apiKey,
+      hasProjectId: !!firebaseConfig.projectId,
+      hasAppId: !!firebaseConfig.appId,
+      apiKeyLength: firebaseConfig.apiKey?.length || 0,
+    });
   }
   // App vil håndtere dette i App.tsx
 }

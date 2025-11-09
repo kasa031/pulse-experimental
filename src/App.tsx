@@ -41,14 +41,25 @@ const App = () => {
     const initializeAuth = async () => {
       try {
         setLoading(true);
-        safeLog('Initialiserer autentisering...');
+        safeLog(`Initialiserer autentisering... (Platform: ${Platform.OS})`);
+        
+        // Timeout for Android - hvis Firebase tar for lang tid
+        const timeoutId = setTimeout(() => {
+          if (!authInitialized) {
+            safeError('Firebase initialisering timeout (10s)');
+            setError('Appen tar for lang tid å laste. Prøv å starte på nytt.');
+            setAuthInitialized(true);
+            setLoading(false);
+          }
+        }, 10000); // 10 sekunder timeout
         
         // Sjekk om Firebase er initialisert
         const { firebaseInitialized, getFirebaseError } = await import('./services/firebase');
         if (!firebaseInitialized) {
+          clearTimeout(timeoutId);
           const error = getFirebaseError();
           const errorMessage = error?.message || 
-            'Firebase er ikke initialisert. Sjekk at API-nøkler er satt riktig i GitHub Secrets.';
+            'Firebase er ikke initialisert. Sjekk at API-nøkler er satt riktig i app.local.json.';
           safeError('Firebase ikke initialisert:', errorMessage);
           setError(errorMessage);
           setAuthInitialized(true);
@@ -57,6 +68,7 @@ const App = () => {
         }
         
         if (!auth) {
+          clearTimeout(timeoutId);
           const errorMessage = 'Firebase Auth er ikke tilgjengelig. Sjekk konfigurasjon.';
           safeError('Firebase Auth mangler:', errorMessage);
           setError(errorMessage);
@@ -68,6 +80,7 @@ const App = () => {
         // Lytt til Firebase auth state changes
         const unsubscribe = auth!.onAuthStateChanged(
           async (firebaseUser) => {
+            clearTimeout(timeoutId);
             safeLog('Firebase auth state endret:', firebaseUser?.email);
             
             if (firebaseUser) {
@@ -98,6 +111,7 @@ const App = () => {
             setLoading(false);
           },
           (err) => {
+            clearTimeout(timeoutId);
             safeError('Firebase auth feil:', err);
             setError('Feil med autentisering: ' + err.message);
             setAuthInitialized(true);
@@ -105,7 +119,10 @@ const App = () => {
           }
         );
 
-        return unsubscribe;
+        return () => {
+          clearTimeout(timeoutId);
+          unsubscribe();
+        };
       } catch (error) {
         safeError('Feil ved initialisering av auth:', error);
         setError('Feil ved oppstart av appen: ' + (error as Error).message);
