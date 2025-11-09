@@ -53,16 +53,17 @@ const parseRSSFeed = async (feedUrl: string): Promise<RSSItem[]> => {
       if (titleMatch && descMatch && linkMatch) {
         // Sanitize HTML - fjern tags og escape entities (komplett sanitization)
         const sanitizeHtml = (html: string): string => {
-          if (!html) return '';
-          // Fjern HTML tags først (komplett sanitization)
-          let sanitized = html.replace(/<[^>]*>/g, '');
-          // Escape HTML entities (må gjøres før vi fjerner tegn)
+          if (!html || typeof html !== 'string') return '';
+          // Fjern HTML tags først (komplett sanitization - håndterer alle varianter)
+          let sanitized = html.replace(/<\/?[^>]+(>|$)/g, '');
+          // Escape HTML entities i riktig rekkefølge for komplett sanitization
           sanitized = sanitized
-            .replace(/&/g, '&amp;')  // Må gjøres først for å unngå dobbel escaping
+            .replace(/&(?!amp;|lt;|gt;|quot;|#x27;|#x2F;|#39;)/g, '&amp;')  // Escape & som ikke er del av en entity
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#x27;');
+            .replace(/'/g, '&#x27;')
+            .replace(/\//g, '&#x2F;'); // Escape forward slash for ekstra sikkerhet
           return sanitized.trim();
         };
         

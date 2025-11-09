@@ -334,28 +334,29 @@ jobs:
               # Use Node.js to properly fix script tags (more reliable than sed)
               node << NODE_SCRIPT
 const fs = require('fs');
-const path = require('path');
 
 const htmlPath = '$OUTPUT_DIR/index.html';
 const jsPath = '$JS_PATH';
 
 let html = fs.readFileSync(htmlPath, 'utf8');
 
-// Fix empty src attributes
+// Fix empty src attributes (both double and single quotes)
 html = html.replace(/src=["']{2}/g, \`src="\${jsPath}"\`);
 html = html.replace(/src=''/g, \`src='\${jsPath}'\`);
 
 // Fix script tags without src attribute
 // Match <script> or <script with attributes but no src
-html = html.replace(/<script([^>]*?)(?<!src=)(?<!src=")(?<!src=')(>)/g, (match, attrs, closing) => {
+html = html.replace(/<script([^>]*?)>/g, (match, attrs) => {
   // Only add src if it doesn't already have one
-  if (!attrs.includes('src=')) {
-    return \`<script\${attrs} src="\${jsPath}"\${closing}\`;
+  if (!attrs || !attrs.includes('src=')) {
+    // Preserve existing attributes and add src
+    const cleanAttrs = attrs ? attrs.trim() : '';
+    return \`<script\${cleanAttrs ? ' ' + cleanAttrs : ''} src="\${jsPath}">\`;
   }
   return match;
 });
 
-// Also handle any remaining empty script tags
+// Also handle any remaining empty script tags with src=""
 html = html.replace(/<script([^>]*?)src=["']{2}([^>]*?)>/g, \`<script\$1src="\${jsPath}"\$2>\`);
 
 fs.writeFileSync(htmlPath, html, 'utf8');

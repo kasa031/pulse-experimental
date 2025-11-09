@@ -64,18 +64,18 @@ export const validatePassword = (password: string): { valid: boolean; error?: st
 export const sanitizeText = (text: string, maxLength: number = 1000): string => {
   if (!text || typeof text !== 'string') return '';
   
-  // Fjern HTML tags først (komplett sanitization - håndterer alle HTML tags)
-  // Bruk non-greedy matching for å fange alle tags, inkludert nested tags
-  let sanitized = text.replace(/<[^>]+>/g, '');
+  // Komplett sanitization: Fjern HTML tags først (inkludert nested og malformed tags)
+  // Bruk global flag og håndter alle varianter av HTML tags
+  let sanitized = text.replace(/<\/?[^>]+(>|$)/g, '');
   
-  // Escape HTML entities (må gjøres etter tag removal for komplett sanitization)
-  // Escape & først for å unngå dobbel escaping
+  // Escape HTML entities i riktig rekkefølge for komplett sanitization
+  // Escape & først for å unngå dobbel escaping av allerede escaped entities
   sanitized = sanitized
-    .replace(/&/g, '&amp;')  // Må gjøres først for å unngå dobbel escaping
+    .replace(/&(?!amp;|lt;|gt;|quot;|#x27;|#x2F;|#39;)/g, '&amp;')  // Escape & som ikke er del av en entity
     .replace(/</g, '&lt;')   // Escape < (kan være igjen etter tag removal)
     .replace(/>/g, '&gt;')   // Escape > (kan være igjen etter tag removal)
     .replace(/"/g, '&quot;')  // Escape doble anførselstegn
-    .replace(/'/g, '&#x27;') // Escape enkle anførselstegn
+    .replace(/'/g, '&#x27;') // Escape enkle anførselstegn (bruk &#x27; ikke &#39;)
     .replace(/\//g, '&#x2F;'); // Escape forward slash for ekstra sikkerhet
   
   // Trim og begrens lengde
