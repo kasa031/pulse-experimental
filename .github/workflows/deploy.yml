@@ -337,17 +337,9 @@ NODE_SCRIPT
             exit 1
           fi
           
-          # Continue with existing path fixing...
+          # Fix remaining paths (CSS, images, etc.)
           if [ -f "$OUTPUT_DIR/index.html" ]; then
-            # Check if script tags exist (Expo should have added them)
-            SCRIPT_COUNT=$(grep -c '<script' "$OUTPUT_DIR/index.html" || echo "0")
-            echo "Found $SCRIPT_COUNT script tags in index.html"
-            
-            # Check if scripts have valid src attributes
-            EMPTY_SCRIPTS=$(grep -c 'src=""' "$OUTPUT_DIR/index.html" || echo "0")
-            if [ "$EMPTY_SCRIPTS" -gt "0" ]; then
-              echo "⚠️ WARNING: Found $EMPTY_SCRIPTS script tags with empty src!"
-            fi
+            echo "Fixing remaining paths..."
             
             if [ "$SCRIPT_COUNT" -eq "0" ] || [ "$EMPTY_SCRIPTS" -gt "0" ]; then
               echo "⚠️ WARNING: Script tags missing or invalid! Searching for JS files..."
