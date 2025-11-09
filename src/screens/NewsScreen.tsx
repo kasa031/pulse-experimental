@@ -7,9 +7,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, Linking, Share, Image, Platform } from 'react-native';
 import { Card, Text, Button, Chip, ActivityIndicator, Dialog, Portal, Menu, Searchbar, Snackbar } from 'react-native-paper';
 import { theme, osloBranding } from '../constants/theme';
-import { getLatestNews, getNewsByCategory, getNewsByDistrict, searchNews, sortNews, NewsItem } from '../services/newsService';
-import { importNewsFromRSS, generateAndImportAINews, getSuggestedTopics } from '../services/osloNewsImporter';
-import { isUserAdmin } from '../utils/adminCheck';
+import { getLatestNews, getNewsByCategory, getNewsByDistrict, NewsItem } from '../services/newsService';
 import { OSLO_DISTRICTS, POLL_CATEGORIES, getCategoryColor } from '../constants/osloDistricts';
 import { safeError, safeLog } from '../utils/performance';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -19,9 +17,9 @@ import { getUserProfile } from '../services/userService';
 import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
 import { SPACING } from '../constants/spacing';
 import { BUTTON_MIN_HEIGHT, CHIP_MIN_HEIGHT } from '../constants/touchTargets';
-import { formatRelativeTime, formatDateNorwegian } from '../utils/dateHelpers';
+import { formatRelativeTime } from '../utils/dateHelpers';
 
-const CATEGORIES = POLL_CATEGORIES || ['politikk', 'transport', 'miljø', 'byutvikling', 'nyheter'];
+const CATEGORIES = POLL_CATEGORIES;
 
 // Bruk formatRelativeTime fra dateHelpers
 const formatDate = formatRelativeTime;

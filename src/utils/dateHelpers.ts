@@ -16,7 +16,7 @@ export const toDate = (date: Date | Timestamp | any): Date | null => {
       return date;
     }
     
-    if (date && typeof date === 'object') {
+    if (typeof date === 'object') {
       // Firestore Timestamp
       if ('toDate' in date && typeof date.toDate === 'function') {
         return date.toDate();

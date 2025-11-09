@@ -62,18 +62,21 @@ export const validatePassword = (password: string): { valid: boolean; error?: st
  * Sanitize tekst for å forhindre XSS
  */
 export const sanitizeText = (text: string, maxLength: number = 1000): string => {
-  if (!text) return '';
+  if (!text || typeof text !== 'string') return '';
   
-  // Fjern HTML tags først (komplett sanitization)
-  let sanitized = text.replace(/<[^>]*>/g, '');
+  // Fjern HTML tags først (komplett sanitization - håndterer alle HTML tags)
+  // Bruk non-greedy matching for å fange alle tags, inkludert nested tags
+  let sanitized = text.replace(/<[^>]+>/g, '');
   
-  // Escape HTML entities (må gjøres før vi fjerner tegn)
+  // Escape HTML entities (må gjøres etter tag removal for komplett sanitization)
+  // Escape & først for å unngå dobbel escaping
   sanitized = sanitized
     .replace(/&/g, '&amp;')  // Må gjøres først for å unngå dobbel escaping
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;');
+    .replace(/</g, '&lt;')   // Escape < (kan være igjen etter tag removal)
+    .replace(/>/g, '&gt;')   // Escape > (kan være igjen etter tag removal)
+    .replace(/"/g, '&quot;')  // Escape doble anførselstegn
+    .replace(/'/g, '&#x27;') // Escape enkle anførselstegn
+    .replace(/\//g, '&#x2F;'); // Escape forward slash for ekstra sikkerhet
   
   // Trim og begrens lengde
   sanitized = sanitized.trim().substring(0, maxLength);

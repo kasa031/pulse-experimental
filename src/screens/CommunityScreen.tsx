@@ -13,7 +13,7 @@ import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
 import { SPACING } from '../constants/spacing';
 import { BUTTON_MIN_HEIGHT, CHIP_MIN_HEIGHT } from '../constants/touchTargets';
 
-const CATEGORIES = POLL_CATEGORIES || ['generelt', 'transport', 'miljø', 'byutvikling', 'politikk'];
+const CATEGORIES = POLL_CATEGORIES;
 
 // Bruk formatRelativeTime fra dateHelpers
 const formatDate = formatRelativeTime;
