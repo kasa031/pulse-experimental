@@ -1,0 +1,59 @@
+{
+  "name": "OsloPuls - Din stemme i byen",
+  "short_name": "OsloPuls",
+  "description": "En digital plattform hvor innbyggerne i Oslo kan delta i lokale avstemninger, diskutere saker og følge med på hva som skjer i byen.",
+  "start_url": "/pulse-experimental/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "background_color": "#ffffff",
+  "theme_color": "#0066cc",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/pulse-experimental/assets/icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/pulse-experimental/assets/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/pulse-experimental/assets/favicon.png",
+      "sizes": "48x48",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["government", "social", "news"],
+  "lang": "nb-NO",
+  "dir": "ltr",
+  "scope": "/pulse-experimental/",
+  "shortcuts": [
+    {
+      "name": "Stem",
+      "short_name": "Stem",
+      "description": "Delta i lokale avstemninger",
+      "url": "/pulse-experimental/#/Stem",
+      "icons": [{ "src": "/pulse-experimental/assets/icon.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Nyheter",
+      "short_name": "Nyheter",
+      "description": "Følg med på nyheter fra Oslo",
+      "url": "/pulse-experimental/#/Nyheter",
+      "icons": [{ "src": "/pulse-experimental/assets/icon.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Fellesskap",
+      "short_name": "Fellesskap",
+      "description": "Delta i diskusjoner",
+      "url": "/pulse-experimental/#/Fellesskap",
+      "icons": [{ "src": "/pulse-experimental/assets/icon.png", "sizes": "96x96" }]
+    }
+  ]
+}
+

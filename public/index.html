@@ -3,8 +3,63 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <meta name="description" content="OsloPuls - Din stemme i byen" />
-  <title>OsloPuls</title>
+  
+  <!-- Primary Meta Tags -->
+  <title>OsloPuls - Din stemme i byen</title>
+  <meta name="title" content="OsloPuls - Din stemme i byen" />
+  <meta name="description" content="OsloPuls er en digital plattform hvor innbyggerne i Oslo kan delta i lokale avstemninger, diskutere saker og følge med på hva som skjer i byen." />
+  <meta name="keywords" content="Oslo, lokaldemokrati, avstemninger, bydeler, OsloPuls, stemmerett, deltakelse" />
+  <meta name="author" content="OsloPuls" />
+  <meta name="robots" content="index, follow" />
+  <meta name="language" content="Norwegian" />
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://kasa031.github.io/pulse-experimental/" />
+  <meta property="og:title" content="OsloPuls - Din stemme i byen" />
+  <meta property="og:description" content="Delta i lokale avstemninger, diskuter saker og følg med på hva som skjer i Oslo. Din stemme betyr noe!" />
+  <meta property="og:image" content="https://kasa031.github.io/pulse-experimental/assets/oslo-logo.png" />
+  <meta property="og:locale" content="nb_NO" />
+  <meta property="og:site_name" content="OsloPuls" />
+  
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://kasa031.github.io/pulse-experimental/" />
+  <meta property="twitter:title" content="OsloPuls - Din stemme i byen" />
+  <meta property="twitter:description" content="Delta i lokale avstemninger, diskuter saker og følg med på hva som skjer i Oslo." />
+  <meta property="twitter:image" content="https://kasa031.github.io/pulse-experimental/assets/oslo-logo.png" />
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/pulse-experimental/assets/favicon.png" />
+  <link rel="apple-touch-icon" href="/pulse-experimental/assets/icon.png" />
+  
+  <!-- Theme Color -->
+  <meta name="theme-color" content="#0066cc" />
+  <meta name="msapplication-TileColor" content="#0066cc" />
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/pulse-experimental/manifest.json" />
+  
+  <!-- Apple Touch Icons for iOS -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/pulse-experimental/assets/icon.png" />
+  <link rel="apple-touch-icon" sizes="152x152" href="/pulse-experimental/assets/icon.png" />
+  <link rel="apple-touch-icon" sizes="144x144" href="/pulse-experimental/assets/icon.png" />
+  <link rel="apple-touch-icon" sizes="120x120" href="/pulse-experimental/assets/icon.png" />
+  <link rel="apple-touch-icon" sizes="114x114" href="/pulse-experimental/assets/icon.png" />
+  <link rel="apple-touch-icon" sizes="76x76" href="/pulse-experimental/assets/icon.png" />
+  <link rel="apple-touch-icon" sizes="72x72" href="/pulse-experimental/assets/icon.png" />
+  <link rel="apple-touch-icon" sizes="60x60" href="/pulse-experimental/assets/icon.png" />
+  <link rel="apple-touch-icon" sizes="57x57" href="/pulse-experimental/assets/icon.png" />
+  
+  <!-- Apple Mobile Web App Capable -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="OsloPuls" />
+  
+  <!-- Microsoft Tiles -->
+  <meta name="msapplication-TileImage" content="/pulse-experimental/assets/icon.png" />
+  <meta name="msapplication-config" content="/pulse-experimental/browserconfig.xml" />
+  
   <style>
     /* Prevent flash of unstyled content */
     body {
@@ -44,6 +99,67 @@
       color: #666;
       font-size: 16px;
     }
+    
+    /* Dark mode styles */
+    :root.dark {
+      background-color: #1E1E1E;
+      color: #E0E0E0;
+    }
+    
+    :root.dark body {
+      background-color: #1E1E1E;
+      color: #E0E0E0;
+    }
+    
+    :root.dark .loading-container {
+      background-color: #1E1E1E;
+    }
+    
+    :root.dark .loading-container p {
+      color: #E0E0E0;
+    }
+    
+    :root.dark .spinner {
+      border-color: #444;
+      border-top-color: #0066cc;
+    }
+    
+    /* Skip link for accessibility */
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: #0066cc;
+      color: #fff;
+      padding: 8px 16px;
+      text-decoration: none;
+      z-index: 1000;
+      border-radius: 0 0 4px 0;
+    }
+    .skip-link:focus {
+      top: 0;
+      outline: 2px solid #fff;
+      outline-offset: -2px;
+    }
+    
+    /* Screen reader only class */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+    
+    /* Focus styles for keyboard navigation */
+    *:focus-visible {
+      outline: 2px solid #0066cc;
+      outline-offset: 2px;
+    }
   </style>
 </head>
 <body>
@@ -54,5 +170,51 @@
     </div>
   </div>
   <!-- Expo will inject script tags here during build -->
+  
+  <!-- Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        // Register service worker with error handling
+        navigator.serviceWorker.register('/pulse-experimental/sw.js', {
+          scope: '/pulse-experimental/'
+        })
+          .then((registration) => {
+            console.log('✅ Service Worker registered:', registration.scope);
+            
+            // Check for updates
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              if (newWorker) {
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    console.log('🔄 New service worker available. Refresh to update.');
+                  }
+                });
+              }
+            });
+          })
+          .catch((error) => {
+            console.warn('⚠️ Service Worker registration failed:', error);
+          });
+        
+        // Handle service worker updates
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!refreshing) {
+            refreshing = true;
+            window.location.reload();
+          }
+        });
+      });
+    }
+    
+    // Detect if app is running in standalone mode (added to home screen)
+    if (window.matchMedia('(display-mode: standalone)').matches || 
+        (window.navigator.standalone === true)) {
+      document.documentElement.classList.add('standalone');
+      console.log('📱 App running in standalone mode');
+    }
+  </script>
 </body>
 </html>

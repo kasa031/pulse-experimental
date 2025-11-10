@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, lazy, Suspense } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Provider as PaperProvider, ActivityIndicator, Text, Button } from 'react-native-paper';
@@ -12,22 +12,73 @@ import { saveUserToStorage, clearAuthStorage } from './services/authPersistence'
 import { createOrUpdateUserProfile } from './services/userService';
 import { ErrorBoundary } from './utils/errorBoundary';
 import { safeLog, safeError } from './utils/performance';
-import { FirebaseUser } from './types';
-import LoginScreen from './screens/LoginScreen';
-// Screens
-import HomeScreen from './screens/HomeScreen';
-import VoteScreen from './screens/VoteScreen';
-import ProfileScreen from './screens/ProfileScreen';
-import CommunityScreen from './screens/CommunityScreen';
-import NewsScreen from './screens/NewsScreen';
-import ContactScreen from './screens/ContactScreen';
-import LocalHistoryScreen from './screens/LocalHistoryScreen';
-import CreatePollScreen from './screens/CreatePollScreen';
-import FeedbackScreen from './screens/FeedbackScreen';
+import { FirebaseUser, LazyComponent } from './types';
+import { analytics } from './utils/analytics';
+import { createSkipLink } from './utils/accessibility';
+import { useAppKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 // Firebase setup
 import './services/firebase';
 // Theme
-import { theme, osloBranding } from './constants/theme';
+import { theme, lightTheme, darkTheme, osloBranding } from './constants/theme';
+import { useDarkMode } from './hooks/useDarkMode';
+
+// Lazy load screens for better performance (only on web)
+// Note: React.lazy only works on web, so we conditionally use it
+const getLazyScreen = (importFn: () => Promise<any>) => {
+  if (Platform.OS === 'web') {
+    return lazy(importFn);
+  }
+  // On mobile, import synchronously
+  return importFn().then(m => m.default);
+};
+
+// For web: use lazy loading
+// For mobile: import normally
+let LoginScreen: any;
+let HomeScreen: any;
+let VoteScreen: any;
+let ProfileScreen: any;
+let CommunityScreen: any;
+let NewsScreen: any;
+let ContactScreen: any;
+let LocalHistoryScreen: any;
+let CreatePollScreen: any;
+let FeedbackScreen: any;
+let OsloScreen: any;
+
+if (Platform.OS === 'web') {
+  LoginScreen = lazy(() => import('./screens/LoginScreen'));
+  HomeScreen = lazy(() => import('./screens/HomeScreen'));
+  VoteScreen = lazy(() => import('./screens/VoteScreen'));
+  ProfileScreen = lazy(() => import('./screens/ProfileScreen'));
+  CommunityScreen = lazy(() => import('./screens/CommunityScreen'));
+  NewsScreen = lazy(() => import('./screens/NewsScreen'));
+  ContactScreen = lazy(() => import('./screens/ContactScreen'));
+  LocalHistoryScreen = lazy(() => import('./screens/LocalHistoryScreen'));
+  CreatePollScreen = lazy(() => import('./screens/CreatePollScreen'));
+  FeedbackScreen = lazy(() => import('./screens/FeedbackScreen'));
+  OsloScreen = lazy(() => import('./screens/OsloScreen'));
+} else {
+  // Synchronous imports for mobile
+  LoginScreen = require('./screens/LoginScreen').default;
+  HomeScreen = require('./screens/HomeScreen').default;
+  VoteScreen = require('./screens/VoteScreen').default;
+  ProfileScreen = require('./screens/ProfileScreen').default;
+  CommunityScreen = require('./screens/CommunityScreen').default;
+  NewsScreen = require('./screens/NewsScreen').default;
+  ContactScreen = require('./screens/ContactScreen').default;
+  LocalHistoryScreen = require('./screens/LocalHistoryScreen').default;
+  CreatePollScreen = require('./screens/CreatePollScreen').default;
+  FeedbackScreen = require('./screens/FeedbackScreen').default;
+  OsloScreen = require('./screens/OsloScreen').default;
+}
+
+// Loading component for lazy loaded screens
+const ScreenLoader = () => (
+  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+    <ActivityIndicator size="large" />
+  </View>
+);
 
 const Tab = createBottomTabNavigator();
 
@@ -36,6 +87,21 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authInitialized, setAuthInitialized] = useState(false);
+  const { isDarkMode } = useDarkMode();
+  
+  // Select theme based on dark mode
+  const currentTheme = isDarkMode ? darkTheme : lightTheme;
+
+  // Setup keyboard shortcuts for web
+  useAppKeyboardShortcuts();
+
+  // Setup accessibility features for web
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      createSkipLink();
+      analytics.trackPageView('app_start');
+    }
+  }, []);
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -78,7 +144,7 @@ const App = () => {
         }
         
         // Lytt til Firebase auth state changes
-        const unsubscribe = auth!.onAuthStateChanged(
+        const unsubscribe = auth.onAuthStateChanged(
           async (firebaseUser) => {
             if (!timeoutTriggered) {
               clearTimeout(timeoutId);
@@ -285,6 +351,13 @@ const App = () => {
   }
 
   if (!user) {
+    if (Platform.OS === 'web') {
+      return (
+        <Suspense fallback={<ScreenLoader />}>
+          <LoginScreen />
+        </Suspense>
+      );
+    }
     return <LoginScreen />;
   }
 
@@ -345,54 +418,83 @@ const App = () => {
     },
   }), []);
 
+  // Wrapper component for lazy loaded screens (only on web)
+  const LazyScreen = ({ Component, ...props }: { Component: LazyComponent; [key: string]: unknown }) => {
+    if (Platform.OS === 'web' && Component && typeof (Component as any).then === 'function') {
+      // Lazy loaded component
+      return (
+        <Suspense fallback={<ScreenLoader />}>
+          <Component {...props} />
+        </Suspense>
+      );
+    }
+    // Regular component (mobile or already loaded)
+    return <Component {...props} />;
+  };
+
   const renderNavigation = () => {
     const tabNavigator = (
       <Tab.Navigator screenOptions={screenOptions}>
               <Tab.Screen 
                 name="Hjem" 
-                component={HomeScreen}
                 options={{ title: osloBranding.logo.text }}
-              />
+              >
+                {() => <LazyScreen Component={HomeScreen} />}
+              </Tab.Screen>
               <Tab.Screen 
                 name="Stem" 
-                component={VoteScreen}
                 options={{ title: 'Stem på temaer' }}
-              />
+              >
+                {() => <LazyScreen Component={VoteScreen} />}
+              </Tab.Screen>
               <Tab.Screen 
                 name="Fellesskap" 
-                component={CommunityScreen}
                 options={{ title: 'Fellesskap' }}
-              />
+              >
+                {() => <LazyScreen Component={CommunityScreen} />}
+              </Tab.Screen>
               <Tab.Screen 
                 name="Nyheter" 
-                component={NewsScreen}
                 options={{ title: 'Nyheter' }}
-              />
+              >
+                {() => <LazyScreen Component={NewsScreen} />}
+              </Tab.Screen>
               <Tab.Screen 
                 name="Profil" 
-                component={ProfileScreen}
                 options={{ title: 'Min profil' }}
-              />
+              >
+                {() => <LazyScreen Component={ProfileScreen} />}
+              </Tab.Screen>
               <Tab.Screen 
                 name="Kontakt" 
-                component={ContactScreen}
                 options={{ title: 'Kontakt' }}
-              />
+              >
+                {() => <LazyScreen Component={ContactScreen} />}
+              </Tab.Screen>
               <Tab.Screen 
                 name="Lokalhistorie" 
-                component={LocalHistoryScreen}
                 options={{ title: 'Lokalhistorie' }}
-              />
+              >
+                {() => <LazyScreen Component={LocalHistoryScreen} />}
+              </Tab.Screen>
               <Tab.Screen 
                 name="Opprett" 
-                component={CreatePollScreen}
                 options={{ title: 'Opprett avstemning' }}
-              />
+              >
+                {() => <LazyScreen Component={CreatePollScreen} />}
+              </Tab.Screen>
               <Tab.Screen 
                 name="Rapporter" 
-                component={FeedbackScreen}
                 options={{ title: 'Rapporter feil' }}
-              />
+              >
+                {() => <LazyScreen Component={FeedbackScreen} />}
+              </Tab.Screen>
+              <Tab.Screen 
+                name="Oslo" 
+                options={{ title: 'Oslo' }}
+              >
+                {() => <LazyScreen Component={OsloScreen} />}
+              </Tab.Screen>
             </Tab.Navigator>
     );
 
@@ -401,7 +503,14 @@ const App = () => {
       return (
         <WebNavigation>
           <NavigationContainer
-            onStateChange={(state) => safeLog('Navigation state changed:', state)}
+            onStateChange={(state) => {
+              safeLog('Navigation state changed:', state);
+              // Track navigation in analytics
+              const currentRoute = state?.routes[state.index];
+              if (currentRoute) {
+                analytics.trackNavigation('previous', currentRoute.name);
+              }
+            }}
           >
             {tabNavigator}
           </NavigationContainer>
@@ -411,7 +520,14 @@ const App = () => {
 
     return (
       <NavigationContainer
-        onStateChange={(state) => safeLog('Navigation state changed:', state)}
+        onStateChange={(state) => {
+          safeLog('Navigation state changed:', state);
+          // Track navigation in analytics
+          const currentRoute = state?.routes[state.index];
+          if (currentRoute) {
+            analytics.trackNavigation('previous', currentRoute.name);
+          }
+        }}
       >
         {tabNavigator}
       </NavigationContainer>
@@ -421,7 +537,7 @@ const App = () => {
   return (
     <ErrorBoundary>
       <SafeAreaProvider>
-        <PaperProvider theme={theme}>
+        <PaperProvider theme={currentTheme}>
           {renderNavigation()}
         </PaperProvider>
       </SafeAreaProvider>

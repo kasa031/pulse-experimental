@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Card, Text, Button, Avatar, TextInput, HelperText, Chip, ActivityIndicator, Switch, List } from 'react-native-paper';
+import { Card, Text, Button, Avatar, TextInput, HelperText, Chip, ActivityIndicator, Switch, List, Snackbar } from 'react-native-paper';
 import { auth } from '../services/firebase';
 import { signOut, updateProfile } from 'firebase/auth';
 import { theme, osloBranding } from '../constants/theme';
@@ -8,6 +8,7 @@ import { getUserProfile, updateUserProfile, createOrUpdateUserProfile, UserProfi
 import { OSLO_DISTRICTS } from '../constants/osloDistricts';
 import { isUserAdmin } from '../utils/adminCheck';
 import { safeError, safeLog } from '../utils/performance';
+import { analytics } from '../utils/analytics';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
 import { SPACING } from '../constants/spacing';
@@ -31,9 +32,13 @@ const ProfileScreen = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   useEffect(() => {
     loadProfile();
+    // Track page view
+    analytics.trackPageView('profile_screen');
   }, [user]);
 
   const loadProfile = async () => {
@@ -145,8 +150,8 @@ const ProfileScreen = () => {
   }
 
   return (
+    <View style={styles.container}>
     <ScrollView 
-      style={styles.container}
       contentContainerStyle={[
         styles.content,
         { padding },
@@ -343,7 +348,10 @@ const ProfileScreen = () => {
                 left={(props) => <List.Icon {...props} icon="shield" />}
                 right={(props) => <List.Icon {...props} icon="chevron-right" />}
                 onPress={() => {
-                  // TODO: Naviger til privatlivsinnstillinger
+                  // Privatlivsinnstillinger kan implementeres senere
+                  // For nå viser vi en melding
+                  setSnackbarMessage('Privatlivsinnstillinger kommer snart!');
+                  setSnackbarVisible(true);
                 }}
               />
             </>
@@ -361,6 +369,14 @@ const ProfileScreen = () => {
         Logg ut
       </Button>
     </ScrollView>
+    <Snackbar
+      visible={snackbarVisible}
+      onDismiss={() => setSnackbarVisible(false)}
+      duration={3000}
+    >
+      {snackbarMessage}
+    </Snackbar>
+  </View>
   );
 };
 

@@ -287,81 +287,82 @@ jobs:
           echo ""
           
           # Use Node.js to completely rewrite index.html with proper script tag
-          node << NODE_SCRIPT
-const fs = require('fs');
-const path = require('path');
-
-const htmlPath = '$OUTPUT_DIR/index.html';
-const jsPath = '$JS_PATH';
-const basePath = '$BASE_PATH';
-
-console.log('🔧 Starting index.html fix...');
-console.log('HTML path:', htmlPath);
-console.log('JS path:', jsPath);
-console.log('Base path:', basePath);
-
-// Read original HTML
-let html = fs.readFileSync(htmlPath, 'utf8');
-console.log('Original HTML length:', html.length);
-
-// Show all script tags before removal
-const beforeScripts = html.match(/<script[^>]*>[\s\S]*?<\/script>/gi);
-if (beforeScripts) {
-  console.log('Found', beforeScripts.length, 'script tags to remove:');
-  beforeScripts.forEach((script, i) => {
-    console.log(\`  [\${i+1}] \${script.substring(0, 100)}...\`);
-  });
-} else {
-  console.log('No script tags found in original HTML');
-}
-
-// Remove ALL existing script tags (they're broken)
-html = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-console.log('✅ Removed all script tags');
-
-// Find the closing body tag and inject script BEFORE it
-if (html.includes('</body>')) {
-  const scriptTag = \`  <script src="\${jsPath}"></script>\\n\`;
-  html = html.replace('</body>', scriptTag + '</body>');
-  console.log('✅ Injected script before </body>');
-  console.log('Script tag:', scriptTag.trim());
-} else {
-  const scriptTag = \`\\n  <script src="\${jsPath}"></script>\\n</body>\`;
-  html += scriptTag;
-  console.log('✅ Added script and </body>');
-}
-
-// Fix all paths (do this AFTER injecting script)
-html = html.replace(/src="\\/_expo/g, \`src="\${basePath}/_expo\`);
-html = html.replace(/src="\\/static/g, \`src="\${basePath}/static\`);
-html = html.replace(/href="\\/_expo/g, \`href="\${basePath}/_expo\`);
-html = html.replace(/href="\\/static/g, \`href="\${basePath}/static\`);
-
-// Write fixed HTML
-fs.writeFileSync(htmlPath, html, 'utf8');
-console.log('✅ Wrote fixed HTML');
-
-// Verify
-const finalScripts = html.match(/<script[^>]*src="[^"]*"[^>]*>/gi);
-if (finalScripts) {
-  console.log('✅ Verification: Found', finalScripts.length, 'script tags with src:');
-  finalScripts.forEach((script, i) => {
-    console.log(\`  [\${i+1}] \${script}\`);
-  });
-  
-  const hasCorrectScript = html.includes(jsPath);
-  console.log('✅ Verification: HTML contains JS path:', hasCorrectScript);
-  if (!hasCorrectScript) {
-    console.error('❌ ERROR: Script path not found in final HTML!');
-    process.exit(1);
-  }
-} else {
-  console.error('❌ ERROR: No script tags found in final HTML!');
-  process.exit(1);
-}
-
-console.log('✅ All checks passed!');
-NODE_SCRIPT
+          cat > /tmp/fix_html.js << 'FIX_HTML_EOF'
+          const fs = require('fs');
+          const path = require('path');
+          
+          const htmlPath = process.env.HTML_PATH;
+          const jsPath = process.env.JS_PATH;
+          const basePath = process.env.BASE_PATH;
+          
+          console.log('🔧 Starting index.html fix...');
+          console.log('HTML path:', htmlPath);
+          console.log('JS path:', jsPath);
+          console.log('Base path:', basePath);
+          
+          // Read original HTML
+          let html = fs.readFileSync(htmlPath, 'utf8');
+          console.log('Original HTML length:', html.length);
+          
+          // Show all script tags before removal
+          const beforeScripts = html.match(/<script[^>]*>[\s\S]*?<\/script>/gi);
+          if (beforeScripts) {
+            console.log('Found', beforeScripts.length, 'script tags to remove:');
+            beforeScripts.forEach((script, i) => {
+              console.log(`  [${i+1}] ${script.substring(0, 100)}...`);
+            });
+          } else {
+            console.log('No script tags found in original HTML');
+          }
+          
+          // Remove ALL existing script tags (they're broken)
+          html = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+          console.log('✅ Removed all script tags');
+          
+          // Find the closing body tag and inject script BEFORE it
+          if (html.includes('</body>')) {
+            const scriptTag = `  <script src="${jsPath}"></script>\n`;
+            html = html.replace('</body>', scriptTag + '</body>');
+            console.log('✅ Injected script before </body>');
+            console.log('Script tag:', scriptTag.trim());
+          } else {
+            const scriptTag = `\n  <script src="${jsPath}"></script>\n</body>`;
+            html += scriptTag;
+            console.log('✅ Added script and </body>');
+          }
+          
+          // Fix all paths (do this AFTER injecting script)
+          html = html.replace(/src="\/_expo/g, `src="${basePath}/_expo`);
+          html = html.replace(/src="\/static/g, `src="${basePath}/static`);
+          html = html.replace(/href="\/_expo/g, `href="${basePath}/_expo`);
+          html = html.replace(/href="\/static/g, `href="${basePath}/static`);
+          
+          // Write fixed HTML
+          fs.writeFileSync(htmlPath, html, 'utf8');
+          console.log('✅ Wrote fixed HTML');
+          
+          // Verify
+          const finalScripts = html.match(/<script[^>]*src="[^"]*"[^>]*>/gi);
+          if (finalScripts) {
+            console.log('✅ Verification: Found', finalScripts.length, 'script tags with src:');
+            finalScripts.forEach((script, i) => {
+              console.log(`  [${i+1}] ${script}`);
+            });
+            
+            const hasCorrectScript = html.includes(jsPath);
+            console.log('✅ Verification: HTML contains JS path:', hasCorrectScript);
+            if (!hasCorrectScript) {
+              console.error('❌ ERROR: Script path not found in final HTML!');
+              process.exit(1);
+            }
+          } else {
+            console.error('❌ ERROR: No script tags found in final HTML!');
+            process.exit(1);
+          }
+          
+          console.log('✅ All checks passed!');
+          FIX_HTML_EOF
+          HTML_PATH="$OUTPUT_DIR/index.html" JS_PATH="$JS_PATH" BASE_PATH="$BASE_PATH" node /tmp/fix_html.js
             
             echo ""
             echo "✅ Node.js script completed!"
@@ -383,36 +384,53 @@ NODE_SCRIPT
               exit 1
             fi
           
+          # Copy PWA files (manifest.json and sw.js) to output directory
+          echo "📦 Copying PWA files..."
+          if [ -f "public/manifest.json" ]; then
+            cp public/manifest.json "$OUTPUT_DIR/manifest.json"
+            echo "✅ Copied manifest.json"
+          else
+            echo "⚠️ Warning: public/manifest.json not found"
+          fi
+          
+          if [ -f "public/sw.js" ]; then
+            cp public/sw.js "$OUTPUT_DIR/sw.js"
+            echo "✅ Copied sw.js"
+          else
+            echo "⚠️ Warning: public/sw.js not found"
+          fi
+          
           # Fix remaining paths (CSS, images, etc.) - script is already fixed above
           # IMPORTANT: Use Node.js to fix paths to avoid breaking the script tag we just injected
           if [ -f "$OUTPUT_DIR/index.html" ]; then
             echo "Fixing remaining paths (CSS, images) with Node.js..."
-            node << NODE_SCRIPT
-const fs = require('fs');
-const htmlPath = '$OUTPUT_DIR/index.html';
-const basePath = '$BASE_PATH';
-
-let html = fs.readFileSync(htmlPath, 'utf8');
-
-// Fix link href attributes (but preserve script src we just added)
-html = html.replace(/href="\\/_expo/g, \`href="\${basePath}/_expo\`);
-html = html.replace(/href="\\/static/g, \`href="\${basePath}/static\`);
-html = html.replace(/href="_expo/g, \`href="\${basePath}/_expo\`);
-html = html.replace(/href="static/g, \`href="\${basePath}/static\`);
-
-// Fix CSS url() references
-html = html.replace(/url\('\\/_expo/g, \`url('\${basePath}/_expo\`);
-html = html.replace(/url\("\\/_expo/g, \`url("\${basePath}/_expo\`);
-html = html.replace(/url\\('_expo/g, \`url('\${basePath}/_expo\`);
-html = html.replace(/url\\("_expo/g, \`url("\${basePath}/_expo\`);
-
-fs.writeFileSync(htmlPath, html, 'utf8');
-console.log('✅ Fixed remaining paths');
-NODE_SCRIPT
+            cat > /tmp/fix_paths.js << 'FIX_PATHS_EOF'
+            const fs = require('fs');
+            const htmlPath = process.env.HTML_PATH;
+            const basePath = process.env.BASE_PATH;
+            
+            let html = fs.readFileSync(htmlPath, 'utf8');
+            
+            // Fix link href attributes (but preserve script src we just added)
+            html = html.replace(/href="\/_expo/g, `href="${basePath}/_expo`);
+            html = html.replace(/href="\/static/g, `href="${basePath}/static`);
+            html = html.replace(/href="_expo/g, `href="${basePath}/_expo`);
+            html = html.replace(/href="static/g, `href="${basePath}/static`);
+            
+            // Fix CSS url() references
+            html = html.replace(/url\('\/_expo/g, `url('${basePath}/_expo`);
+            html = html.replace(/url\("\/_expo/g, `url("${basePath}/_expo`);
+            html = html.replace(/url\('_expo/g, `url('${basePath}/_expo`);
+            html = html.replace(/url\("_expo/g, `url("${basePath}/_expo`);
+            
+            fs.writeFileSync(htmlPath, html, 'utf8');
+            console.log('✅ Fixed remaining paths');
+            FIX_PATHS_EOF
+            HTML_PATH="$OUTPUT_DIR/index.html" BASE_PATH="$BASE_PATH" node /tmp/fix_paths.js
             
             # Inject error handling script before closing body tag (but after Expo's scripts)
             echo "Injecting error handling script..."
-            cat > /tmp/error_script.js << 'ERROR_SCRIPT_EOF'
+            cat > /tmp/error_script.js << 'EOF'
 <script>
     // Error handling and load detection
     console.log("OsloPuls - Environment info:", {
@@ -448,7 +466,7 @@ NODE_SCRIPT
       }
     }, 10000);
 </script>
-ERROR_SCRIPT_EOF
+EOF
             
             # Insert error script before closing body tag
             ERROR_SCRIPT=$(cat /tmp/error_script.js)

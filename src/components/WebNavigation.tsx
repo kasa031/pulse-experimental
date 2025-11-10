@@ -5,10 +5,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Platform, useWindowDimensions, TouchableOpacity, Image } from 'react-native';
-import { Drawer, Portal, Text, Surface, Modal } from 'react-native-paper';
+import { Drawer, Portal, Text, Surface, Modal, Switch } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation, useRoute, NavigationContainer } from '@react-navigation/native';
 import { osloBranding } from '../constants/theme';
+import { useDarkMode } from '../hooks/useDarkMode';
+import { getAriaProps, getKeyboardProps } from '../utils/accessibility';
+import { analytics } from '../utils/analytics';
+import { NavigationProps, RouteProps, RootStackParamList } from '../types';
+import { safeError, safeWarn } from '../utils/performance';
 
 interface NavItem {
   name: string;
@@ -22,6 +27,7 @@ const navItems: NavItem[] = [
   { name: 'Stem', title: 'Stem', icon: 'vote-outline', iconFocused: 'vote' },
   { name: 'Fellesskap', title: 'Fellesskap', icon: 'account-group-outline', iconFocused: 'account-group' },
   { name: 'Nyheter', title: 'Nyheter', icon: 'newspaper-outline', iconFocused: 'newspaper' },
+  { name: 'Oslo', title: 'Oslo', icon: 'city-variant-outline', iconFocused: 'city-variant' },
   { name: 'Profil', title: 'Profil', icon: 'account-outline', iconFocused: 'account' },
   { name: 'Kontakt', title: 'Kontakt', icon: 'email-outline', iconFocused: 'email' },
   { name: 'Lokalhistorie', title: 'Lokalhistorie', icon: 'history', iconFocused: 'history' },
@@ -35,29 +41,35 @@ interface WebNavigationProps {
 
 const WebNavigation = ({ children }: WebNavigationProps) => {
   // Safely get navigation and route - wrap in try-catch for safety
-  let navigation: any = null;
-  let route: any = null;
+  let navigation: NavigationProps | null = null;
+  let route: RouteProps | null = null;
   
   try {
-    navigation = useNavigation<any>();
-    route = useRoute();
+    const nav = useNavigation();
+    const rt = useRoute();
+    navigation = {
+      navigate: (screen: string) => {
+        if (nav && 'navigate' in nav && typeof (nav as any).navigate === 'function') {
+          (nav as any).navigate(screen);
+        }
+      },
+      addListener: nav && 'addListener' in nav ? (nav as any).addListener : undefined,
+    };
+    route = {
+      name: rt?.name || '',
+      key: rt?.key,
+      params: rt?.params as Record<string, unknown> | undefined,
+    };
   } catch (error) {
     // Navigation context not available yet - return children
-    // Bruk safeError hvis tilgjengelig, ellers console.warn
-    try {
-      const { safeError } = require('../utils/performance');
-      safeError('Navigation not ready in WebNavigation:', error);
-    } catch {
-      if (typeof console !== 'undefined' && console.warn) {
-        console.warn('Navigation not ready in WebNavigation:', error);
-      }
-    }
+    safeWarn('Navigation not ready in WebNavigation:', error);
     return <>{children}</>;
   }
 
   const { width } = useWindowDimensions();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
   const isWeb = Platform.OS === 'web';
   const isDesktop = isWeb && width > 1024;
   const isTablet = width > 768 && width <= 1024;
@@ -71,14 +83,7 @@ const WebNavigation = ({ children }: WebNavigationProps) => {
         });
         return unsubscribe;
       } catch (error) {
-        try {
-          const { safeError } = require('../utils/performance');
-          safeError('Error setting up navigation listener:', error);
-        } catch {
-          if (typeof console !== 'undefined' && console.warn) {
-            console.warn('Error setting up navigation listener:', error);
-          }
-        }
+        safeWarn('Error setting up navigation listener:', error);
       }
     }
   }, [navigation, drawerOpen, isDesktop]);
@@ -91,19 +96,13 @@ const WebNavigation = ({ children }: WebNavigationProps) => {
   const handleNavigate = (screenName: string) => {
     if (navigation && navigation.navigate) {
       try {
-        navigation.navigate(screenName);
+        navigation.navigate(screenName as keyof RootStackParamList);
+        analytics.trackNavigation('current', screenName);
         if (!isDesktop) {
           setDrawerOpen(false);
         }
       } catch (error) {
-        try {
-          const { safeError } = require('../utils/performance');
-          safeError('Navigation error:', error);
-        } catch {
-          if (typeof console !== 'undefined' && console.error) {
-            console.error('Navigation error:', error);
-          }
-        }
+        safeError('Navigation error:', error);
       }
     }
   };
@@ -124,6 +123,8 @@ const WebNavigation = ({ children }: WebNavigationProps) => {
         {...(Platform.OS === 'web' ? {
           onMouseEnter: () => setHoveredItem(item.name),
           onMouseLeave: () => setHoveredItem(null),
+          ...getAriaProps(`Naviger til ${item.title}`, 'button'),
+          ...getKeyboardProps(() => handleNavigate(item.name)),
         } : {})}
         activeOpacity={0.7}
       >
@@ -153,12 +154,13 @@ const WebNavigation = ({ children }: WebNavigationProps) => {
     const currentRouteName = route?.name || '';
     return (
       <View style={styles.desktopContainer}>
-        <Surface style={styles.sidebar} elevation={2}>
+        <Surface style={styles.sidebar} elevation={2} {...(Platform.OS === 'web' ? { role: 'navigation', 'aria-label': 'Hovednavigasjon' } : {})}>
           <View style={styles.sidebarHeader}>
             <Image 
               source={require('../../assets/oslo-logo.png')} 
               style={styles.sidebarLogo}
               resizeMode="contain"
+              {...(Platform.OS === 'web' ? { 'aria-label': 'OsloPuls logo' } : {})}
             />
             <Text variant="titleMedium" style={styles.sidebarTitle}>
               OsloPuls
@@ -170,8 +172,21 @@ const WebNavigation = ({ children }: WebNavigationProps) => {
               return renderNavItem(item, isActive);
             })}
           </View>
+          <View style={styles.darkModeToggle}>
+            <Icon 
+              name={isDarkMode ? 'weather-night' : 'weather-sunny'} 
+              size={20} 
+              color={osloBranding.colors.text} 
+            />
+            <Text style={styles.darkModeLabel}>Mørk modus</Text>
+            <Switch 
+              value={isDarkMode} 
+              onValueChange={toggleDarkMode}
+              color={osloBranding.colors.primary}
+            />
+          </View>
         </Surface>
-        <View style={styles.contentArea}>
+        <View style={styles.contentArea} {...(Platform.OS === 'web' ? { id: 'main-content', role: 'main' } : {})}>
           {children}
         </View>
       </View>
@@ -218,6 +233,10 @@ const WebNavigation = ({ children }: WebNavigationProps) => {
         <TouchableOpacity
           onPress={() => setDrawerOpen(true)}
           style={styles.menuButton}
+          {...(Platform.OS === 'web' ? {
+            ...getAriaProps('Åpne meny', 'button'),
+            ...getKeyboardProps(() => setDrawerOpen(true)),
+          } : {})}
         >
           <Icon name="menu" size={24} color={osloBranding.colors.text} />
         </TouchableOpacity>
@@ -356,6 +375,22 @@ const styles = StyleSheet.create({
   },
   drawerItem: {
     marginHorizontal: 8,
+  },
+  darkModeToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginTop: 'auto',
+    marginBottom: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+  },
+  darkModeLabel: {
+    flex: 1,
+    marginLeft: 12,
+    fontSize: 14,
+    color: osloBranding.colors.text,
   },
 });
 

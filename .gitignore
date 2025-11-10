@@ -63,6 +63,8 @@ serviceAccount*.json
 # Local app config with credentials (NEVER commit this!)
 app.local.json
 app.local.*.json
+app.json.backup
+*.backup
 
 # Open Router / API keys
 **/openrouter*.json

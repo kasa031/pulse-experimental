@@ -4,7 +4,7 @@
 
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Linking, Image } from 'react-native';
-import { Card, Text, Button, Surface, Divider, TextInput, HelperText, Snackbar } from 'react-native-paper';
+import { Card, Text, Button, Divider, TextInput, HelperText, Snackbar } from 'react-native-paper';
 import { theme, osloBranding } from '../constants/theme';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useResponsive, getResponsivePadding } from '../utils/useResponsive';

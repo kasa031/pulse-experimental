@@ -10,6 +10,7 @@ import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
 import { SPACING } from '../constants/spacing';
 import { CHIP_MIN_HEIGHT } from '../constants/touchTargets';
 import { POLL_CATEGORIES } from '../constants/osloDistricts';
+import { formatDateNorwegian } from '../utils/dateHelpers';
 
 // Bruk formatDateNorwegian fra dateHelpers
 const formatDate = formatDateNorwegian;

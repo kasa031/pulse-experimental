@@ -2,6 +2,7 @@
  * Type definitions for Pulse Oslo
  */
 
+import React from 'react';
 import { User } from 'firebase/auth';
 import { Timestamp } from 'firebase/firestore';
 
@@ -57,6 +58,34 @@ export interface TabBarIconProps {
     params?: Record<string, unknown>;
   };
 }
+
+// Navigation types for React Navigation
+export type RootStackParamList = {
+  Hjem: undefined;
+  Stem: undefined;
+  Fellesskap: undefined;
+  Nyheter: undefined;
+  Profil: undefined;
+  Kontakt: undefined;
+  Lokalhistorie: undefined;
+  Opprett: undefined;
+  Rapporter: undefined;
+  Oslo: undefined;
+};
+
+export interface NavigationProps {
+  navigate: (screen: keyof RootStackParamList) => void;
+  addListener?: (event: string, callback: () => void) => () => void;
+}
+
+export interface RouteProps {
+  name: string;
+  key?: string;
+  params?: Record<string, unknown>;
+}
+
+// Lazy component type
+export type LazyComponent = React.LazyExoticComponent<React.ComponentType<any>> | React.ComponentType<any>;
 
 // Common utility types
 export type AsyncResult<T> = Promise<T>;

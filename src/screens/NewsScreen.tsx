@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, Linking, Share, Image, Platform } from 'react-native';
-import { Card, Text, Button, Chip, ActivityIndicator, Dialog, Portal, Menu, Searchbar, Snackbar } from 'react-native-paper';
+import { Card, Text, Button, Chip, ActivityIndicator, Dialog, Portal, Snackbar } from 'react-native-paper';
 import { theme, osloBranding } from '../constants/theme';
 import { getLatestNews, getNewsByCategory, getNewsByDistrict, NewsItem } from '../services/newsService';
 import { OSLO_DISTRICTS, POLL_CATEGORIES, getCategoryColor } from '../constants/osloDistricts';

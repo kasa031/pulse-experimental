@@ -3,6 +3,7 @@ import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore, enableIndexedDbPersistence } from 'firebase/firestore';
 import Constants from 'expo-constants';
 import { FirebaseConfig } from '../types';
+import { safeLog, safeError, safeWarn } from '../utils/performance';
 
 // Firebase konfigurasjon fra expo-constants eller miljøvariabler
 const getFirebaseConfig = () => {
@@ -67,27 +68,21 @@ try {
   if (getApps().length === 0) {
     app = initializeApp(firebaseConfig);
     // Log successful initialization
-    if (typeof console !== 'undefined' && console.log) {
-      console.log('✅ Firebase initialisert suksessfullt');
-    }
+    safeLog('✅ Firebase initialisert suksessfullt');
   } else {
     app = getApps()[0];
-    if (typeof console !== 'undefined' && console.log) {
-      console.log('✅ Firebase allerede initialisert');
-    }
+    safeLog('✅ Firebase allerede initialisert');
   }
 } catch (error) {
   firebaseError = error as Error;
   // Log error - dette er kritisk så vi logger alltid
-  if (typeof console !== 'undefined' && console.error) {
-    console.error('❌ Firebase initialisering feilet:', error);
-    console.error('Firebase config:', {
-      hasApiKey: !!firebaseConfig.apiKey,
-      hasProjectId: !!firebaseConfig.projectId,
-      hasAppId: !!firebaseConfig.appId,
-      apiKeyLength: firebaseConfig.apiKey?.length || 0,
-    });
-  }
+  safeError('❌ Firebase initialisering feilet:', error);
+  safeError('Firebase config:', {
+    hasApiKey: !!firebaseConfig.apiKey,
+    hasProjectId: !!firebaseConfig.projectId,
+    hasAppId: !!firebaseConfig.appId,
+    apiKeyLength: firebaseConfig.apiKey?.length || 0,
+  });
   // App vil håndtere dette i App.tsx
 }
 
@@ -101,9 +96,9 @@ export const getFirebaseError = () => firebaseError;
 if (typeof window !== 'undefined' && db) {
   enableIndexedDbPersistence(db).catch((err) => {
     if (err.code === 'failed-precondition') {
-      console.warn('Firestore persistence kan bare aktiveres i én tab om gangen');
+      safeWarn('Firestore persistence kan bare aktiveres i én tab om gangen');
     } else if (err.code === 'unimplemented') {
-      console.warn('Firestore persistence er ikke støttet i dette miljøet');
+      safeWarn('Firestore persistence er ikke støttet i dette miljøet');
     }
   });
 }

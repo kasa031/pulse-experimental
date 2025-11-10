@@ -5,6 +5,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { theme, osloBranding } from '../constants/theme';
 import { safeError } from './performance';
 import { reportBug } from '../services/feedbackService';
+import { analytics } from './analytics';
 
 interface Props {
   children: ReactNode;
@@ -32,6 +33,9 @@ export class ErrorBoundary extends Component<Props, State> {
     // Log error med safe error logging
     safeError('ErrorBoundary caught an error:', error);
     safeError('Error info:', errorInfo);
+    
+    // Track error in analytics
+    analytics.trackError(error, errorInfo.componentStack);
     
     // Lagre errorInfo for visning
     this.setState({ errorInfo });

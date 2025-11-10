@@ -10,6 +10,8 @@ import { OSLO_DISTRICTS, getCategoryColor } from '../constants/osloDistricts';
 import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
 import { SPACING } from '../constants/spacing';
 import { BUTTON_MIN_HEIGHT, CHIP_MIN_HEIGHT } from '../constants/touchTargets';
+import { analytics } from '../utils/analytics';
+import { toTimestamp } from '../utils/dateHelpers';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const VoteScreen = React.memo(() => {
@@ -93,6 +95,9 @@ const VoteScreen = React.memo(() => {
 
     // Initial load
     loadPolls();
+    
+    // Track page view
+    analytics.trackPageView('vote_screen');
 
     return () => unsubscribe();
   }, [loadPolls]);
@@ -134,6 +139,15 @@ const VoteScreen = React.memo(() => {
 
     try {
       await submitVote(pollId, optionIndex, user.uid);
+      
+      // Track vote in analytics
+      analytics.trackPollInteraction('vote', pollId, poll.title);
+      analytics.track('vote_submitted', {
+        pollId,
+        pollTitle: poll.title,
+        optionIndex,
+      });
+      
       setSnackbarVisible(true);
       setSelectedOptions(prev => {
         const newState = { ...prev };
