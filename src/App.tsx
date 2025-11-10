@@ -12,7 +12,7 @@ import { saveUserToStorage, clearAuthStorage } from './services/authPersistence'
 import { createOrUpdateUserProfile } from './services/userService';
 import { ErrorBoundary } from './utils/errorBoundary';
 import { safeLog, safeError } from './utils/performance';
-import { FirebaseUser, TabBarIconProps } from './types';
+import { FirebaseUser } from './types';
 import LoginScreen from './screens/LoginScreen';
 // Screens
 import HomeScreen from './screens/HomeScreen';

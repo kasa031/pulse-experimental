@@ -3,7 +3,7 @@
  */
 
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { 
   Card, 
   Text, 
