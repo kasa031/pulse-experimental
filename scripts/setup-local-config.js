@@ -24,19 +24,25 @@ try {
   } else {
     console.log('⚠️  app.local.json not found. Creating from app.json...');
     // Create app.local.json from app.json if it doesn't exist
-    // Use writeFileSync with error handling to prevent race conditions
-    try {
-      fs.writeFileSync(appLocalJsonPath, JSON.stringify(appJson, null, 2), { flag: 'wx' });
-      console.log('✅ Created app.local.json - please add your credentials there!');
-      process.exit(0);
-    } catch (writeError) {
-      // File might have been created by another process
-      if (writeError.code === 'EEXIST') {
-        console.log('⚠️  app.local.json was created by another process, reading it...');
-        appLocalJson = JSON.parse(fs.readFileSync(appLocalJsonPath, 'utf8'));
-      } else {
-        throw writeError;
+    // Use atomic file operations to prevent race conditions
+    // Check if file exists before attempting to create
+    if (!fs.existsSync(appLocalJsonPath)) {
+      try {
+        fs.writeFileSync(appLocalJsonPath, JSON.stringify(appJson, null, 2), { flag: 'wx' });
+        console.log('✅ Created app.local.json - please add your credentials there!');
+        process.exit(0);
+      } catch (writeError) {
+        // File might have been created by another process between existsSync and writeFileSync
+        if (writeError.code === 'EEXIST') {
+          console.log('⚠️  app.local.json was created by another process, reading it...');
+          appLocalJson = JSON.parse(fs.readFileSync(appLocalJsonPath, 'utf8'));
+        } else {
+          throw writeError;
+        }
       }
+    } else {
+      // File already exists, read it
+      appLocalJson = JSON.parse(fs.readFileSync(appLocalJsonPath, 'utf8'));
     }
   }
 } catch (error) {
@@ -46,21 +52,21 @@ try {
 
 // Backup original app.json (with race condition handling)
 // Use atomic file operations to prevent race conditions
-try {
-  // Check if backup exists first to avoid unnecessary write
-  if (!fs.existsSync(appJsonBackupPath)) {
+// Double-check pattern to handle race conditions safely
+if (!fs.existsSync(appJsonBackupPath)) {
+  try {
     // Use 'wx' flag for atomic write - fails if file exists (created by another process)
     fs.writeFileSync(appJsonBackupPath, JSON.stringify(appJson, null, 2), { flag: 'wx' });
     console.log('✅ Backed up original app.json');
-  }
-} catch (backupError) {
-  // File might have been created by another process (race condition handled)
-  if (backupError.code === 'EEXIST') {
-    // Another process created the backup - this is fine, continue
-    // No need to log as this is expected behavior in concurrent scenarios
-  } else {
-    // Real error occurred
-    console.warn('⚠️  Could not create backup:', backupError.message);
+  } catch (backupError) {
+    // File might have been created by another process between existsSync and writeFileSync
+    if (backupError.code === 'EEXIST') {
+      // Another process created the backup - this is fine, continue silently
+      // This is expected behavior in concurrent scenarios
+    } else {
+      // Real error occurred
+      console.warn('⚠️  Could not create backup:', backupError.message);
+    }
   }
 }
 

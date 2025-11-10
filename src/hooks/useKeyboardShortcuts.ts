@@ -3,7 +3,7 @@
  * Håndterer keyboard shortcuts for web-applikasjonen
  */
 
-import { useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../types';

@@ -24,13 +24,7 @@ import { useDarkMode } from './hooks/useDarkMode';
 
 // Lazy load screens for better performance (only on web)
 // Note: React.lazy only works on web, so we conditionally use it
-const getLazyScreen = (importFn: () => Promise<any>) => {
-  if (Platform.OS === 'web') {
-    return lazy(importFn);
-  }
-  // On mobile, import synchronously
-  return importFn().then(m => m.default);
-};
+// getLazyScreen removed - not used
 
 // For web: use lazy loading
 // For mobile: import normally

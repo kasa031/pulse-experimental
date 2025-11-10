@@ -46,7 +46,6 @@ const FeedbackScreen = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [currentScreen, setCurrentScreen] = useState('Feedback');
 
   // Sjekk om EmailJS er konfigurert
   const emailJSConfigured = isEmailJSConfigured();

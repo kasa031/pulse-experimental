@@ -12,7 +12,7 @@ export interface DragDropOptions {
   onDragEnd?: (event: DragEvent) => void;
   onDrop?: (event: DragEvent) => void;
   enabled?: boolean;
-  accept?: string[]; // MIME types or file extensions
+  // accept?: string[]; // MIME types or file extensions - not currently used
 }
 
 export const useDragDrop = (options: DragDropOptions = {}) => {
@@ -22,7 +22,7 @@ export const useDragDrop = (options: DragDropOptions = {}) => {
     onDragEnd,
     onDrop,
     enabled = true,
-    accept = [],
+    // accept = [], // Not currently used
   } = options;
 
   const [isDragging, setIsDragging] = useState(false);

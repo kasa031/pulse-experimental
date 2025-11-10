@@ -16,7 +16,7 @@ import { formatDateNorwegian } from '../utils/dateHelpers';
 const formatDate = formatDateNorwegian;
 
 const LocalHistoryScreen = React.memo(() => {
-  const { isMobile, isTablet, isDesktop, width } = useResponsive();
+  const { width } = useResponsive();
   const padding = getResponsivePadding(width);
   const [userVotes, setUserVotes] = useState<UserVote[]>([]);
   const [completedPolls, setCompletedPolls] = useState<PollResult[]>([]);

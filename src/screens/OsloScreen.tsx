@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Image, Linking, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Linking } from 'react-native';
 import { 
   Card, 
   Text, 
@@ -41,7 +41,7 @@ interface StreetHistory {
 }
 
 const OsloScreen = () => {
-  const { isMobile, isTablet, isDesktop, width } = useResponsive();
+  const { width } = useResponsive();
   const padding = getResponsivePadding(width);
   const [activeTab, setActiveTab] = useState<'quiz' | 'history' | 'facts'>('quiz');
   const [currentQuestion, setCurrentQuestion] = useState<QuizQuestion | null>(null);
