@@ -45,15 +45,22 @@ try {
 }
 
 // Backup original app.json (with race condition handling)
-if (!fs.existsSync(appJsonBackupPath)) {
-  try {
+// Use atomic file operations to prevent race conditions
+try {
+  // Check if backup exists first to avoid unnecessary write
+  if (!fs.existsSync(appJsonBackupPath)) {
+    // Use 'wx' flag for atomic write - fails if file exists (created by another process)
     fs.writeFileSync(appJsonBackupPath, JSON.stringify(appJson, null, 2), { flag: 'wx' });
     console.log('✅ Backed up original app.json');
-  } catch (backupError) {
-    // Backup might already exist from another process
-    if (backupError.code !== 'EEXIST') {
-      console.warn('⚠️  Could not create backup:', backupError.message);
-    }
+  }
+} catch (backupError) {
+  // File might have been created by another process (race condition handled)
+  if (backupError.code === 'EEXIST') {
+    // Another process created the backup - this is fine, continue
+    // No need to log as this is expected behavior in concurrent scenarios
+  } else {
+    // Real error occurred
+    console.warn('⚠️  Could not create backup:', backupError.message);
   }
 }
 

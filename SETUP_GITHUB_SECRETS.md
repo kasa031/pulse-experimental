@@ -13,7 +13,7 @@ Klikk **"New repository secret"** for hver av disse:
 
 #### Secret 1: OPENROUTER_API_KEY
 - **Name:** `OPENROUTER_API_KEY`
-- **Secret:** [Hent fra app.local.json eller OpenRouter dashboard]
+- **Secret:** [Hent fra app.local.json eller OpenRouter dashboard - IKKE lim inn her, dette er kun en guide]
 - Klikk **Add secret**
 
 #### Secret 2: FIREBASE_API_KEY

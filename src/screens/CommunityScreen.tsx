@@ -4,11 +4,11 @@ import { Card, Text, Button, Chip, ActivityIndicator, Dialog, Portal, TextInput,
 import { theme, osloBranding } from '../constants/theme';
 import { getDiscussions, createDiscussion, Discussion, getComments, addComment, likeComment, dislikeComment, Comment } from '../services/discussionService';
 import { auth } from '../services/firebase';
-import { OSLO_DISTRICTS, POLL_CATEGORIES, getCategoryColor } from '../constants/osloDistricts';
+import { POLL_CATEGORIES, getCategoryColor } from '../constants/osloDistricts';
 import { safeError, safeLog } from '../utils/performance';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Timestamp } from 'firebase/firestore';
-import { toTimestamp, formatRelativeTime } from '../utils/dateHelpers';
+import { formatRelativeTime } from '../utils/dateHelpers';
 import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
 import { SPACING } from '../constants/spacing';
 import { BUTTON_MIN_HEIGHT, CHIP_MIN_HEIGHT } from '../constants/touchTargets';
