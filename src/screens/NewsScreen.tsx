@@ -105,7 +105,7 @@ const NewsScreen = () => {
           safeLog('Kan ikke åpne URL:', url);
         }
       } catch (error) {
-        safeError('Feil ved åpning av lenke:', error);
+        safeError('Error opening link:', error);
       }
     }
   };

@@ -468,43 +468,34 @@ jobs:
             
             # Inject error handling script before closing body tag (but after Expo's scripts)
             echo "Injecting error handling script..."
-            cat > /tmp/error_script.js << 'EOF'
-<script>
-    // Error handling and load detection
-    console.log("OsloPuls - Environment info:", {
-      userAgent: navigator.userAgent,
-      location: window.location.href,
-      basePath: window.location.pathname.split("/").slice(0, -1).join("/") || "/",
-      timestamp: new Date().toISOString()
-    });
-    
-    window.addEventListener("error", function(e) {
-      console.error("Global error:", e.error, e.filename, e.lineno, e.colno);
-      const root = document.getElementById("root");
-      if (root && !root.querySelector(".error-container")) {
-        const errorMsg = e.error ? e.error.toString() : "Unknown error";
-        root.innerHTML = "<div class=\"error-container\" style=\"padding: 40px; text-align: center; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;\"><h2 style=\"color: #d32f2f; margin-bottom: 16px;\">An error occurred</h2><p style=\"margin-bottom: 8px; color: #666;\">" + errorMsg + "</p><button onclick=\"window.location.reload()\" style=\"padding: 12px 24px; background-color: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer;\">Reload</button></div>";
-      }
-    });
-    
-    window.addEventListener("unhandledrejection", function(e) {
-      console.error("Unhandled promise rejection:", e.reason);
-    });
-    
-    // Timeout removed - let app load without artificial timeout
-    // App will show loading state until it's ready
-</script>
-EOF
-            
-            # Insert error script before closing body tag (but after our main script)
-            ERROR_SCRIPT=$(cat /tmp/error_script.js)
-            # Use Node.js to insert safely (sed can break with special characters)
+            # Use Node.js to generate and inject error script (avoids YAML heredoc issues)
             node -e "
               const fs = require('fs');
-              const html = fs.readFileSync('$OUTPUT_DIR/index.html', 'utf8');
-              const errorScript = \`$ERROR_SCRIPT\`;
-              const fixed = html.replace('</body>', errorScript + '</body>');
-              fs.writeFileSync('$OUTPUT_DIR/index.html', fixed, 'utf8');
+              const htmlPath = '$OUTPUT_DIR/index.html';
+              let html = fs.readFileSync(htmlPath, 'utf8');
+              
+              const errorScript = '<script>' +
+                'console.log(\"OsloPuls - Environment info:\", {' +
+                  'userAgent: navigator.userAgent,' +
+                  'location: window.location.href,' +
+                  'basePath: window.location.pathname.split(\"/\").slice(0, -1).join(\"/\") || \"/\",' +
+                  'timestamp: new Date().toISOString()' +
+                '});' +
+                'window.addEventListener(\"error\", function(e) {' +
+                  'console.error(\"Global error:\", e.error, e.filename, e.lineno, e.colno);' +
+                  'const root = document.getElementById(\"root\");' +
+                  'if (root && !root.querySelector(\".error-container\")) {' +
+                    'const errorMsg = e.error ? e.error.toString() : \"Unknown error\";' +
+                    'root.innerHTML = \"<div class=\\\"error-container\\\" style=\\\"padding: 40px; text-align: center; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;\\\"><h2 style=\\\"color: #d32f2f; margin-bottom: 16px;\\\">An error occurred</h2><p style=\\\"margin-bottom: 8px; color: #666;\\\">\" + errorMsg + \"</p><button onclick=\\\"window.location.reload()\\\" style=\\\"padding: 12px 24px; background-color: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer;\\\">Reload</button></div>\";' +
+                  '}' +
+                '});' +
+                'window.addEventListener(\"unhandledrejection\", function(e) {' +
+                  'console.error(\"Unhandled promise rejection:\", e.reason);' +
+                '});' +
+                '</script>';
+              
+              html = html.replace('</body>', errorScript + '</body>');
+              fs.writeFileSync(htmlPath, html, 'utf8');
               console.log('✅ Injected error handling script');
             "
             
