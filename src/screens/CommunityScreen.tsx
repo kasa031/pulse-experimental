@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, Image } from 'react-native';
 import { Card, Text, Button, Chip, ActivityIndicator, Dialog, Portal, TextInput, Menu, Divider } from 'react-native-paper';
+import { SkeletonLoader, SkeletonCard } from '../components/SkeletonLoader';
 import { theme, osloBranding } from '../constants/theme';
 import { getDiscussions, createDiscussion, Discussion, getComments, addComment, likeComment, dislikeComment, Comment } from '../services/discussionService';
 import { auth } from '../services/firebase';
@@ -8,7 +9,7 @@ import { POLL_CATEGORIES, getCategoryColor } from '../constants/osloDistricts';
 import { safeError, safeLog } from '../utils/performance';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Timestamp } from 'firebase/firestore';
-import { formatRelativeTime } from '../utils/dateHelpers';
+import { formatRelativeTime, toTimestamp } from '../utils/dateHelpers';
 import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
 import { SPACING } from '../constants/spacing';
 import { BUTTON_MIN_HEIGHT, CHIP_MIN_HEIGHT } from '../constants/touchTargets';
@@ -275,7 +276,11 @@ const CommunityScreen = () => {
 
         {/* Discussions List */}
         {loading && !refreshing ? (
-          <ActivityIndicator style={styles.loader} />
+          <View style={styles.skeletonContainer}>
+            {[1, 2, 3, 4].map((i) => (
+              <SkeletonCard key={i} lines={3} showImage={false} />
+            ))}
+          </View>
         ) : sortedDiscussions.length === 0 ? (
           <Card style={styles.card}>
             <Card.Content style={styles.emptyCardContent}>
@@ -598,6 +603,9 @@ const styles = StyleSheet.create({
   },
   loader: {
     marginVertical: 32,
+  },
+  skeletonContainer: {
+    gap: 16,
   },
   emptyCardContent: {
     alignItems: 'center',

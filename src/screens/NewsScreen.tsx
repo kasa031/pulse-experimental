@@ -262,7 +262,11 @@ const NewsScreen = () => {
 
         {/* News List */}
         {loading && !refreshing ? (
-          <ActivityIndicator style={styles.loader} size="large" />
+          <View style={styles.skeletonContainer}>
+            {[1, 2, 3, 4].map((i) => (
+              <SkeletonCard key={i} lines={3} showImage={false} />
+            ))}
+          </View>
         ) : filteredNews.length === 0 ? (
           <Card style={styles.card}>
             <Card.Content>
@@ -523,6 +527,9 @@ const styles = StyleSheet.create({
   },
   loader: {
     marginVertical: 32,
+  },
+  skeletonContainer: {
+    marginTop: SPACING.md,
   },
   newsCard: {
     marginBottom: SPACING.cardMargin.mobile,

@@ -2,6 +2,8 @@
  * Notification utility - Sentralisert håndtering av notifikasjoner og feedback
  */
 
+import React from 'react';
+
 export type NotificationType = 'success' | 'error' | 'info' | 'warning';
 
 export interface Notification {
@@ -70,5 +72,66 @@ class NotificationManager {
 
 export const notificationManager = new NotificationManager();
 
-// Note: useNotification hook kan brukes i React-komponenter
-// Eksempel: const { showSuccess, showError } = useNotification();
+/**
+ * React Hook for å bruke notificationManager i komponenter
+ * 
+ * @example
+ * ```tsx
+ * const { showSuccess, showError, showInfo, showWarning, notification, dismiss } = useNotification();
+ * 
+ * // I en komponent:
+ * const handleSave = async () => {
+ *   try {
+ *     await saveData();
+ *     showSuccess('Data lagret!');
+ *   } catch (error) {
+ *     showError('Kunne ikke lagre data');
+ *   }
+ * };
+ * ```
+ */
+export function useNotification() {
+  const [notification, setNotification] = React.useState<Notification | null>(null);
+
+  React.useEffect(() => {
+    const unsubscribe = notificationManager.subscribe((notif) => {
+      setNotification(notif);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  const show = React.useCallback((message: string, type: NotificationType = 'info', duration?: number, action?: { label: string; onPress: () => void }) => {
+    notificationManager.show(message, type, duration, action);
+  }, []);
+
+  const showSuccess = React.useCallback((message: string, duration?: number) => {
+    notificationManager.showSuccess(message, duration);
+  }, []);
+
+  const showError = React.useCallback((message: string, duration?: number) => {
+    notificationManager.showError(message, duration);
+  }, []);
+
+  const showInfo = React.useCallback((message: string, duration?: number) => {
+    notificationManager.showInfo(message, duration);
+  }, []);
+
+  const showWarning = React.useCallback((message: string, duration?: number) => {
+    notificationManager.showWarning(message, duration);
+  }, []);
+
+  const dismiss = React.useCallback(() => {
+    notificationManager.dismiss();
+  }, []);
+
+  return {
+    notification,
+    show,
+    showSuccess,
+    showError,
+    showInfo,
+    showWarning,
+    dismiss,
+  };
+}

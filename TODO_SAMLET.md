@@ -97,6 +97,17 @@
 
 ## 🟡 HØY PRIORITET - Bør fikses snart
 
+### Ufullstendig Kode og Manglende Funksjonalitet
+- [x] **useNotification Hook mangler** - ✅ FIKSET
+  - `src/utils/notifications.ts` - useNotification hook er nå implementert
+  - Hook kan nå brukes i React-komponenter med full funksjonalitet
+- [x] **useDragDrop og useCopyPaste brukes ikke** - ✅ FIKSET
+  - Hooks er fjernet da de ikke ble brukt noen steder
+  - Kan re-implementeres senere hvis nødvendig
+- [x] **TODO_APP_LOADING.md kan oppdateres** - ✅ FIKSET
+  - Filen er flyttet til docs/status/ og oppdatert
+  - Deployment problem er dokumentert som løst
+
 ### Input Validering og Sanitization
 - [x] OsloScreen - ✅ Fikset (sanitizeText brukes)
 - [x] **Verifisert andre skjermer:**
@@ -161,7 +172,11 @@
 
 ### Performance Optimalisering
 - [x] **Loading states** - ✅ Allerede implementert (ActivityIndicator på flere skjermer)
-- [ ] **Implementer skeleton loaders** på flere skjermer (forbedring)
+- [x] **Implementer skeleton loaders** på flere skjermer - ✅ FULLFØRT
+  - ✅ HomeScreen - Skeleton loaders for statistikk og poll cards
+  - ✅ NewsScreen - Skeleton loaders for nyhetsliste
+  - ✅ VoteScreen - Skeleton loaders for poll cards
+  - ✅ CommunityScreen - Skeleton loaders for diskusjoner
 - [ ] **Optimaliser bildelasting:**
   - [ ] Lazy loading for bilder
   - [ ] WebP format hvor mulig

@@ -12,6 +12,7 @@ import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
 import { SPACING } from '../constants/spacing';
 import { BUTTON_MIN_HEIGHT } from '../constants/touchTargets';
 import { safeError } from '../utils/performance';
+import { SkeletonLoader, SkeletonCard } from '../components/SkeletonLoader';
 
 const HomeScreen = () => {
   const navigation = useNavigation<any>();
@@ -101,7 +102,7 @@ const HomeScreen = () => {
               <View style={styles.stat}>
                 <Icon name="vote" size={20} color={osloBranding.colors.secondary} />
                 {loading ? (
-                  <ActivityIndicator size="small" color={osloBranding.colors.secondary} style={styles.statLoader} />
+                  <SkeletonLoader width={120} height={16} borderRadius={4} />
                 ) : (
                   <Text variant="bodySmall" style={styles.statText}>
                     {activePollsCount} aktive avstemninger
@@ -194,7 +195,11 @@ const HomeScreen = () => {
                 Aktive avstemninger
               </Text>
               {loading ? (
-                <ActivityIndicator style={styles.loader} />
+                <View style={styles.skeletonContainer}>
+                  {[1, 2, 3].map((i) => (
+                    <SkeletonCard key={i} lines={2} showImage={false} />
+                  ))}
+                </View>
               ) : activePollsCount > 0 ? (
                 <>
                   <Text variant="bodyMedium" style={styles.infoText}>
@@ -440,6 +445,9 @@ const styles = StyleSheet.create({
   },
   loader: {
     marginVertical: 16,
+  },
+  skeletonContainer: {
+    marginTop: SPACING.md,
   },
   previewList: {
     marginTop: SPACING.md,

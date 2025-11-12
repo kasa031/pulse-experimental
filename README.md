@@ -80,30 +80,23 @@ npm start
 
 ### Firebase Setup
 
+Se [Firebase Setup Guide](docs/setup/FIREBASE_SETUP_CHECKLIST.md) for detaljerte instruksjoner.
+
 1. Opprett et Firebase-prosjekt på [Firebase Console](https://console.firebase.google.com/)
 2. Legg til Web-app i Firebase-prosjektet
 3. Kopier Firebase-konfigurasjonen til `app.local.json`
 4. Opprett Firestore-database
-5. Sett opp Security Rules (se `FIRESTORE_SECURITY_RULES_ADVANCED.txt`)
-6. Opprett Firestore indekser (se `FIRESTORE_INDEXES.md`)
-7. Seed initial data med `node seedPolls.js` (hvis du har service account key)
+5. Sett opp Security Rules (se `docs/security/FIRESTORE_SECURITY_RULES.md`)
+6. Opprett Firestore indekser (se `docs/security/FIRESTORE_INDEXES.md`)
+7. Seed initial data med `node scripts/seedPolls.js` (hvis du har service account key)
 
 ### EmailJS Setup (for Feilrapportering)
 
+Se [EmailJS Setup Guide](docs/guides/EMAILJS_SETUP_GUIDE.md) for detaljerte instruksjoner.
+
 1. Opprett EmailJS konto på [EmailJS](https://www.emailjs.com/)
-2. Følg instruksjonene i `EMAILJS_SETUP_GUIDE.md`
-3. Legg til EmailJS nøkler i `app.local.json`:
-   ```json
-   {
-     "expo": {
-       "extra": {
-         "emailjsPublicKey": "din-public-key",
-         "emailjsServiceId": "din-service-id",
-         "emailjsTemplateId": "din-template-id"
-       }
-     }
-   }
-   ```
+2. Følg instruksjonene i guiden
+3. Legg til EmailJS nøkler i `app.local.json`
 4. For produksjon: Legg til nøkler i GitHub Secrets
 
 ## 📁 Prosjektstruktur
@@ -118,11 +111,36 @@ pulse-experimental/
 │   ├── components/      # Gjenbrukbare komponenter (WebNavigation, etc.)
 │   ├── hooks/           # Custom hooks (useKeyboardShortcuts, etc.)
 │   └── utils/           # Hjelpefunksjoner (validation, accessibility, etc.)
+├── docs/                # Dokumentasjon
+│   ├── guides/          # Brukerguider og instruksjoner
+│   ├── setup/           # Setup-guider (Firebase, EmailJS, etc.)
+│   ├── deployment/     # Deployment-guider og fikser
+│   ├── security/       # Sikkerhetsguider og regler
+│   ├── status/          # Prosjektstatus og TODO-lister
+│   └── archive/        # Arkiverte dokumenter
+├── scripts/             # Hjelpeskript
 ├── .github/
 │   └── workflows/       # GitHub Actions for deployment
-├── scripts/             # Hjelpeskript
 └── app.json             # Expo konfigurasjon
 ```
+
+## 📚 Dokumentasjon
+
+### Viktige Guider
+- **[Deployment Guide](docs/deployment/DEPLOYMENT_GUIDE.md)** - Hvordan deploye appen
+- **[Firebase Setup](docs/setup/FIREBASE_SETUP_CHECKLIST.md)** - Firebase konfigurasjon
+- **[EmailJS Setup](docs/guides/EMAILJS_SETUP_GUIDE.md)** - EmailJS konfigurasjon
+- **[Security Guide](docs/security/SECURITY_SETUP_GUIDE.md)** - Sikkerhetsinstruksjoner
+
+### Status og TODO
+- **[Prosjektstatus](docs/status/STATUS.md)** - Nåværende status
+- **[TODO Liste](TODO_SAMLET.md)** - Alle oppgaver
+- **[Ufullstendig Kode](docs/status/UFULLSTENDIG_KODE_RAPPORT.md)** - Rapportert ufullstendig kode
+
+### Andre Guider
+- **[Quick Start](docs/guides/QUICK_START.md)** - Rask start-guide
+- **[Testing Guide](docs/guides/TESTING_GUIDE.md)** - Testing instruksjoner
+- **[Brave iPhone Guide](docs/guides/BRAVE_IPHONE_GUIDE.md)** - PWA setup for iPhone
 
 ## 🔒 Sikkerhet
 

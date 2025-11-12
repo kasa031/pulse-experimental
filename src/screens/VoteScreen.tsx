@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, Image } from 'react-native';
 import { Card, Text, Button, RadioButton, ProgressBar, ActivityIndicator, Snackbar, Searchbar, Chip, Menu, Divider } from 'react-native-paper';
+import { SkeletonLoader, SkeletonCard } from '../components/SkeletonLoader';
 import { theme, osloBranding } from '../constants/theme';
 import { getActivePolls, submitVote, subscribeToPolls, Poll } from '../services/pollsService';
 import { auth } from '../services/firebase';
@@ -275,10 +276,22 @@ const VoteScreen = React.memo(() => {
 
   if (loading && polls.length === 0) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" />
-        <Text style={styles.loadingText}>Laster avstemninger...</Text>
-      </View>
+      <ScrollView 
+        style={styles.container}
+        contentContainerStyle={[
+          styles.content, 
+          { padding },
+          isTablet && styles.contentTablet,
+          isMobile && styles.contentMobile,
+          isDesktop && styles.contentDesktop
+        ]}
+      >
+        <View style={styles.skeletonContainer}>
+          {[1, 2, 3].map((i) => (
+            <SkeletonCard key={i} lines={4} showImage={false} />
+          ))}
+        </View>
+      </ScrollView>
     );
   }
 
@@ -677,6 +690,9 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
     color: osloBranding.colors.textSecondary,
     fontSize: 12,
+  },
+  skeletonContainer: {
+    gap: 16,
   },
 });
 
