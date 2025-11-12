@@ -143,7 +143,7 @@ export const searchNews = async (searchQuery: string, limitCount: number = 20): 
       news.summary?.toLowerCase().includes(queryLower)
     );
   } catch (error) {
-    safeError('Feil ved søk i nyheter:', error);
+    safeError('Error searching news:', error);
     return [];
   }
 };

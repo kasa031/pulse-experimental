@@ -1,12 +1,12 @@
 /**
  * Accessibility Utilities
- * Hjelpefunksjoner for å forbedre tilgjengelighet
+ * Helper functions to improve accessibility
  */
 
 import { Platform } from 'react-native';
 
 /**
- * Legg til ARIA labels til React Native komponenter for web
+ * Add ARIA labels to React Native components for web
  */
 export const getAriaProps = (label?: string, role?: string, describedBy?: string): Record<string, string | undefined> => {
   if (Platform.OS !== 'web') {
@@ -20,9 +20,9 @@ export const getAriaProps = (label?: string, role?: string, describedBy?: string
   }
   
   if (role && Platform.OS === 'web') {
-    // For web, role kan være string, men React Native krever spesifikk type
-    // Vi bruker type assertion for å unngå TypeScript-feil
-    // Dette er trygt fordi vi kun bruker det på web
+    // For web, role can be string, but React Native requires specific type
+    // We use type assertion to avoid TypeScript errors
+    // This is safe because we only use it on web
     (props as any).role = role;
   }
   
@@ -34,7 +34,7 @@ export const getAriaProps = (label?: string, role?: string, describedBy?: string
 };
 
 /**
- * Legg til keyboard navigation props
+ * Add keyboard navigation props
  */
 export const getKeyboardProps = (
   onPress: () => void,
@@ -54,13 +54,13 @@ export const getKeyboardProps = (
       }
     },
     tabIndex: disabled ? -1 : 0,
-    // role er inkludert via getAriaProps hvis nødvendig
-    // Vi unngår å sette det direkte for å unngå TypeScript-feil
+    // role is included via getAriaProps if necessary
+    // We avoid setting it directly to avoid TypeScript errors
   } as any;
 };
 
 /**
- * Fokus management
+ * Focus management
  */
 export const focusElement = (elementId: string) => {
   if (Platform.OS === 'web' && typeof document !== 'undefined') {
@@ -98,7 +98,7 @@ export const createSkipLink = () => {
   if (Platform.OS === 'web' && typeof document !== 'undefined') {
     const skipLink = document.createElement('a');
     skipLink.href = '#main-content';
-    skipLink.textContent = 'Hopp til hovedinnhold';
+    skipLink.textContent = 'Skip to main content';
     skipLink.className = 'skip-link';
     skipLink.style.cssText = `
       position: absolute;

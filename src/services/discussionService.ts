@@ -178,14 +178,14 @@ export const createDiscussion = async (
   try {
     const user = auth?.currentUser;
     if (!user) {
-      throw new Error('Du må være logget inn for å opprette en diskusjon');
+      throw new Error('You must be logged in to create a discussion');
     }
 
     if (!db) {
-      throw new Error('Database er ikke tilgjengelig');
+      throw new Error('Database is not available');
     }
 
-    // Hent brukerens navn
+    // Get user's name
     const userDoc = await getDoc(doc(db, 'users', user.uid));
     const userData = userDoc.data();
     const authorName = userData?.displayName || user.displayName || user.email?.split('@')[0] || 'Anonym';
@@ -275,14 +275,14 @@ export const addComment = async (
   try {
     const user = auth?.currentUser;
     if (!user) {
-      throw new Error('Du må være logget inn for å legge til en kommentar');
+      throw new Error('You must be logged in to add a comment');
     }
 
     if (!db) {
-      throw new Error('Database er ikke tilgjengelig');
+      throw new Error('Database is not available');
     }
 
-    // Hent brukerens navn
+    // Get user's name
     const userDoc = await getDoc(doc(db, 'users', user.uid));
     const userData = userDoc.data();
     const authorName = userData?.displayName || user.displayName || user.email?.split('@')[0] || 'Anonym';
@@ -296,7 +296,7 @@ export const addComment = async (
       updatedAt: serverTimestamp(),
     });
 
-    // Oppdater commentCount på diskusjonen
+    // Update commentCount on the discussion
     const discussionRef = doc(db, 'discussions', discussionId);
     const discussionSnap = await getDoc(discussionRef);
     if (discussionSnap.exists()) {
@@ -315,13 +315,31 @@ export const addComment = async (
 };
 
 /**
- * Lytt til real-time oppdateringer av diskusjoner
+ * Listen to real-time updates of discussions
+ * 
+ * @param callback - Function called when discussions are updated
+ * @returns Cleanup function to unsubscribe, or empty function if db is not initialized
+ * 
+ * @example
+ * ```ts
+ * const unsubscribe = subscribeToDiscussions((discussions) => {
+ *   console.log('New discussions:', discussions);
+ * });
+ * // When done:
+ * unsubscribe();
+ * ```
+ * 
+ * @remarks
+ * Returns empty cleanup function if Firebase is not initialized.
+ * This is intentional design to avoid errors when the app runs without Firebase.
  */
 export const subscribeToDiscussions = (
   callback: (discussions: Discussion[]) => void
 ): (() => void) => {
   if (!db) {
-    safeError('Database er ikke tilgjengelig');
+    safeError('Database is not available');
+    // Return empty cleanup function when db is not available
+    // This is intentional design to avoid errors in development environment
     return () => {};
   }
   const discussionsRef = collection(db, 'discussions');
@@ -354,17 +372,17 @@ export const subscribeToDiscussions = (
 };
 
 /**
- * Like en kommentar
+ * Like a comment
  */
 export const likeComment = async (discussionId: string, commentId: string): Promise<void> => {
   try {
     const user = auth?.currentUser;
     if (!user) {
-      throw new Error('Du må være logget inn for å like en kommentar');
+      throw new Error('You must be logged in to like a comment');
     }
 
     if (!db) {
-      throw new Error('Database er ikke tilgjengelig');
+      throw new Error('Database is not available');
     }
 
     const commentRef = doc(db, 'discussions', discussionId, 'comments', commentId);
@@ -409,17 +427,17 @@ export const likeComment = async (discussionId: string, commentId: string): Prom
 };
 
 /**
- * Dislike en kommentar
+ * Dislike a comment
  */
 export const dislikeComment = async (discussionId: string, commentId: string): Promise<void> => {
   try {
     const user = auth?.currentUser;
     if (!user) {
-      throw new Error('Du må være logget inn for å dislike en kommentar');
+      throw new Error('You must be logged in to dislike a comment');
     }
 
     if (!db) {
-      throw new Error('Database er ikke tilgjengelig');
+      throw new Error('Database is not available');
     }
 
     const commentRef = doc(db, 'discussions', discussionId, 'comments', commentId);

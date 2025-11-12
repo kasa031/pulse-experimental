@@ -16,7 +16,24 @@ export interface ResponsiveBreakpoints {
 
 /**
  * Hook for responsive design
- * Returns breakpoint information based on screen width
+ * 
+ * Returns breakpoint information based on screen width.
+ * Used to adapt layout and styling based on device type.
+ * 
+ * @returns ResponsiveBreakpoints object with breakpoint flags and dimensions
+ * 
+ * @example
+ * ```tsx
+ * const { isMobile, isTablet, isDesktop, width } = useResponsive();
+ * 
+ * if (isMobile) {
+ *   return <MobileLayout />;
+ * } else if (isTablet) {
+ *   return <TabletLayout />;
+ * } else {
+ *   return <DesktopLayout />;
+ * }
+ * ```
  */
 export const useResponsive = (): ResponsiveBreakpoints => {
   const { width, height } = useWindowDimensions();
@@ -34,6 +51,15 @@ export const useResponsive = (): ResponsiveBreakpoints => {
 
 /**
  * Get responsive padding based on screen size
+ * 
+ * @param width - Screen width in pixels
+ * @returns Padding value in pixels based on screen size
+ * 
+ * @example
+ * ```ts
+ * const padding = getResponsivePadding(375); // Returns 16 for mobile
+ * const padding = getResponsivePadding(1920); // Returns 32 for desktop
+ * ```
  */
 export const getResponsivePadding = (width: number): number => {
   if (width < 360) return 12;  // Small mobile
@@ -45,6 +71,15 @@ export const getResponsivePadding = (width: number): number => {
 
 /**
  * Get responsive margin based on screen size
+ * 
+ * @param width - Screen width in pixels
+ * @returns Margin value in pixels based on screen size
+ * 
+ * @example
+ * ```ts
+ * const margin = getResponsiveMargin(375); // Returns 12 for mobile
+ * const margin = getResponsiveMargin(1920); // Returns 24 for desktop
+ * ```
  */
 export const getResponsiveMargin = (width: number): number => {
   if (width < 360) return 8;   // Small mobile
@@ -56,6 +91,15 @@ export const getResponsiveMargin = (width: number): number => {
 
 /**
  * Get responsive font size multiplier
+ * 
+ * @param width - Screen width in pixels
+ * @returns Font size multiplier based on screen size (0.9 to 1.15)
+ * 
+ * @example
+ * ```ts
+ * const multiplier = getResponsiveFontSize(375); // Returns 1.0 for mobile
+ * const fontSize = baseFontSize * multiplier;
+ * ```
  */
 export const getResponsiveFontSize = (width: number): number => {
   if (width < 360) return 0.9;  // Small mobile - slightly smaller

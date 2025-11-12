@@ -147,6 +147,35 @@
 
 ---
 
+## 🟡 HØY PRIORITET - Oversettelse til Engelsk
+
+### Code Translation (Norwegian → English)
+- [x] **Utils-filer oversatt:**
+  - [x] useResponsive.ts - ✅ FULLFØRT
+  - [x] validation.ts - ✅ FULLFØRT
+  - [x] accessibility.ts - ✅ FULLFØRT
+  - [x] dateHelpers.ts - ✅ FULLFØRT
+- [x] **Components oversatt:**
+  - [x] InstallPrompt.tsx - ✅ FULLFØRT
+- [x] **Services oversatt:**
+  - [x] pollsService.ts - ✅ FULLFØRT (JSDoc-kommentarer)
+  - [x] discussionService.ts - ✅ FULLFØRT (JSDoc-kommentarer)
+- [ ] **Gjenstående oversettelser:**
+  - [ ] pollsService.ts - Error messages (norske strings)
+  - [ ] discussionService.ts - Error messages (norske strings)
+  - [ ] CommunityScreen.tsx - Kommentarer og strings
+  - [ ] VoteScreen.tsx - Kommentarer
+  - [ ] CreatePollScreen.tsx - Kommentarer
+  - [ ] LocalHistoryScreen.tsx - Kommentarer
+  - [ ] rateLimiter.ts - Kommentarer
+  - [ ] firebase.ts - Kommentarer
+  - [ ] App.tsx - Kommentarer
+  - [ ] Andre services-filer (newsService, userService, osloNewsImporter, etc.)
+  - [ ] Andre screens-filer
+  - [ ] Andre components-filer
+
+---
+
 ## 🟢 MEDIUM PRIORITET - Nice to have
 
 ### Testing

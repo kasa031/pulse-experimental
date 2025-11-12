@@ -60,7 +60,7 @@ export interface Poll {
  */
 export const getActivePolls = async (): Promise<Poll[]> => {
   try {
-    // Sjekk cache først
+    // Check cache first
     const cached = await getCachedPolls();
     if (cached) {
       return cached;
@@ -175,28 +175,28 @@ export const submitVote = async (
     const pollRef = doc(db, 'polls', pollId);
     const voteRef = doc(db, 'votes', `${pollId}_${userId}`);
 
-    // Sjekk om brukeren allerede har stemt
+    // Check if user has already voted
     const existingVote = await getDoc(voteRef);
     if (existingVote.exists()) {
-      throw new Error('Du har allerede stemt på denne avstemningen');
+      throw new Error('You have already voted on this poll');
     }
 
-    // Hent poll data
+    // Get poll data
     const poll = await getDoc(pollRef);
     if (!poll.exists()) {
-      throw new Error('Avstemning ikke funnet');
+      throw new Error('Poll not found');
     }
 
     const pollData = poll.data();
     const options = pollData.options || [];
     
-    // Valider option index
+    // Validate option index
     const optionValidation = validateOptionIndex(optionIndex, options.length);
     if (!optionValidation.valid) {
-      throw new Error(optionValidation.error || 'Ugyldig valg');
+      throw new Error(optionValidation.error || 'Invalid choice');
     }
 
-    // Sjekk om poll er aktiv
+    // Check if poll is active
     const now = new Date();
     const startDate = toDate(pollData.startDate);
     const endDate = toDate(pollData.endDate);
@@ -231,32 +231,50 @@ export const submitVote = async (
       }),
     ]);
 
-    // Oppdater brukerens vote count
+    // Update user's vote count
     await incrementUserVoteCount(userId);
 
-    // Oppdater cache
+    // Update cache
     await invalidateCache();
 
     return true;
   } catch (error: unknown) {
-    safeError('Feil ved innsending av stemme:', error);
-    // Re-throw med bedre feilmelding
+    safeError('Error submitting vote:', error);
+    // Re-throw with better error message
     const err = error as { message?: string };
     if (err.message) {
       throw error;
     }
-    throw new Error('Kunne ikke sende stemme. Prøv igjen.');
+    throw new Error('Could not submit vote. Please try again.');
   }
 };
 
 /**
- * Lytt til real-time oppdateringer av avstemninger
+ * Listen to real-time updates of polls
+ * 
+ * @param callback - Function called when polls are updated
+ * @returns Cleanup function to unsubscribe, or empty function if db is not initialized
+ * 
+ * @example
+ * ```ts
+ * const unsubscribe = subscribeToPolls((polls) => {
+ *   console.log('New polls:', polls);
+ * });
+ * // When done:
+ * unsubscribe();
+ * ```
+ * 
+ * @remarks
+ * Returns empty cleanup function if Firebase is not initialized.
+ * This is intentional design to avoid errors when the app runs without Firebase.
  */
 export const subscribeToPolls = (
   callback: (polls: Poll[]) => void
 ): (() => void) => {
   if (!db) {
-    safeError('Firebase Firestore er ikke initialisert');
+    safeError('Firebase Firestore is not initialized');
+    // Return empty cleanup function when db is not available
+    // This is intentional design to avoid errors in development environment
     return () => {};
   }
   const pollsRef = collection(db, 'polls');
@@ -301,7 +319,7 @@ const getCachedPolls = async (): Promise<Poll[] | null> => {
 
     const { data, timestamp } = JSON.parse(cached);
     
-    // Sjekk om cache er utløpt
+    // Check if cache is expired
     if (Date.now() - timestamp > CACHE_EXPIRY) {
       await AsyncStorage.removeItem(POLLS_CACHE_KEY);
       return null;
@@ -371,23 +389,23 @@ export const createPoll = async (
     
     const titleValidation = validatePollTitle(pollData.title);
     if (!titleValidation.valid) {
-      throw new Error(titleValidation.error || 'Ugyldig tittel');
+      throw new Error(titleValidation.error || 'Invalid title');
     }
 
     const descValidation = validatePollDescription(pollData.description);
     if (!descValidation.valid) {
-      throw new Error(descValidation.error || 'Ugyldig beskrivelse');
+      throw new Error(descValidation.error || 'Invalid description');
     }
 
     if (!pollData.options || pollData.options.length < 2 || pollData.options.length > 10) {
-      throw new Error('Avstemning må ha mellom 2 og 10 alternativer');
+      throw new Error('Poll must have between 2 and 10 options');
     }
 
-    // Valider alle alternativer
+    // Validate all options
     for (const option of pollData.options) {
       const optionValidation = validatePollOption(option.text);
       if (!optionValidation.valid) {
-        throw new Error(`Ugyldig alternativ: ${optionValidation.error}`);
+        throw new Error(`Invalid option: ${optionValidation.error}`);
       }
     }
 
@@ -397,24 +415,24 @@ export const createPoll = async (
       const remaining = rateLimitCheck.resetAt 
         ? Math.ceil((rateLimitCheck.resetAt - Date.now()) / 3600000)
         : 1;
-      throw new Error(`For mange opprettelser. Prøv igjen om ${remaining} time(r).`);
+      throw new Error(`Too many creations. Please try again in ${remaining} hour(s).`);
     }
 
-    // Sjekk datoer
+    // Check dates
     const now = new Date();
     if (pollData.startDate < now) {
-      throw new Error('Startdato kan ikke være i fortiden');
+      throw new Error('Start date cannot be in the past');
     }
 
     if (pollData.endDate <= pollData.startDate) {
-      throw new Error('Sluttdato må være etter startdato');
+      throw new Error('End date must be after start date');
     }
 
     if (!db) {
-      throw new Error('Firebase Firestore er ikke initialisert');
+      throw new Error('Firebase Firestore is not initialized');
     }
 
-    // Opprett poll
+    // Create poll
     const pollsRef = collection(db, 'polls');
     const pollDoc = {
       title: pollData.title.trim(),
@@ -440,8 +458,8 @@ export const createPoll = async (
       const { incrementUserPollCount } = await import('./userService');
       await incrementUserPollCount(userId);
     } catch (error) {
-      safeError('Feil ved oppdatering av pollsCreated:', error);
-      // Ikke kast feil, dette er ikke kritisk
+      safeError('Error updating pollsCreated:', error);
+      // Don't throw error, this is not critical
     }
     
     // Oppdater cache
@@ -449,12 +467,12 @@ export const createPoll = async (
 
     return docRef.id;
   } catch (error: unknown) {
-    safeError('Feil ved opprettelse av avstemning:', error);
+    safeError('Error creating poll:', error);
     const err = error as { message?: string };
     if (err.message) {
       throw error;
     }
-    throw new Error('Kunne ikke opprette avstemning. Prøv igjen.');
+    throw new Error('Could not create poll. Please try again.');
   }
 };
 

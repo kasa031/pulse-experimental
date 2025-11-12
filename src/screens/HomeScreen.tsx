@@ -13,6 +13,8 @@ import { SPACING } from '../constants/spacing';
 import { BUTTON_MIN_HEIGHT } from '../constants/touchTargets';
 import { safeError } from '../utils/performance';
 import { SkeletonLoader, SkeletonCard } from '../components/SkeletonLoader';
+import { InstallPrompt } from '../components/InstallPrompt';
+import { Platform } from 'react-native';
 
 const HomeScreen = () => {
   const navigation = useNavigation<any>();
@@ -75,6 +77,11 @@ const HomeScreen = () => {
         isMobile && styles.contentMobile,
         isDesktop && styles.contentDesktop
       ]}>
+        {/* Install Prompt - Only on Web */}
+        {Platform.OS === 'web' && (
+          <InstallPrompt />
+        )}
+
         {/* Welcome Card */}
         <Animated.View entering={FadeInDown.duration(500).delay(100)}>
           <Card style={[styles.card, styles.welcomeCard]}>

@@ -56,9 +56,9 @@ export const sendFeedback = async (data: FeedbackData): Promise<boolean> => {
   try {
     const config = getEmailJSConfig();
     
-    // Sjekk at konfigurasjon er satt
+    // Check that configuration is set
     if (!config.publicKey || !config.serviceId || !config.templateId) {
-      throw new Error('EmailJS er ikke konfigurert. Sjekk at API-nøkler er satt.');
+      throw new Error('EmailJS is not configured. Check that API keys are set.');
     }
 
     // Initialiser EmailJS

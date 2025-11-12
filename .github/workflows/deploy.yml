@@ -250,6 +250,11 @@ jobs:
           # Find the main entry point JS file (prioritize _expo/static/js/web/)
           MAIN_JS=""
           
+          # Show directory structure for debugging
+          echo "📁 Directory structure:"
+          find "$OUTPUT_DIR" -type d -maxdepth 3 | head -20
+          echo ""
+          
           # Try most specific paths first
           if [ -d "$OUTPUT_DIR/_expo/static/js/web" ]; then
             MAIN_JS=$(find "$OUTPUT_DIR/_expo/static/js/web" -name "*.js" -type f | head -1)
@@ -259,26 +264,47 @@ jobs:
           fi
           
           # Try other common locations
-          if [ -z "$MAIN_JS" ]; then
+          if [ -z "$MAIN_JS" ] && [ -d "$OUTPUT_DIR/_expo" ]; then
             MAIN_JS=$(find "$OUTPUT_DIR/_expo" -path "*/js/web/*.js" -type f | head -1)
+            if [ -n "$MAIN_JS" ]; then
+              echo "✅ Found JS in _expo/*/js/web/"
+            fi
           fi
-          if [ -z "$MAIN_JS" ]; then
+          if [ -z "$MAIN_JS" ] && [ -d "$OUTPUT_DIR/_expo" ]; then
             MAIN_JS=$(find "$OUTPUT_DIR/_expo" -name "index.js" -type f | head -1)
+            if [ -n "$MAIN_JS" ]; then
+              echo "✅ Found JS in _expo/index.js"
+            fi
           fi
           if [ -z "$MAIN_JS" ]; then
             MAIN_JS=$(find "$OUTPUT_DIR" -path "*/static/js/*.js" -type f | head -1)
+            if [ -n "$MAIN_JS" ]; then
+              echo "✅ Found JS in static/js/"
+            fi
           fi
           if [ -z "$MAIN_JS" ]; then
-            # Use first JS file as fallback
-            MAIN_JS=$(echo "$ALL_JS_FILES" | head -1)
+            # Use first JS file as fallback (but prefer files with "index" or "main" in name)
+            MAIN_JS=$(echo "$ALL_JS_FILES" | grep -i "index\|main\|app" | head -1)
+            if [ -z "$MAIN_JS" ]; then
+              MAIN_JS=$(echo "$ALL_JS_FILES" | head -1)
+            fi
+            if [ -n "$MAIN_JS" ]; then
+              echo "✅ Using fallback JS file"
+            fi
           fi
           
           if [ -z "$MAIN_JS" ] || [ ! -f "$MAIN_JS" ]; then
             echo "❌ ERROR: Could not find valid JS file!"
+            echo "All JS files found:"
+            echo "$ALL_JS_FILES"
+            echo "Directory structure:"
+            find "$OUTPUT_DIR" -type f -name "*.js" | head -20
             exit 1
           fi
           
           JS_RELATIVE=$(echo "$MAIN_JS" | sed "s|^$OUTPUT_DIR/||")
+          # Ensure path doesn't start with /
+          JS_RELATIVE=$(echo "$JS_RELATIVE" | sed 's|^/||')
           JS_PATH="$BASE_PATH/$JS_RELATIVE"
           echo ""
           echo "✅ Using JS file: $MAIN_JS"
@@ -320,15 +346,19 @@ jobs:
           console.log('✅ Removed all script tags');
           
           // Find the closing body tag and inject script BEFORE it
+          // Make sure we use the exact path format
+          const scriptTag = `  <script src="${jsPath}"></script>\n`;
+          
           if (html.includes('</body>')) {
-            const scriptTag = `  <script src="${jsPath}"></script>\n`;
             html = html.replace('</body>', scriptTag + '</body>');
             console.log('✅ Injected script before </body>');
             console.log('Script tag:', scriptTag.trim());
+          } else if (html.includes('</html>')) {
+            html = html.replace('</html>', scriptTag + '</body></html>');
+            console.log('✅ Added script and </body> before </html>');
           } else {
-            const scriptTag = `\n  <script src="${jsPath}"></script>\n</body>`;
-            html += scriptTag;
-            console.log('✅ Added script and </body>');
+            html += scriptTag + '</body>';
+            console.log('✅ Added script and </body> at end');
           }
           
           // Fix all paths (do this AFTER injecting script)
@@ -452,8 +482,8 @@ jobs:
       console.error("Global error:", e.error, e.filename, e.lineno, e.colno);
       const root = document.getElementById("root");
       if (root && !root.querySelector(".error-container")) {
-        const errorMsg = e.error ? e.error.toString() : "Ukjent feil";
-        root.innerHTML = "<div class=\"error-container\" style=\"padding: 40px; text-align: center; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;\"><h2 style=\"color: #d32f2f; margin-bottom: 16px;\">En feil oppstod</h2><p style=\"margin-bottom: 8px; color: #666;\">" + errorMsg + "</p><button onclick=\"window.location.reload()\" style=\"padding: 12px 24px; background-color: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer;\">Last på nytt</button></div>";
+        const errorMsg = e.error ? e.error.toString() : "Unknown error";
+        root.innerHTML = "<div class=\"error-container\" style=\"padding: 40px; text-align: center; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;\"><h2 style=\"color: #d32f2f; margin-bottom: 16px;\">An error occurred</h2><p style=\"margin-bottom: 8px; color: #666;\">" + errorMsg + "</p><button onclick=\"window.location.reload()\" style=\"padding: 12px 24px; background-color: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer;\">Reload</button></div>";
       }
     });
     
@@ -466,9 +496,17 @@ jobs:
 </script>
 EOF
             
-            # Insert error script before closing body tag
+            # Insert error script before closing body tag (but after our main script)
             ERROR_SCRIPT=$(cat /tmp/error_script.js)
-            sed -i "s|</body>|$ERROR_SCRIPT</body|" "$OUTPUT_DIR/index.html"
+            # Use Node.js to insert safely (sed can break with special characters)
+            node -e "
+              const fs = require('fs');
+              const html = fs.readFileSync('$OUTPUT_DIR/index.html', 'utf8');
+              const errorScript = \`$ERROR_SCRIPT\`;
+              const fixed = html.replace('</body>', errorScript + '</body>');
+              fs.writeFileSync('$OUTPUT_DIR/index.html', fixed, 'utf8');
+              console.log('✅ Injected error handling script');
+            "
             
             # Verify final result
             FINAL_SCRIPT_COUNT=$(grep -c '<script' "$OUTPUT_DIR/index.html" || echo "0")

@@ -1,12 +1,12 @@
 /**
  * Date Helper Utilities
- * Konsistent håndtering av Firestore Timestamp og Date objekter
+ * Consistent handling of Firestore Timestamp and Date objects
  */
 
 import { Timestamp } from 'firebase/firestore';
 
 /**
- * Konverter Firestore Timestamp eller Date til Date objekt
+ * Convert Firestore Timestamp or Date to Date object
  */
 export const toDate = (date: Date | Timestamp | any): Date | null => {
   try {
@@ -22,12 +22,12 @@ export const toDate = (date: Date | Timestamp | any): Date | null => {
         return date.toDate();
       }
       
-      // Firestore Timestamp med toMillis
+      // Firestore Timestamp with toMillis
       if ('toMillis' in date && typeof date.toMillis === 'function') {
         return new Date(date.toMillis());
       }
       
-      // Timestamp object med seconds og nanoseconds
+      // Timestamp object with seconds and nanoseconds
       if ('seconds' in date && typeof date.seconds === 'number') {
         return new Date(date.seconds * 1000);
       }
@@ -48,7 +48,7 @@ export const toDate = (date: Date | Timestamp | any): Date | null => {
 };
 
 /**
- * Konverter til timestamp (milliseconds)
+ * Convert to timestamp (milliseconds)
  */
 export const toTimestamp = (date: Date | Timestamp | any): number => {
   const dateObj = toDate(date);
@@ -57,7 +57,7 @@ export const toTimestamp = (date: Date | Timestamp | any): number => {
 };
 
 /**
- * Sjekk om dato er gyldig
+ * Check if date is valid
  */
 export const isValidDate = (date: Date | Timestamp | any): boolean => {
   const dateObj = toDate(date);
@@ -65,11 +65,11 @@ export const isValidDate = (date: Date | Timestamp | any): boolean => {
 };
 
 /**
- * Formater dato til norsk format
+ * Format date to Norwegian format
  */
 export const formatDateNorwegian = (date: Date | Timestamp | any): string => {
   const dateObj = toDate(date);
-  if (!dateObj) return 'Ukjent dato';
+  if (!dateObj) return 'Unknown date';
   
   try {
     return dateObj.toLocaleDateString('nb-NO', {
@@ -78,16 +78,16 @@ export const formatDateNorwegian = (date: Date | Timestamp | any): string => {
       year: 'numeric',
     });
   } catch {
-    return 'Ukjent dato';
+    return 'Unknown date';
   }
 };
 
 /**
- * Formater dato til relativ tid (f.eks. "2 timer siden")
+ * Format date to relative time (e.g. "2 hours ago")
  */
 export const formatRelativeTime = (date: Date | Timestamp | any): string => {
   const dateObj = toDate(date);
-  if (!dateObj) return 'Ukjent dato';
+  if (!dateObj) return 'Unknown date';
   
   try {
     const now = new Date();
@@ -98,16 +98,16 @@ export const formatRelativeTime = (date: Date | Timestamp | any): string => {
     const diffWeeks = Math.floor(diffDays / 7);
     const diffMonths = Math.floor(diffDays / 30);
     
-    if (diffMins < 1) return 'Nettopp';
-    if (diffMins < 60) return `${diffMins} ${diffMins === 1 ? 'minutt' : 'minutter'} siden`;
-    if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? 'time' : 'timer'} siden`;
-    if (diffDays < 7) return `${diffDays} ${diffDays === 1 ? 'dag' : 'dager'} siden`;
-    if (diffWeeks < 4) return `${diffWeeks} ${diffWeeks === 1 ? 'uke' : 'uker'} siden`;
-    if (diffMonths < 12) return `${diffMonths} ${diffMonths === 1 ? 'måned' : 'måneder'} siden`;
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} ${diffMins === 1 ? 'minute' : 'minutes'} ago`;
+    if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
+    if (diffDays < 7) return `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
+    if (diffWeeks < 4) return `${diffWeeks} ${diffWeeks === 1 ? 'week' : 'weeks'} ago`;
+    if (diffMonths < 12) return `${diffMonths} ${diffMonths === 1 ? 'month' : 'months'} ago`;
     
     return formatDateNorwegian(dateObj);
   } catch {
-    return 'Ukjent dato';
+    return 'Unknown date';
   }
 };
 

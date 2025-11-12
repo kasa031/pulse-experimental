@@ -1,51 +1,51 @@
 /**
  * Input Validation Utilities
- * Sikker validering av brukerinput for å forhindre injeksjoner og ugyldige data
+ * Secure validation of user input to prevent injections and invalid data
  */
 
 /**
- * Valider e-postadresse
+ * Validate email address
  * 
- * @param email - E-postadressen som skal valideres
- * @returns Objekt med `valid` (boolean) og `error` (string, hvis ugyldig)
+ * @param email - The email address to validate
+ * @returns Object with `valid` (boolean) and `error` (string, if invalid)
  * 
  * @example
  * ```typescript
  * const result = validateEmail('test@example.com');
  * if (result.valid) {
- *   // E-post er gyldig
+ *   // Email is valid
  * }
  * ```
  */
 export const validateEmail = (email: string): { valid: boolean; error?: string } => {
   if (!email || email.trim().length === 0) {
-    return { valid: false, error: 'E-post er påkrevd' };
+    return { valid: false, error: 'Email is required' };
   }
 
-  // Grunnleggende e-post validering
+  // Basic email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
-    return { valid: false, error: 'Ugyldig e-postformat' };
+    return { valid: false, error: 'Invalid email format' };
   }
 
-  // Sjekk lengde (forhindre DoS)
+  // Check length (prevent DoS)
   if (email.length > 254) {
-    return { valid: false, error: 'E-post er for lang' };
+    return { valid: false, error: 'Email is too long' };
   }
 
   return { valid: true };
 };
 
 /**
- * Valider passord med styrke-krav
+ * Validate password with strength requirements
  * 
- * @param password - Passordet som skal valideres
- * @returns Objekt med `valid` (boolean), `error` (string, hvis ugyldig), og `strength` ('weak' | 'medium' | 'strong')
+ * @param password - The password to validate
+ * @returns Object with `valid` (boolean), `error` (string, if invalid), and `strength` ('weak' | 'medium' | 'strong')
  * 
- * Krav:
- * - Minimum 8 tegn
- * - Maksimum 128 tegn
- * - Må inneholde både bokstaver og tall
+ * Requirements:
+ * - Minimum 8 characters
+ * - Maximum 128 characters
+ * - Must contain both letters and numbers
  * 
  * @example
  * ```typescript
@@ -55,14 +55,14 @@ export const validateEmail = (email: string): { valid: boolean; error?: string }
  */
 export const validatePassword = (password: string): { valid: boolean; error?: string; strength?: 'weak' | 'medium' | 'strong' } => {
   if (!password || password.length < 8) {
-    return { valid: false, error: 'Passord må være minst 8 tegn' };
+    return { valid: false, error: 'Password must be at least 8 characters' };
   }
 
   if (password.length > 128) {
-    return { valid: false, error: 'Passord er for langt' };
+    return { valid: false, error: 'Password is too long' };
   }
 
-  // Sjekk passord styrke
+  // Check password strength
   let strength: 'weak' | 'medium' | 'strong' = 'weak';
   let score = 0;
 
@@ -75,20 +75,20 @@ export const validatePassword = (password: string): { valid: boolean; error?: st
   if (score >= 4) strength = 'strong';
   else if (score >= 3) strength = 'medium';
 
-  // Minimum krav: minst ett tall og ett bokstav
+  // Minimum requirement: at least one number and one letter
   if (!/[0-9]/.test(password) || !/[a-zA-Z]/.test(password)) {
-    return { valid: false, error: 'Passord må inneholde både bokstaver og tall' };
+    return { valid: false, error: 'Password must contain both letters and numbers' };
   }
 
   return { valid: true, strength };
 };
 
 /**
- * Sanitize tekst for å forhindre XSS (Cross-Site Scripting) angrep
+ * Sanitize text to prevent XSS (Cross-Site Scripting) attacks
  * 
- * @param text - Teksten som skal sanitizes
- * @param maxLength - Maksimal lengde på teksten (standard: 1000 tegn)
- * @returns Sanitized tekst uten HTML tags og med escaped HTML entities
+ * @param text - The text to sanitize
+ * @param maxLength - Maximum length of the text (default: 1000 characters)
+ * @returns Sanitized text without HTML tags and with escaped HTML entities
  * 
  * @example
  * ```typescript
@@ -99,108 +99,108 @@ export const validatePassword = (password: string): { valid: boolean; error?: st
 export const sanitizeText = (text: string, maxLength: number = 1000): string => {
   if (!text || typeof text !== 'string') return '';
   
-  // Komplett sanitization: Fjern HTML tags først (inkludert nested og malformed tags)
-  // Bruk global flag og håndter alle varianter av HTML tags
+  // Complete sanitization: Remove HTML tags first (including nested and malformed tags)
+  // Use global flag and handle all variants of HTML tags
   let sanitized = text.replace(/<\/?[^>]+(>|$)/g, '');
   
-  // Escape HTML entities i riktig rekkefølge for komplett sanitization
-  // Escape & først for å unngå dobbel escaping av allerede escaped entities
+  // Escape HTML entities in correct order for complete sanitization
+  // Escape & first to avoid double escaping of already escaped entities
   sanitized = sanitized
-    .replace(/&(?!amp;|lt;|gt;|quot;|#x27;|#x2F;|#39;)/g, '&amp;')  // Escape & som ikke er del av en entity
-    .replace(/</g, '&lt;')   // Escape < (kan være igjen etter tag removal)
-    .replace(/>/g, '&gt;')   // Escape > (kan være igjen etter tag removal)
-    .replace(/"/g, '&quot;')  // Escape doble anførselstegn
-    .replace(/'/g, '&#x27;') // Escape enkle anførselstegn (bruk &#x27; ikke &#39;)
-    .replace(/\//g, '&#x2F;'); // Escape forward slash for ekstra sikkerhet
+    .replace(/&(?!amp;|lt;|gt;|quot;|#x27;|#x2F;|#39;)/g, '&amp;')  // Escape & that is not part of an entity
+    .replace(/</g, '&lt;')   // Escape < (may remain after tag removal)
+    .replace(/>/g, '&gt;')   // Escape > (may remain after tag removal)
+    .replace(/"/g, '&quot;')  // Escape double quotes
+    .replace(/'/g, '&#x27;') // Escape single quotes (use &#x27; not &#39;)
+    .replace(/\//g, '&#x2F;'); // Escape forward slash for extra security
   
-  // Trim og begrens lengde
+  // Trim and limit length
   sanitized = sanitized.trim().substring(0, maxLength);
   
   return sanitized;
 };
 
 /**
- * Valider poll title
+ * Validate poll title
  */
 export const validatePollTitle = (title: string): { valid: boolean; error?: string } => {
   const sanitized = sanitizeText(title, 200);
   
   if (!sanitized || sanitized.trim().length < 5) {
-    return { valid: false, error: 'Tittel må være minst 5 tegn' };
+    return { valid: false, error: 'Title must be at least 5 characters' };
   }
 
   if (sanitized.length > 200) {
-    return { valid: false, error: 'Tittel må være maks 200 tegn' };
+    return { valid: false, error: 'Title must be at most 200 characters' };
   }
 
   return { valid: true };
 };
 
 /**
- * Valider poll description
+ * Validate poll description
  */
 export const validatePollDescription = (description: string): { valid: boolean; error?: string } => {
   const sanitized = sanitizeText(description, 2000);
   
   if (!sanitized || sanitized.trim().length < 10) {
-    return { valid: false, error: 'Beskrivelse må være minst 10 tegn' };
+    return { valid: false, error: 'Description must be at least 10 characters' };
   }
 
   if (sanitized.length > 2000) {
-    return { valid: false, error: 'Beskrivelse må være maks 2000 tegn' };
+    return { valid: false, error: 'Description must be at most 2000 characters' };
   }
 
   return { valid: true };
 };
 
 /**
- * Valider poll option
+ * Validate poll option
  */
 export const validatePollOption = (option: string): { valid: boolean; error?: string } => {
   const sanitized = sanitizeText(option, 500);
   
   if (!sanitized || sanitized.trim().length < 2) {
-    return { valid: false, error: 'Alternativ må være minst 2 tegn' };
+    return { valid: false, error: 'Option must be at least 2 characters' };
   }
 
   if (sanitized.length > 500) {
-    return { valid: false, error: 'Alternativ må være maks 500 tegn' };
+    return { valid: false, error: 'Option must be at most 500 characters' };
   }
 
   return { valid: true };
 };
 
 /**
- * Valider option index
+ * Validate option index
  */
 export const validateOptionIndex = (index: number, maxOptions: number): { valid: boolean; error?: string } => {
   if (typeof index !== 'number' || isNaN(index)) {
-    return { valid: false, error: 'Ugyldig valg' };
+    return { valid: false, error: 'Invalid choice' };
   }
 
   if (index < 0 || index >= maxOptions) {
-    return { valid: false, error: 'Ugyldig valg' };
+    return { valid: false, error: 'Invalid choice' };
   }
 
   return { valid: true };
 };
 
 /**
- * Valider poll ID
+ * Validate poll ID
  */
 export const validatePollId = (pollId: string): { valid: boolean; error?: string } => {
   if (!pollId || typeof pollId !== 'string') {
-    return { valid: false, error: 'Ugyldig avstemning ID' };
+    return { valid: false, error: 'Invalid poll ID' };
   }
 
   // Firestore ID format: alphanumeric, max 1500 bytes
   if (pollId.length > 1500) {
-    return { valid: false, error: 'Avstemning ID er for lang' };
+    return { valid: false, error: 'Poll ID is too long' };
   }
 
-  // Sjekk for potensielt farlige tegn
+  // Check for potentially dangerous characters
   if (!/^[a-zA-Z0-9_-]+$/.test(pollId)) {
-    return { valid: false, error: 'Ugyldig avstemning ID format' };
+    return { valid: false, error: 'Invalid poll ID format' };
   }
 
   return { valid: true };

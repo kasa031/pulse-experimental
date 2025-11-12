@@ -40,7 +40,7 @@ export interface UserProfile {
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
   try {
     if (!db) {
-      throw new Error('Firebase Firestore er ikke initialisert');
+      throw new Error('Firebase Firestore is not initialized');
     }
     const userRef = doc(db, 'users', userId);
     const userSnap = await getDoc(userRef);
@@ -67,11 +67,11 @@ export const createOrUpdateUserProfile = async (
 ): Promise<void> => {
   try {
     if (!user.email) {
-      throw new Error('E-post er påkrevd');
+      throw new Error('Email is required');
     }
 
     if (!db) {
-      throw new Error('Firebase Firestore er ikke initialisert');
+      throw new Error('Firebase Firestore is not initialized');
     }
 
     const userRef = doc(db, 'users', user.uid);
@@ -118,11 +118,11 @@ export const updateUserProfile = async (
   try {
     const user = auth?.currentUser;
     if (!user || user.uid !== userId) {
-      throw new Error('Ikke autorisert til å oppdatere denne profilen');       
+      throw new Error('Not authorized to update this profile');       
     }
 
     if (!db) {
-      throw new Error('Firebase Firestore er ikke initialisert');
+      throw new Error('Firebase Firestore is not initialized');
     }
 
     const userRef = doc(db, 'users', userId);
@@ -142,7 +142,7 @@ export const updateUserProfile = async (
 export const getUserVoteCount = async (userId: string): Promise<number> => {
   try {
     if (!db) {
-      throw new Error('Firebase Firestore er ikke initialisert');
+      throw new Error('Firebase Firestore is not initialized');
     }
     // Telle faktiske votes fra votes collection
     const votesQuery = query(
