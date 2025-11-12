@@ -16,7 +16,7 @@ import { BUTTON_MIN_HEIGHT, CHIP_MIN_HEIGHT } from '../constants/touchTargets';
 
 const CATEGORIES = POLL_CATEGORIES;
 
-// Bruk formatRelativeTime fra dateHelpers
+// Use formatRelativeTime from dateHelpers
 const formatDate = formatRelativeTime;
 
 const CommunityScreen = () => {
@@ -50,21 +50,21 @@ const CommunityScreen = () => {
       setLoading(true);
       const discussionsList = await getDiscussions();
       
-      // Filtrer etter kategori hvis valgt
+      // Filter by category if selected
       const filtered = selectedCategory
         ? discussionsList.filter(d => d.category === selectedCategory)
         : discussionsList;
       
       setDiscussions(filtered);
     } catch (error) {
-      safeError('Feil ved henting av diskusjoner:', error);
+      safeError('Error fetching discussions:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   }, [selectedCategory]);
 
-  // Sorterte diskusjoner
+  // Sorted discussions
   const sortedDiscussions = useMemo(() => {
     const sorted = [...discussions].sort((a, b) => {
       if (sortBy === 'newest') {
@@ -101,9 +101,9 @@ const CommunityScreen = () => {
       setNewContent('');
       setNewCategory('generelt');
       await loadDiscussions();
-      safeLog('Diskusjon opprettet');
+      safeLog('Discussion created');
     } catch (error) {
-      safeError('Feil ved opprettelse av diskusjon:', error);
+      safeError('Error creating discussion:', error);
     } finally {
       setCreating(false);
     }
@@ -117,7 +117,7 @@ const CommunityScreen = () => {
       const commentsList = await getComments(discussionId);
       setComments(commentsList);
     } catch (error) {
-      safeError('Feil ved henting av kommentarer:', error);
+      safeError('Error fetching comments:', error);
     } finally {
       setLoadingComments(false);
     }
@@ -132,13 +132,13 @@ const CommunityScreen = () => {
       setSubmittingComment(true);
       await addComment(selectedDiscussion, newComment);
       setNewComment('');
-      // Last kommentarer på nytt
+      // Reload comments
       const commentsList = await getComments(selectedDiscussion);
       setComments(commentsList);
-      // Oppdater diskusjoner for å oppdatere commentCount
+      // Update discussions to update commentCount
       await loadDiscussions();
     } catch (error) {
-      safeError('Feil ved legg til kommentar:', error);
+      safeError('Error adding comment:', error);
     } finally {
       setSubmittingComment(false);
     }
@@ -165,10 +165,10 @@ const CommunityScreen = () => {
         <Card style={styles.card}>
           <Card.Content>
             <Text variant="headlineSmall" style={styles.title}>
-              Fellesskap
+              Community
             </Text>
             <Text variant="bodyMedium" style={styles.description}>
-              Diskuter med andre innbyggere i Oslo og del dine meninger om lokale saker.
+              Discuss with other residents of Oslo and share your opinions on local issues.
             </Text>
           </Card.Content>
         </Card>
@@ -178,7 +178,7 @@ const CommunityScreen = () => {
           <Card.Content>
             <View style={styles.sortFilterRow}>
               <Text variant="bodySmall" style={styles.filterLabel}>
-                Sorter:
+                Sort:
               </Text>
               <Menu
                 visible={sortMenuVisible}
@@ -191,7 +191,7 @@ const CommunityScreen = () => {
                     style={styles.sortButton}
                     compact
                   >
-                    {sortBy === 'newest' ? 'Nyeste' : sortBy === 'mostComments' ? 'Mest kommentarer' : 'Eldste'}
+                    {sortBy === 'newest' ? 'Newest' : sortBy === 'mostComments' ? 'Most comments' : 'Oldest'}
                   </Button>
                 }
               >
@@ -200,7 +200,7 @@ const CommunityScreen = () => {
                     setSortBy('newest');
                     setSortMenuVisible(false);
                   }}
-                  title="Nyeste"
+                  title="Newest"
                   leadingIcon={sortBy === 'newest' ? 'check' : undefined}
                 />
                 <Menu.Item
@@ -208,7 +208,7 @@ const CommunityScreen = () => {
                     setSortBy('mostComments');
                     setSortMenuVisible(false);
                   }}
-                  title="Mest kommentarer"
+                  title="Most comments"
                   leadingIcon={sortBy === 'mostComments' ? 'check' : undefined}
                 />
                 <Menu.Item
@@ -216,14 +216,14 @@ const CommunityScreen = () => {
                     setSortBy('oldest');
                     setSortMenuVisible(false);
                   }}
-                  title="Eldste"
+                  title="Oldest"
                   leadingIcon={sortBy === 'oldest' ? 'check' : undefined}
                 />
               </Menu>
             </View>
             <Divider style={styles.divider} />
             <Text variant="titleMedium" style={styles.sectionTitle}>
-              Filtrer etter kategori
+              Filter by category
             </Text>
             <View style={styles.chipContainer}>
               <Chip
@@ -232,7 +232,7 @@ const CommunityScreen = () => {
                 style={styles.chip}
                 textStyle={styles.chipText}
               >
-                Alle
+                All
               </Chip>
               {CATEGORIES.map((cat) => {
                 const categoryColor = getCategoryColor(cat as any);
@@ -268,7 +268,7 @@ const CommunityScreen = () => {
                 onPress={() => setShowCreateDialog(true)}
                 style={styles.createButton}
               >
-                Start ny diskusjon
+                Start new discussion
               </Button>
             </Card.Actions>
           </Card>
@@ -290,8 +290,8 @@ const CommunityScreen = () => {
                   resizeMode="contain"
               />
               <Text variant="bodyMedium" style={styles.emptyText}>
-                Ingen diskusjoner for øyeblikket. 
-                {isAuthenticated && ' Start den første diskusjonen!'}
+                No discussions at the moment. 
+                {isAuthenticated && ' Start the first discussion!'}
               </Text>
             </Card.Content>
           </Card>
@@ -343,7 +343,7 @@ const CommunityScreen = () => {
                     style={styles.commentButton}
                     textColor={osloBranding.colors.primary}
                   >
-                    {discussion.commentCount} {discussion.commentCount === 1 ? 'kommentar' : 'kommentarer'}
+                    {discussion.commentCount} {discussion.commentCount === 1 ? 'comment' : 'comments'}
                   </Button>
                 </View>
               </Card.Content>
@@ -355,10 +355,10 @@ const CommunityScreen = () => {
       {/* Create Discussion Dialog */}
       <Portal>
         <Dialog visible={showCreateDialog} onDismiss={() => setShowCreateDialog(false)}>
-          <Dialog.Title>Start ny diskusjon</Dialog.Title>
+          <Dialog.Title>Start new discussion</Dialog.Title>
           <Dialog.Content>
             <TextInput
-              label="Tittel"
+              label="Title"
               value={newTitle}
               onChangeText={setNewTitle}
               mode="outlined"
@@ -366,7 +366,7 @@ const CommunityScreen = () => {
               maxLength={200}
             />
             <TextInput
-              label="Innhold"
+              label="Content"
               value={newContent}
               onChangeText={setNewContent}
               mode="outlined"
@@ -390,14 +390,14 @@ const CommunityScreen = () => {
             </View>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setShowCreateDialog(false)}>Avbryt</Button>
+            <Button onPress={() => setShowCreateDialog(false)}>Cancel</Button>
             <Button
               mode="contained"
               onPress={handleCreateDiscussion}
               loading={creating}
               disabled={!newTitle.trim() || !newContent.trim() || creating}
             >
-              Opprett
+              Create
             </Button>
           </Dialog.Actions>
         </Dialog>
@@ -413,14 +413,14 @@ const CommunityScreen = () => {
           }}
           style={styles.commentsDialog}
         >
-          <Dialog.Title>Kommentarer</Dialog.Title>
+          <Dialog.Title>Comments</Dialog.Title>
           <Dialog.ScrollArea style={styles.commentsScrollArea}>
             <ScrollView>
               {loadingComments ? (
                 <ActivityIndicator style={styles.loader} />
               ) : comments.length === 0 ? (
                 <Text variant="bodyMedium" style={styles.emptyText}>
-                  Ingen kommentarer ennå. Vær den første!
+                  No comments yet. Be the first!
                 </Text>
               ) : (
                 comments.map((comment) => {
@@ -455,11 +455,11 @@ const CommunityScreen = () => {
                                 setLikingComments(prev => ({ ...prev, [comment.id]: true }));
                                 try {
                                   await likeComment(selectedDiscussion, comment.id);
-                                  // Oppdater kommentarer
+                                  // Update comments
                                   const updatedComments = await getComments(selectedDiscussion);
                                   setComments(updatedComments);
                                 } catch (error) {
-                                  safeError('Feil ved like av kommentar:', error);
+                                  safeError('Error liking comment:', error);
                                 } finally {
                                   setLikingComments(prev => ({ ...prev, [comment.id]: false }));
                                 }
@@ -478,11 +478,11 @@ const CommunityScreen = () => {
                                 setLikingComments(prev => ({ ...prev, [comment.id]: true }));
                                 try {
                                   await dislikeComment(selectedDiscussion, comment.id);
-                                  // Oppdater kommentarer
+                                  // Update comments
                                   const updatedComments = await getComments(selectedDiscussion);
                                   setComments(updatedComments);
                                 } catch (error) {
-                                  safeError('Feil ved dislike av kommentar:', error);
+                                  safeError('Error disliking comment:', error);
                                 } finally {
                                   setLikingComments(prev => ({ ...prev, [comment.id]: false }));
                                 }
@@ -505,7 +505,7 @@ const CommunityScreen = () => {
           {isAuthenticated && (
             <Dialog.Content>
               <TextInput
-                label="Skriv en kommentar..."
+                label="Write a comment..."
                 value={newComment}
                 onChangeText={setNewComment}
                 mode="outlined"
@@ -523,7 +523,7 @@ const CommunityScreen = () => {
               setComments([]);
               setNewComment('');
             }}>
-              Lukk
+              Close
             </Button>
             {isAuthenticated && (
               <Button
@@ -532,7 +532,7 @@ const CommunityScreen = () => {
                 loading={submittingComment}
                 disabled={!newComment.trim() || submittingComment}
               >
-                Legg til
+                Add
               </Button>
             )}
           </Dialog.Actions>

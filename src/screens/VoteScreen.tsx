@@ -31,24 +31,24 @@ const VoteScreen = React.memo(() => {
   const { isMobile, isTablet, isDesktop, width } = useResponsive();
   const padding = getResponsivePadding(width);
 
-  // Filtrerte og sorterte polls
+  // Filtered and sorted polls
   const filteredPolls = useMemo(() => {
     let filtered = searchAndFilterPolls(polls, searchQuery, selectedCategory, selectedDistrict);
     
-    // Sortering
+    // Sorting
     filtered = [...filtered].sort((a, b) => {
       if (sortBy === 'newest') {
-        // Sorter etter startDate (nyeste først)
+        // Sort by startDate (newest first)
         const aStart = toTimestamp(a.startDate);
         const bStart = toTimestamp(b.startDate);
         return bStart - aStart;
       } else if (sortBy === 'popular') {
-        // Sorter etter totalt antall stemmer (mest populære først)
+        // Sort by total number of votes (most popular first)
         const aVotes = a.options.reduce((sum, opt) => sum + opt.votes, 0);
         const bVotes = b.options.reduce((sum, opt) => sum + opt.votes, 0);
         return bVotes - aVotes;
       } else if (sortBy === 'endingSoon') {
-        // Sorter etter endDate (slutter snart først)
+        // Sort by endDate (ending soon first)
         const aEnd = toTimestamp(a.endDate) || Infinity;
         const bEnd = toTimestamp(b.endDate) || Infinity;
         return aEnd - bEnd;
@@ -59,7 +59,7 @@ const VoteScreen = React.memo(() => {
     return filtered;
   }, [polls, searchQuery, selectedCategory, selectedDistrict, sortBy]);
 
-  // Unike kategorier fra polls
+  // Unique categories from polls
   const availableCategories = useMemo(() => {
     const categories = new Set<string>();
     polls.forEach(poll => {
@@ -70,7 +70,7 @@ const VoteScreen = React.memo(() => {
     return Array.from(categories).sort();
   }, [polls]);
 
-  // Hent avstemninger
+  // Fetch polls
   const loadPolls = useCallback(async () => {
     try {
       setLoading(true);
@@ -78,8 +78,8 @@ const VoteScreen = React.memo(() => {
       setPolls(activePolls);
       setError(null);
     } catch (err: unknown) {
-      safeError('Feil ved henting av avstemninger:', err);
-      setError('Kunne ikke laste avstemninger. Prøv igjen.');
+      safeError('Error fetching polls:', err);
+      setError('Could not load polls. Please try again.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -117,14 +117,14 @@ const VoteScreen = React.memo(() => {
   const submitVoteHandler = useCallback(async (poll: Poll, optionIndex: number) => {
     const user = auth?.currentUser;
     if (!user) {
-      setError('Du må være innlogget for å stemme');
+      setError('You must be logged in to vote');
       setSnackbarVisible(true);
       return;
     }
 
     const pollId = poll.id;
 
-    // Optimistisk oppdatering
+    // Optimistic update
     setOptimisticVotes(prev => ({
       ...prev,
       [pollId]: {
@@ -153,7 +153,7 @@ const VoteScreen = React.memo(() => {
         return newState;
       });
       
-      // Oppdater lokal state
+      // Update local state
       setPolls(prevPolls => prevPolls.map(p => {
         if (p.id === pollId) {
           const newOptions = [...p.options];
@@ -166,12 +166,12 @@ const VoteScreen = React.memo(() => {
         return p;
       }));
     } catch (err: unknown) {
-      safeError('Feil ved innsending av stemme:', err);
+      safeError('Error submitting vote:', err);
       const error = err as { message?: string };
-      setError(error.message || 'Kunne ikke sende stemme. Prøv igjen.');
+      setError(error.message || 'Could not submit vote. Please try again.');
       setSnackbarVisible(true);
       
-      // Revert optimistisk oppdatering
+      // Revert optimistic update
       setOptimisticVotes(prev => {
         const newState = { ...prev };
         delete newState[pollId];
@@ -242,7 +242,7 @@ const VoteScreen = React.memo(() => {
                               style={styles.progressBar}
                             />
                             <Text variant="bodySmall" style={styles.voteCount}>
-                              {voteCount} stemmer ({percentage.toFixed(1)}%)
+                              {voteCount} votes ({percentage.toFixed(1)}%)
                             </Text>
                           </View>
                         )}
@@ -266,7 +266,7 @@ const VoteScreen = React.memo(() => {
               loading={isSubmitting}
               style={styles.voteButton}
             >
-              {isSubmitting ? 'Sender...' : 'Stem'}
+              {isSubmitting ? 'Submitting...' : 'Vote'}
             </Button>
           </Card.Content>
         </Card>
@@ -314,7 +314,7 @@ const VoteScreen = React.memo(() => {
         <Card.Content>
           <View style={styles.searchContainer}>
             <Searchbar
-              placeholder="Søk i avstemninger..."
+              placeholder="Search polls..."
               onChangeText={setSearchQuery}
               value={searchQuery}
               style={styles.searchbar}
@@ -328,13 +328,13 @@ const VoteScreen = React.memo(() => {
                 style={styles.clearSearchButton}
                 compact
               >
-                Nullstill
+                Reset
               </Button>
             )}
           </View>
           {searchQuery.length > 0 && (
             <Text variant="bodySmall" style={styles.searchHint}>
-              Søker etter: "{searchQuery}"
+              Searching for: "{searchQuery}"
             </Text>
           )}
         </Card.Content>
@@ -358,7 +358,7 @@ const VoteScreen = React.memo(() => {
                   style={styles.sortButton}
                   compact
                 >
-                  {sortBy === 'newest' ? 'Nyeste' : sortBy === 'popular' ? 'Mest populære' : 'Slutter snart'}
+                  {sortBy === 'newest' ? 'Newest' : sortBy === 'popular' ? 'Most popular' : 'Ending soon'}
                 </Button>
               }
             >
@@ -367,7 +367,7 @@ const VoteScreen = React.memo(() => {
                   setSortBy('newest');
                   setSortMenuVisible(false);
                 }}
-                title="Nyeste"
+                title="Newest"
                 leadingIcon={sortBy === 'newest' ? 'check' : undefined}
               />
               <Menu.Item
@@ -375,7 +375,7 @@ const VoteScreen = React.memo(() => {
                   setSortBy('popular');
                   setSortMenuVisible(false);
                 }}
-                title="Mest populære"
+                title="Most popular"
                 leadingIcon={sortBy === 'popular' ? 'check' : undefined}
               />
               <Menu.Item
@@ -383,7 +383,7 @@ const VoteScreen = React.memo(() => {
                   setSortBy('endingSoon');
                   setSortMenuVisible(false);
                 }}
-                title="Slutter snart"
+                title="Ending soon"
                 leadingIcon={sortBy === 'endingSoon' ? 'check' : undefined}
               />
             </Menu>
@@ -392,7 +392,7 @@ const VoteScreen = React.memo(() => {
             <>
               <Divider style={styles.divider} />
               <Text variant="bodySmall" style={styles.filterLabel}>
-                Filtrer etter:
+                Filter by:
               </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
               {availableCategories.map((cat) => {
@@ -434,7 +434,7 @@ const VoteScreen = React.memo(() => {
                   }}
                   style={styles.clearFilterButton}
                 >
-                  Nullstill filter
+                  Reset filter
                 </Button>
               )}
             </>
@@ -459,7 +459,7 @@ const VoteScreen = React.memo(() => {
               resizeMode="contain"
             />
             <Text variant="bodyMedium" style={styles.emptyText}>
-              Ingen avstemninger funnet med de valgte filterne. Prøv å endre søket eller filterne.
+              No polls found with the selected filters. Try changing the search or filters.
             </Text>
           </Card.Content>
         </Card>
@@ -472,10 +472,10 @@ const VoteScreen = React.memo(() => {
               resizeMode="contain"
             />
             <Text variant="bodyLarge" style={styles.emptyText}>
-              Ingen aktive avstemninger for øyeblikket.
+              No active polls at the moment.
             </Text>
             <Text variant="bodySmall" style={styles.emptySubtext}>
-              Dra ned for å oppdatere
+              Pull down to refresh
             </Text>
           </Card.Content>
         </Card>
@@ -483,7 +483,7 @@ const VoteScreen = React.memo(() => {
         <>
           {filteredPolls.length > 0 && (
             <Text variant="bodySmall" style={styles.resultCount}>
-              Viser {filteredPolls.length} av {polls.length} avstemninger
+              Showing {filteredPolls.length} of {polls.length} polls
             </Text>
           )}
           {pollCards}
@@ -499,7 +499,7 @@ const VoteScreen = React.memo(() => {
           onPress: () => setSnackbarVisible(false),
         }}
       >
-        {error || 'Stemme registrert!'}
+        {error || 'Vote registered!'}
       </Snackbar>
     </ScrollView>
   );
