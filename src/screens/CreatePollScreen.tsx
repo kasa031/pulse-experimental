@@ -20,7 +20,7 @@ import { createPoll, CreatePollData } from '../services/pollsService';
 import { auth } from '../services/firebase';
 import { isUserAdmin } from '../utils/adminCheck';
 import { validatePollTitle, validatePollDescription, validatePollOption } from '../utils/validation';
-import { safeError, safeLog } from '../utils/performance';
+import { safeError } from '../utils/performance';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
 import { SPACING } from '../constants/spacing';

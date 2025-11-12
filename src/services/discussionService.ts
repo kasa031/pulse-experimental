@@ -23,6 +23,7 @@ import {
 import { db } from './firebase';
 import { auth } from './firebase';
 import { safeError, safeLog } from '../utils/performance';
+import { sanitizeText } from '../utils/validation';
 
 export interface Discussion {
   id: string;
@@ -53,7 +54,15 @@ export interface Comment {
 }
 
 /**
- * Hent alle diskusjoner
+ * Hent alle diskusjoner fra Firestore
+ * 
+ * @param limitCount - Maksimalt antall diskusjoner å hente (standard: 20)
+ * @returns Array med Discussion-objekter, sortert etter opprettelsesdato (nyeste først)
+ * 
+ * @example
+ * ```typescript
+ * const discussions = await getDiscussions(10);
+ * ```
  */
 export const getDiscussions = async (limitCount: number = 20): Promise<Discussion[]> => {
   try {
@@ -141,7 +150,24 @@ export const getDiscussionsByCategory = async (
 };
 
 /**
- * Opprett en ny diskusjon
+ * Opprett en ny diskusjon i Firestore
+ * 
+ * @param title - Tittel på diskusjonen (maks 200 tegn, sanitized)
+ * @param content - Innholdet i diskusjonen (maks 2000 tegn, sanitized)
+ * @param category - Kategori for diskusjonen
+ * @param district - Bydel (valgfritt)
+ * @returns ID til den opprettede diskusjonen
+ * @throws Error hvis bruker ikke er innlogget eller database ikke er tilgjengelig
+ * 
+ * @example
+ * ```typescript
+ * const discussionId = await createDiscussion(
+ *   'Ny park i byen',
+ *   'Jeg synes vi trenger en ny park...',
+ *   'miljø',
+ *   'Grünerløkka'
+ * );
+ * ```
  */
 export const createDiscussion = async (
   title: string,
@@ -166,10 +192,10 @@ export const createDiscussion = async (
 
     const discussionsRef = collection(db, 'discussions');
     const docRef = await addDoc(discussionsRef, {
-      title: title.trim(),
-      content: content.trim(),
+      title: sanitizeText(title.trim(), 200),
+      content: sanitizeText(content.trim(), 2000),
       authorId: user.uid,
-      authorName,
+      authorName: sanitizeText(authorName, 100),
       category: category || 'generelt',
       district: district || null,
       createdAt: serverTimestamp(),
@@ -228,7 +254,19 @@ export const getComments = async (discussionId: string): Promise<Comment[]> => {
 };
 
 /**
- * Legg til en kommentar
+ * Legg til en kommentar til en diskusjon
+ * 
+ * @param discussionId - ID til diskusjonen
+ * @param content - Kommentarens innhold (maks 1000 tegn, sanitized)
+ * @returns ID til den opprettede kommentaren
+ * @throws Error hvis bruker ikke er innlogget eller database ikke er tilgjengelig
+ * 
+ * Kommentaren oppdaterer automatisk `commentCount` på diskusjonen.
+ * 
+ * @example
+ * ```typescript
+ * const commentId = await addComment('discussion123', 'Jeg er enig!');
+ * ```
  */
 export const addComment = async (
   discussionId: string,
@@ -251,15 +289,14 @@ export const addComment = async (
 
     const commentsRef = collection(db, 'discussions', discussionId, 'comments');
     const docRef = await addDoc(commentsRef, {
-      content: content.trim(),
+      content: sanitizeText(content.trim(), 1000),
       authorId: user.uid,
-      authorName,
+      authorName: sanitizeText(authorName, 100),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
 
     // Oppdater commentCount på diskusjonen
-    const { updateDoc, increment } = await import('firebase/firestore');
     const discussionRef = doc(db, 'discussions', discussionId);
     const discussionSnap = await getDoc(discussionRef);
     if (discussionSnap.exists()) {

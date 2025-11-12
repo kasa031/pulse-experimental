@@ -4,7 +4,6 @@
 
 import React from 'react';
 import { User } from 'firebase/auth';
-import { Timestamp } from 'firebase/firestore';
 
 // Firebase User type
 export type FirebaseUser = User | null;

@@ -18,8 +18,8 @@ import {
   Divider
 } from 'react-native-paper';
 import { theme, osloBranding } from '../constants/theme';
-import { OSLO_QUIZ_QUESTIONS, getRandomQuestion, QuizQuestion } from '../constants/osloQuiz';
-import { safeError, safeLog } from '../utils/performance';
+import { getRandomQuestion, QuizQuestion } from '../constants/osloQuiz';
+import { safeError } from '../utils/performance';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
 import { SPACING } from '../constants/spacing';
@@ -122,7 +122,7 @@ const OsloScreen = () => {
     }
     setSnackbarVisible(true);
     
-    analytics.trackPollInteraction('quiz_answer', {
+    analytics.track('quiz_answer', {
       questionId: currentQuestion.id,
       correct: selectedAnswer === currentQuestion.correctAnswer
     });
@@ -170,7 +170,7 @@ const OsloScreen = () => {
       // Reload histories
       await loadStreetHistories();
       
-      analytics.trackPollInteraction('street_history_added', {
+      analytics.track('street_history_added', {
         streetName: newStreetName
       });
     } catch (error) {

@@ -11,7 +11,6 @@ interface RateLimitEntry {
 }
 
 const RATE_LIMIT_PREFIX = '@rate_limit_';
-const DEFAULT_WINDOW_MS = 60 * 1000; // 1 minutt
 
 /**
  * Rate limit config per action type

@@ -18,7 +18,7 @@ import {
 import { theme, osloBranding } from '../constants/theme';
 import { sendFeedback, isEmailJSConfigured } from '../services/feedbackService';
 import { auth } from '../services/firebase';
-import { safeError, safeLog } from '../utils/performance';
+import { safeError } from '../utils/performance';
 import { validateEmail } from '../utils/validation';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
@@ -93,7 +93,7 @@ const FeedbackScreen = () => {
         subject: subject.trim(),
         message: message.trim(),
         type,
-        screen: currentScreen,
+        screen: 'Rapporter',
         userEmail: userEmail.trim() || undefined,
         userName: userName.trim() || undefined,
       });

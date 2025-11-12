@@ -5,6 +5,17 @@
 
 /**
  * Valider e-postadresse
+ * 
+ * @param email - E-postadressen som skal valideres
+ * @returns Objekt med `valid` (boolean) og `error` (string, hvis ugyldig)
+ * 
+ * @example
+ * ```typescript
+ * const result = validateEmail('test@example.com');
+ * if (result.valid) {
+ *   // E-post er gyldig
+ * }
+ * ```
  */
 export const validateEmail = (email: string): { valid: boolean; error?: string } => {
   if (!email || email.trim().length === 0) {
@@ -27,6 +38,20 @@ export const validateEmail = (email: string): { valid: boolean; error?: string }
 
 /**
  * Valider passord med styrke-krav
+ * 
+ * @param password - Passordet som skal valideres
+ * @returns Objekt med `valid` (boolean), `error` (string, hvis ugyldig), og `strength` ('weak' | 'medium' | 'strong')
+ * 
+ * Krav:
+ * - Minimum 8 tegn
+ * - Maksimum 128 tegn
+ * - Må inneholde både bokstaver og tall
+ * 
+ * @example
+ * ```typescript
+ * const result = validatePassword('MySecure123');
+ * // Returns: { valid: true, strength: 'strong' }
+ * ```
  */
 export const validatePassword = (password: string): { valid: boolean; error?: string; strength?: 'weak' | 'medium' | 'strong' } => {
   if (!password || password.length < 8) {
@@ -59,7 +84,17 @@ export const validatePassword = (password: string): { valid: boolean; error?: st
 };
 
 /**
- * Sanitize tekst for å forhindre XSS
+ * Sanitize tekst for å forhindre XSS (Cross-Site Scripting) angrep
+ * 
+ * @param text - Teksten som skal sanitizes
+ * @param maxLength - Maksimal lengde på teksten (standard: 1000 tegn)
+ * @returns Sanitized tekst uten HTML tags og med escaped HTML entities
+ * 
+ * @example
+ * ```typescript
+ * const safe = sanitizeText('<script>alert("xss")</script>');
+ * // Returns: "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"
+ * ```
  */
 export const sanitizeText = (text: string, maxLength: number = 1000): string => {
   if (!text || typeof text !== 'string') return '';

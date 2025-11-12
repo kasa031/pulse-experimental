@@ -9,6 +9,7 @@ import { auth } from './firebase';
 import { safeError, safeLog } from '../utils/performance';
 import { getAppVersion } from '../utils/version';
 import { Platform } from 'react-native';
+import { sanitizeText } from '../utils/validation';
 
 interface FeedbackData {
   subject: string;
@@ -33,7 +34,23 @@ const getEmailJSConfig = () => {
 };
 
 /**
- * Send feilrapport eller tilbakemelding
+ * Send feilrapport eller tilbakemelding via EmailJS
+ * 
+ * @param data - FeedbackData objekt med emne, melding, type, etc.
+ * @returns true hvis sending var vellykket
+ * @throws Error hvis EmailJS ikke er konfigurert eller sending feiler
+ * 
+ * Alle brukerinput sanitizes automatisk før sending.
+ * 
+ * @example
+ * ```typescript
+ * await sendFeedback({
+ *   subject: 'Feil i appen',
+ *   message: 'Jeg oppdaget en feil...',
+ *   type: 'bug',
+ *   screen: 'VoteScreen'
+ * });
+ * ```
  */
 export const sendFeedback = async (data: FeedbackData): Promise<boolean> => {
   try {
@@ -51,14 +68,14 @@ export const sendFeedback = async (data: FeedbackData): Promise<boolean> => {
     const user = auth?.currentUser;
     const appVersion = getAppVersion();
 
-    // Forbered template parameters
+    // Forbered template parameters (sanitize all user input)
     const templateParams = {
-      from_name: data.userName || user?.displayName || 'Anonym bruker',
+      from_name: sanitizeText(data.userName || user?.displayName || 'Anonym bruker', 100),
       from_email: data.userEmail || user?.email || 'ikke-angitt@example.com',
-      subject: data.subject,
-      message: data.message,
+      subject: sanitizeText(data.subject, 200),
+      message: sanitizeText(data.message, 2000),
       feedback_type: data.type,
-      screen_name: data.screen || 'Ukjent',
+      screen_name: sanitizeText(data.screen || 'Ukjent', 50),
       app_version: appVersion,
       platform: Platform.OS,
       user_email: user?.email || 'Ikke innlogget',

@@ -31,6 +31,12 @@ Pulse Oslo er en digital plattform hvor innbyggerne i Oslo kan delta i lokale av
 - Se resultater fra avsluttede avstemninger
 - Hold oversikt over din deltakelse
 
+### 🔹 Oslo - Quiz og Historie
+- Test din kunnskap om Oslo med interaktive quiz-spørsmål
+- Legg til og les historie om gatenavn i Oslo
+- Lær fun facts om byen
+- Del kunnskap om Oslos historie med andre
+
 ### 🔹 Admin-funksjoner
 - Opprett nye avstemninger (kun admin)
 - Administrer avstemninger og resultater
@@ -106,10 +112,12 @@ npm start
 pulse-experimental/
 ├── assets/              # Bilder og ikoner
 ├── src/
-│   ├── constants/       # Konstantdata (farger, bydeler, etc.)
-│   ├── screens/         # React Native skjermer
+│   ├── constants/       # Konstantdata (farger, bydeler, osloQuiz, etc.)
+│   ├── screens/         # React Native skjermer (inkl. OsloScreen)
 │   ├── services/        # Firebase og API-tjenester
-│   └── utils/           # Hjelpefunksjoner
+│   ├── components/      # Gjenbrukbare komponenter (WebNavigation, etc.)
+│   ├── hooks/           # Custom hooks (useKeyboardShortcuts, etc.)
+│   └── utils/           # Hjelpefunksjoner (validation, accessibility, etc.)
 ├── .github/
 │   └── workflows/       # GitHub Actions for deployment
 ├── scripts/             # Hjelpeskript

@@ -5,7 +5,6 @@ import { theme, osloBranding } from '../constants/theme';
 import { auth } from '../services/firebase';
 import { getUserVotingHistory, getCompletedPollResults, PollResult, UserVote } from '../services/historyService';
 import { safeError } from '../utils/performance';
-import { Timestamp } from 'firebase/firestore';
 import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
 import { SPACING } from '../constants/spacing';
 import { CHIP_MIN_HEIGHT } from '../constants/touchTargets';

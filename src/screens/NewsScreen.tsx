@@ -11,7 +11,6 @@ import { getLatestNews, getNewsByCategory, getNewsByDistrict, NewsItem } from '.
 import { OSLO_DISTRICTS, POLL_CATEGORIES, getCategoryColor } from '../constants/osloDistricts';
 import { safeError, safeLog } from '../utils/performance';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { Timestamp } from 'firebase/firestore';
 import { auth } from '../services/firebase';
 import { getUserProfile } from '../services/userService';
 import { useResponsive, getResponsivePadding } from '../utils/useResponsive';

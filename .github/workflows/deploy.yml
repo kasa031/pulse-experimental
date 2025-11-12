@@ -332,10 +332,15 @@ jobs:
           }
           
           // Fix all paths (do this AFTER injecting script)
+          // Fix script src attributes
           html = html.replace(/src="\/_expo/g, `src="${basePath}/_expo`);
           html = html.replace(/src="\/static/g, `src="${basePath}/static`);
+          // Fix link href attributes
           html = html.replace(/href="\/_expo/g, `href="${basePath}/_expo`);
           html = html.replace(/href="\/static/g, `href="${basePath}/static`);
+          // Fix favicon and other root paths
+          html = html.replace(/href="\/favicon\.ico"/g, `href="${basePath}/favicon.ico"`);
+          html = html.replace(/href="\/manifest\.json"/g, `href="${basePath}/manifest.json"`);
           
           // Write fixed HTML
           fs.writeFileSync(htmlPath, html, 'utf8');
@@ -416,6 +421,9 @@ jobs:
             html = html.replace(/href="\/static/g, `href="${basePath}/static`);
             html = html.replace(/href="_expo/g, `href="${basePath}/_expo`);
             html = html.replace(/href="static/g, `href="${basePath}/static`);
+            // Fix favicon and other root paths
+            html = html.replace(/href="\/favicon\.ico"/g, `href="${basePath}/favicon.ico"`);
+            html = html.replace(/href="\/manifest\.json"/g, `href="${basePath}/manifest.json"`);
             
             // Fix CSS url() references
             html = html.replace(/url\('\/_expo/g, `url('${basePath}/_expo`);

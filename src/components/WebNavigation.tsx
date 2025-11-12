@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Platform, useWindowDimensions, TouchableOpacity, Image } from 'react-native';
 import { Drawer, Portal, Text, Surface, Modal, Switch } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { useNavigation, useRoute, NavigationContainer } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { osloBranding } from '../constants/theme';
 import { useDarkMode } from '../hooks/useDarkMode';
 import { getAriaProps, getKeyboardProps } from '../utils/accessibility';

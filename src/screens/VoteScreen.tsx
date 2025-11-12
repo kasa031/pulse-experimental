@@ -4,7 +4,7 @@ import { Card, Text, Button, RadioButton, ProgressBar, ActivityIndicator, Snackb
 import { theme, osloBranding } from '../constants/theme';
 import { getActivePolls, submitVote, subscribeToPolls, Poll } from '../services/pollsService';
 import { auth } from '../services/firebase';
-import { safeError, safeLog } from '../utils/performance';
+import { safeError } from '../utils/performance';
 import { searchAndFilterPolls } from '../utils/search';
 import { OSLO_DISTRICTS, getCategoryColor } from '../constants/osloDistricts';
 import { useResponsive, getResponsivePadding } from '../utils/useResponsive';
@@ -12,7 +12,6 @@ import { SPACING } from '../constants/spacing';
 import { BUTTON_MIN_HEIGHT, CHIP_MIN_HEIGHT } from '../constants/touchTargets';
 import { analytics } from '../utils/analytics';
 import { toTimestamp } from '../utils/dateHelpers';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const VoteScreen = React.memo(() => {
   const [polls, setPolls] = useState<Poll[]>([]);
@@ -36,7 +35,6 @@ const VoteScreen = React.memo(() => {
     let filtered = searchAndFilterPolls(polls, searchQuery, selectedCategory, selectedDistrict);
     
     // Sortering
-    const now = new Date().getTime();
     filtered = [...filtered].sort((a, b) => {
       if (sortBy === 'newest') {
         // Sorter etter startDate (nyeste først)
@@ -124,7 +122,6 @@ const VoteScreen = React.memo(() => {
     }
 
     const pollId = poll.id;
-    const optionKey = `${pollId}_${optionIndex}`;
 
     // Optimistisk oppdatering
     setOptimisticVotes(prev => ({

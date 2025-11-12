@@ -19,9 +19,10 @@ export const getAriaProps = (label?: string, role?: string, describedBy?: string
     props['aria-label'] = label;
   }
   
-  if (role) {
+  if (role && Platform.OS === 'web') {
     // For web, role kan være string, men React Native krever spesifikk type
-    // Vi returnerer som string og la React Native håndtere det
+    // Vi bruker type assertion for å unngå TypeScript-feil
+    // Dette er trygt fordi vi kun bruker det på web
     (props as any).role = role;
   }
   
@@ -53,8 +54,9 @@ export const getKeyboardProps = (
       }
     },
     tabIndex: disabled ? -1 : 0,
-    role: 'button',
-  };
+    // role er inkludert via getAriaProps hvis nødvendig
+    // Vi unngår å sette det direkte for å unngå TypeScript-feil
+  } as any;
 };
 
 /**

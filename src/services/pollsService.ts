@@ -47,6 +47,16 @@ export interface Poll {
 
 /**
  * Hent alle aktive avstemninger fra Firestore
+ * 
+ * @returns Array med aktive Poll-objekter, sortert etter startdato (nyeste først)
+ * 
+ * Bruker caching (5 minutter) for å redusere Firestore-kall.
+ * Fallback til cache hvis nettverk feiler.
+ * 
+ * @example
+ * ```typescript
+ * const polls = await getActivePolls();
+ * ```
  */
 export const getActivePolls = async (): Promise<Poll[]> => {
   try {
@@ -90,7 +100,15 @@ export const getActivePolls = async (): Promise<Poll[]> => {
 };
 
 /**
- * Hent en spesifikk avstemning
+ * Hent en spesifikk avstemning fra Firestore
+ * 
+ * @param pollId - ID til avstemningen
+ * @returns Poll-objekt eller null hvis ikke funnet
+ * 
+ * @example
+ * ```typescript
+ * const poll = await getPoll('poll123');
+ * ```
  */
 export const getPoll = async (pollId: string): Promise<Poll | null> => {
   try {
@@ -114,7 +132,20 @@ export const getPoll = async (pollId: string): Promise<Poll | null> => {
 };
 
 /**
- * Send en stemme
+ * Send en stemme på en avstemning
+ * 
+ * @param pollId - ID til avstemningen
+ * @param optionIndex - Indeks til valgt alternativ (0-basert)
+ * @param userId - ID til brukeren som stemmer
+ * @returns true hvis stemmen ble registrert
+ * @throws Error hvis validering feiler, rate limit er nådd, eller database ikke er tilgjengelig
+ * 
+ * Funksjonen validerer input, sjekker rate limits, og oppdaterer både poll og brukerstatistikk.
+ * 
+ * @example
+ * ```typescript
+ * const success = await submitVote('poll123', 0, 'user456');
+ * ```
  */
 export const submitVote = async (
   pollId: string, 
@@ -305,6 +336,30 @@ export interface CreatePollData {
   isActive?: boolean;
 }
 
+/**
+ * Opprett en ny avstemning i Firestore
+ * 
+ * @param pollData - Data for den nye avstemningen (title, description, options, etc.)
+ * @param userId - ID til brukeren som oppretter avstemningen
+ * @param createdBy - Navn på brukeren som oppretter avstemningen
+ * @returns ID til den opprettede avstemningen
+ * @throws Error hvis validering feiler eller database ikke er tilgjengelig
+ * 
+ * Alle tekstfelter sanitizes automatisk før lagring.
+ * 
+ * @example
+ * ```typescript
+ * const pollId = await createPoll({
+ *   title: 'Ny park?',
+ *   description: 'Skal vi bygge en ny park?',
+ *   options: [{ text: 'Ja' }, { text: 'Nei' }],
+ *   startDate: new Date(),
+ *   endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+ *   district: 'Grünerløkka',
+ *   category: 'miljø'
+ * }, 'user123', 'Ola Nordmann');
+ * ```
+ */
 export const createPoll = async (
   pollData: CreatePollData,
   userId: string,
