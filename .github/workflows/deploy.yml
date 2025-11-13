@@ -147,6 +147,7 @@ jobs:
           EXPO_PUBLIC_USE_STATIC: "0"
           EXPO_PUBLIC_BASE_URL: "/pulse-experimental"
           NODE_ENV: "production"
+          # Note: Secrets may not be set in all environments - handled in setup step above
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
           FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}

@@ -1,6 +1,6 @@
 /**
  * Rate Limiting Utility
- * Client-side rate limiting for å forhindre spam og DoS-angrep
+ * Client-side rate limiting to prevent spam and DoS attacks
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,20 +16,20 @@ const RATE_LIMIT_PREFIX = '@rate_limit_';
  * Rate limit config per action type
  */
 const RATE_LIMITS = {
-  vote: { maxRequests: 10, windowMs: 60 * 1000 }, // 10 stemmer per minutt
-  login: { maxRequests: 5, windowMs: 15 * 60 * 1000 }, // 5 innlogginger per 15 min
-  signup: { maxRequests: 3, windowMs: 60 * 60 * 1000 }, // 3 registreringer per time
-  pollCreate: { maxRequests: 5, windowMs: 60 * 60 * 1000 }, // 5 polls per time
+  vote: { maxRequests: 10, windowMs: 60 * 1000 }, // 10 votes per minute
+  login: { maxRequests: 5, windowMs: 15 * 60 * 1000 }, // 5 logins per 15 min
+  signup: { maxRequests: 3, windowMs: 60 * 60 * 1000 }, // 3 signups per hour
+  pollCreate: { maxRequests: 5, windowMs: 60 * 60 * 1000 }, // 5 polls per hour
 } as const;
 
 type RateLimitType = keyof typeof RATE_LIMITS;
 
 /**
- * Sjekk om en handling er tillatt basert på rate limiting
+ * Check if an action is allowed based on rate limiting
  */
 export const checkRateLimit = async (
   type: RateLimitType,
-  identifier?: string // Bruker ID eller IP
+  identifier?: string // User ID or IP
 ): Promise<{ allowed: boolean; remaining?: number; resetAt?: number }> => {
   try {
     const limit = RATE_LIMITS[type];
@@ -39,7 +39,7 @@ export const checkRateLimit = async (
     const now = Date.now();
 
     if (!stored) {
-      // Første forespørsel
+      // First request
       await AsyncStorage.setItem(key, JSON.stringify({
         count: 1,
         resetAt: now + limit.windowMs,
@@ -49,7 +49,7 @@ export const checkRateLimit = async (
 
     const entry: RateLimitEntry = JSON.parse(stored);
 
-    // Hvis vinduet har utløpt, reset
+    // If window has expired, reset
     if (now > entry.resetAt) {
       await AsyncStorage.setItem(key, JSON.stringify({
         count: 1,
@@ -58,7 +58,7 @@ export const checkRateLimit = async (
       return { allowed: true, remaining: limit.maxRequests - 1 };
     }
 
-    // Sjekk om grensen er nådd
+    // Check if limit is reached
     if (entry.count >= limit.maxRequests) {
       return {
         allowed: false,
@@ -67,7 +67,7 @@ export const checkRateLimit = async (
       };
     }
 
-    // Øk teller
+    // Increment counter
     entry.count += 1;
     await AsyncStorage.setItem(key, JSON.stringify(entry));
 
@@ -77,15 +77,15 @@ export const checkRateLimit = async (
       resetAt: entry.resetAt,
     };
   } catch (error) {
-    // Ved feil, tillat handling (fail-open)
+    // On error, allow action (fail-open)
     const { safeError } = require('./performance');
-    safeError('Rate limit check feilet:', error);
+    safeError('Rate limit check failed:', error);
     return { allowed: true };
   }
 };
 
 /**
- * Reset rate limit for en type
+ * Reset rate limit for a type
  */
 export const resetRateLimit = async (type: RateLimitType, identifier?: string): Promise<void> => {
   try {
@@ -93,12 +93,12 @@ export const resetRateLimit = async (type: RateLimitType, identifier?: string): 
     await AsyncStorage.removeItem(key);
   } catch (error) {
     const { safeError } = require('./performance');
-    safeError('Rate limit reset feilet:', error);
+    safeError('Rate limit reset failed:', error);
   }
 };
 
 /**
- * Hent gjenværende antall for en type
+ * Get remaining count for a type
  */
 export const getRateLimitInfo = async (
   type: RateLimitType,
@@ -126,7 +126,7 @@ export const getRateLimitInfo = async (
     };
   } catch (error) {
     const { safeError } = require('./performance');
-    safeError('Rate limit info feilet:', error);
+    safeError('Rate limit info failed:', error);
     return null;
   }
 };

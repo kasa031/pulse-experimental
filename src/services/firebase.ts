@@ -5,16 +5,16 @@ import Constants from 'expo-constants';
 import { FirebaseConfig } from '../types';
 import { safeLog, safeError, safeWarn } from '../utils/performance';
 
-// Firebase konfigurasjon fra expo-constants eller miljøvariabler
+// Firebase configuration from expo-constants or environment variables
 const getFirebaseConfig = () => {
   const extra = Constants.expoConfig?.extra;
   
-  // Prøv først expo config
+  // Try expo config first
   if (extra?.firebase) {
     return extra.firebase;
   }
 
-  // Fallback til environment variables (uten mock-verdier)
+  // Fallback to environment variables (without mock values)
   return {
     apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || extra?.firebaseApiKey || "",
     authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || extra?.firebaseAuthDomain || "",
@@ -27,7 +27,7 @@ const getFirebaseConfig = () => {
 
 const firebaseConfig = getFirebaseConfig();
 
-// Valider Firebase config
+// Validate Firebase config
 const isValidConfig = (config: FirebaseConfig | Record<string, unknown>): boolean => {
   if (!config || !config.apiKey || !config.projectId) {
     return false;
@@ -60,8 +60,8 @@ try {
     if (!firebaseConfig.appId || firebaseConfig.appId.includes('DIN_')) missingFields.push('appId');
     
     throw new Error(
-      `Firebase konfigurasjon er ugyldig. Manglende eller ugyldige felter: ${missingFields.join(', ')}. ` +
-      `Sjekk at API-nøkler er satt riktig i app.local.json eller miljøvariabler.`
+      `Firebase configuration is invalid. Missing or invalid fields: ${missingFields.join(', ')}. ` +
+      `Check that API keys are set correctly in app.local.json or environment variables.`
     );
   }
 
@@ -75,30 +75,30 @@ try {
   }
 } catch (error) {
   firebaseError = error as Error;
-  // Log error - dette er kritisk så vi logger alltid
-  safeError('❌ Firebase initialisering feilet:', error);
+  // Log error - this is critical so we always log
+  safeError('❌ Firebase initialization failed:', error);
   safeError('Firebase config:', {
     hasApiKey: !!firebaseConfig.apiKey,
     hasProjectId: !!firebaseConfig.projectId,
     hasAppId: !!firebaseConfig.appId,
     apiKeyLength: firebaseConfig.apiKey?.length || 0,
   });
-  // App vil håndtere dette i App.tsx
+  // App will handle this in App.tsx
 }
 
-// Eksporter Firebase services (kun hvis initialisert)
+// Export Firebase services (only if initialized)
 export const auth: Auth | null = app ? getAuth(app) : null;
 export const db: Firestore | null = app ? getFirestore(app) : null;
 export const firebaseInitialized = app !== null;
 export const getFirebaseError = () => firebaseError;
 
-// Aktiver offline persistence for Firestore (caching)
+// Enable offline persistence for Firestore (caching)
 if (typeof window !== 'undefined' && db) {
   enableIndexedDbPersistence(db).catch((err) => {
     if (err.code === 'failed-precondition') {
-      safeWarn('Firestore persistence kan bare aktiveres i én tab om gangen');
+      safeWarn('Firestore persistence can only be enabled in one tab at a time');
     } else if (err.code === 'unimplemented') {
-      safeWarn('Firestore persistence er ikke støttet i dette miljøet');
+      safeWarn('Firestore persistence is not supported in this environment');
     }
   });
 }

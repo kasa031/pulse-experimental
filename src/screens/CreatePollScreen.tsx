@@ -38,7 +38,7 @@ const CreatePollScreen = () => {
   const [district, setDistrict] = useState<string>('Hele Oslo');
   const [category, setCategory] = useState<string>('politikk');
   const [startDate, setStartDate] = useState<Date>(new Date());
-  const [endDate, setEndDate] = useState<Date>(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)); // 7 dager fra nå
+  const [endDate, setEndDate] = useState<Date>(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)); // 7 days from now
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -55,11 +55,11 @@ const CreatePollScreen = () => {
       const admin = await isUserAdmin();
       setIsAdmin(admin);
       if (!admin) {
-        setSnackbarMessage('Kun admin-brukere kan opprette avstemninger');
+        setSnackbarMessage('Only admin users can create polls');
         setSnackbarVisible(true);
       }
     } catch (error) {
-      safeError('Feil ved sjekk av admin-status:', error);
+      safeError('Error checking admin status:', error);
       setIsAdmin(false);
     } finally {
       setCheckingAdmin(false);
@@ -88,49 +88,49 @@ const CreatePollScreen = () => {
     const newErrors: Record<string, string> = {};
 
     if (!title.trim()) {
-      newErrors.title = 'Tittel er påkrevd';
+      newErrors.title = 'Title is required';
     } else {
       const titleValidation = validatePollTitle(title);
       if (!titleValidation.valid) {
-        newErrors.title = titleValidation.error || 'Tittel må være mellom 5 og 200 tegn';
+        newErrors.title = titleValidation.error || 'Title must be between 5 and 200 characters';
       }
     }
 
     if (!description.trim()) {
-      newErrors.description = 'Beskrivelse er påkrevd';
+      newErrors.description = 'Description is required';
     } else {
       const descValidation = validatePollDescription(description);
       if (!descValidation.valid) {
-        newErrors.description = descValidation.error || 'Beskrivelse må være mellom 10 og 2000 tegn';
+        newErrors.description = descValidation.error || 'Description must be between 10 and 2000 characters';
       }
     }
 
     const validOptions = options.filter(opt => opt.trim());
     if (validOptions.length < 2) {
-      newErrors.options = 'Minimum 2 alternativer påkrevd';
+      newErrors.options = 'Minimum 2 options required';
     }
 
     options.forEach((opt, index) => {
       if (!opt.trim() && validOptions.length >= 2) {
-        // Ikke vis feil for tomme alternativer hvis vi har nok
+        // Don't show error for empty options if we have enough
         return;
       }
       if (!opt.trim()) {
-        newErrors[`option_${index}`] = 'Alternativ kan ikke være tomt';
+        newErrors[`option_${index}`] = 'Option cannot be empty';
       } else {
         const optValidation = validatePollOption(opt);
         if (!optValidation.valid) {
-          newErrors[`option_${index}`] = optValidation.error || 'Alternativ må være mellom 1 og 100 tegn';
+          newErrors[`option_${index}`] = optValidation.error || 'Option must be between 1 and 100 characters';
         }
       }
     });
 
     if (endDate <= startDate) {
-      newErrors.dates = 'Sluttdato må være etter startdato';
+      newErrors.dates = 'End date must be after start date';
     }
 
     if (startDate < new Date()) {
-      newErrors.dates = 'Startdato kan ikke være i fortiden';
+      newErrors.dates = 'Start date cannot be in the past';
     }
 
     if (showErrors) {
@@ -141,20 +141,20 @@ const CreatePollScreen = () => {
 
   const handleSubmit = async () => {
     if (!validateForm()) {
-      setSnackbarMessage('Vennligst fyll ut alle felter korrekt');
+      setSnackbarMessage('Please fill out all fields correctly');
       setSnackbarVisible(true);
       return;
     }
 
     if (!isAdmin) {
-      setSnackbarMessage('Kun admin-brukere kan opprette avstemninger');
+      setSnackbarMessage('Only admin users can create polls');
       setSnackbarVisible(true);
       return;
     }
 
     const user = auth?.currentUser;
     if (!user || !user.email) {
-      setSnackbarMessage('Du må være innlogget');
+      setSnackbarMessage('You must be logged in');
       setSnackbarVisible(true);
       return;
     }
@@ -175,7 +175,7 @@ const CreatePollScreen = () => {
 
       await createPoll(pollData, user.uid, user.email);
       
-      setSnackbarMessage('Avstemning opprettet!');
+      setSnackbarMessage('Poll created!');
       setSnackbarVisible(true);
       
       // Reset form
@@ -188,9 +188,9 @@ const CreatePollScreen = () => {
       setEndDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
       setErrors({});
     } catch (error: unknown) {
-      safeError('Feil ved opprettelse av avstemning:', error);
+      safeError('Error creating poll:', error);
       const err = error as { message?: string };
-      setSnackbarMessage(err.message || 'Kunne ikke opprette avstemning');
+      setSnackbarMessage(err.message || 'Could not create poll');
       setSnackbarVisible(true);
     } finally {
       setLoading(false);
@@ -201,7 +201,7 @@ const CreatePollScreen = () => {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" />
-        <Text style={styles.loadingText}>Sjekker tilgang...</Text>
+        <Text style={styles.loadingText}>Checking access...</Text>
       </View>
     );
   }
@@ -211,13 +211,13 @@ const CreatePollScreen = () => {
       <View style={styles.center}>
         <Icon name="shield-off" size={64} color={osloBranding.colors.textSecondary} />
         <Text variant="headlineSmall" style={styles.errorTitle}>
-          Ingen tilgang
+          No access
         </Text>
         <Text variant="bodyMedium" style={styles.errorText}>
-          Kun admin-brukere kan opprette avstemninger.
+          Only admin users can create polls.
         </Text>
         <Text variant="bodySmall" style={styles.errorSubtext}>
-          Kontakt administrator for å få admin-tilgang.
+          Contact administrator to get admin access.
         </Text>
       </View>
     );
@@ -237,10 +237,10 @@ const CreatePollScreen = () => {
       <Card style={styles.card}>
         <Card.Content>
           <Text variant="headlineSmall" style={styles.title}>
-            Opprett ny avstemning
+            Create new poll
           </Text>
           <Text variant="bodySmall" style={styles.subtitle}>
-            Fyll ut alle felter for å opprette en ny avstemning
+            Fill out all fields to create a new poll
           </Text>
         </Card.Content>
       </Card>
@@ -249,7 +249,7 @@ const CreatePollScreen = () => {
         <Card.Content>
           <View>
             <TextInput
-              label="Tittel *"
+              label="Title *"
               value={title}
               onChangeText={setTitle}
               mode="outlined"
@@ -265,7 +265,7 @@ const CreatePollScreen = () => {
 
           <View>
             <TextInput
-              label="Beskrivelse *"
+              label="Description *"
               value={description}
               onChangeText={setDescription}
               mode="outlined"
@@ -283,12 +283,12 @@ const CreatePollScreen = () => {
 
           <View style={styles.section}>
             <Text variant="titleMedium" style={styles.sectionTitle}>
-              Alternativer (2-10) *
+              Options (2-10) *
             </Text>
             {options.map((opt, index) => (
               <View key={index} style={styles.optionRow}>
                 <TextInput
-                  label={`Alternativ ${index + 1}`}
+                  label={`Option ${index + 1}`}
                   value={opt}
                   onChangeText={(value) => updateOption(index, value)}
                   mode="outlined"
@@ -302,7 +302,7 @@ const CreatePollScreen = () => {
                     onPress={() => removeOption(index)}
                     style={styles.removeButton}
                   >
-                    Fjern
+                    Remove
                   </Button>
                 )}
                 {errors[`option_${index}`] && (
@@ -319,7 +319,7 @@ const CreatePollScreen = () => {
                 onPress={addOption}
                 style={styles.addButton}
               >
-                Legg til alternativ
+                Add option
               </Button>
             )}
             {errors.options && (
@@ -329,7 +329,7 @@ const CreatePollScreen = () => {
 
           <View style={styles.section}>
             <Text variant="titleMedium" style={styles.sectionTitle}>
-              Bydel
+              District
             </Text>
             <View style={styles.chipContainer}>
               {OSLO_DISTRICTS.slice(0, 8).map((dist) => (
@@ -347,7 +347,7 @@ const CreatePollScreen = () => {
 
           <View style={styles.section}>
             <Text variant="titleMedium" style={styles.sectionTitle}>
-              Kategori
+              Category
             </Text>
             <View style={styles.chipContainer}>
               {POLL_CATEGORIES.map((cat) => {
@@ -373,12 +373,12 @@ const CreatePollScreen = () => {
 
           <View style={styles.section}>
             <Text variant="titleMedium" style={styles.sectionTitle}>
-              Datoer
+              Dates
             </Text>
             <View style={styles.dateRow}>
               <View style={styles.dateInput}>
                 <Text variant="bodySmall" style={styles.dateLabel}>
-                  Startdato
+                  Start date
                 </Text>
                 <Button
                   mode="outlined"
@@ -405,7 +405,7 @@ const CreatePollScreen = () => {
               </View>
               <View style={styles.dateInput}>
                 <Text variant="bodySmall" style={styles.dateLabel}>
-                  Sluttdato
+                  End date
                 </Text>
                 <Button
                   mode="outlined"
@@ -444,14 +444,14 @@ const CreatePollScreen = () => {
                   setShowPreview(true);
                 } else {
                   validateForm(true);
-                  setSnackbarMessage('Vennligst fyll ut alle felter korrekt før forhåndsvisning');
+                  setSnackbarMessage('Please fill out all fields correctly before preview');
                   setSnackbarVisible(true);
                 }
               }}
               style={styles.previewButton}
               icon="eye"
             >
-              Forhåndsvisning
+              Preview
             </Button>
             <Button
               mode="contained"
@@ -461,7 +461,7 @@ const CreatePollScreen = () => {
               style={styles.submitButton}
               icon="check"
             >
-              Opprett avstemning
+              Create poll
             </Button>
           </View>
         </Card.Content>
@@ -472,7 +472,7 @@ const CreatePollScreen = () => {
         onDismiss={() => setSnackbarVisible(false)}
         duration={4000}
         action={{
-          label: 'Lukk',
+          label: 'Close',
           onPress: () => setSnackbarVisible(false),
         }}
       >
@@ -486,23 +486,23 @@ const CreatePollScreen = () => {
           onDismiss={() => setShowPreview(false)}
           style={styles.previewDialog}
         >
-          <Dialog.Title>Forhåndsvisning av avstemning</Dialog.Title>
+          <Dialog.Title>Poll preview</Dialog.Title>
           <Dialog.ScrollArea style={styles.previewScrollArea}>
             <Dialog.Content>
               <Text variant="headlineSmall" style={styles.previewTitle}>
-                {title || '(Ingen tittel)'}
+                {title || '(No title)'}
               </Text>
               <Divider style={styles.previewDivider} />
               <Text variant="bodyMedium" style={styles.previewDescription}>
-                {description || '(Ingen beskrivelse)'}
+                {description || '(No description)'}
               </Text>
               <Text variant="titleMedium" style={styles.previewSectionTitle}>
-                Alternativer:
+                Options:
               </Text>
               {options.filter(opt => opt.trim()).map((opt, index) => (
                 <View key={index} style={styles.previewOption}>
                   <Chip style={styles.previewChip}>
-                    {opt || `Alternativ ${index + 1}`}
+                    {opt || `Option ${index + 1}`}
                   </Chip>
                 </View>
               ))}
@@ -519,14 +519,14 @@ const CreatePollScreen = () => {
                   Start: {startDate.toLocaleDateString('no-NO')}
                 </Text>
                 <Text variant="bodySmall" style={styles.previewDateLabel}>
-                  Slutt: {endDate.toLocaleDateString('no-NO')}
+                  End: {endDate.toLocaleDateString('no-NO')}
                 </Text>
               </View>
             </Dialog.Content>
           </Dialog.ScrollArea>
           <Dialog.Actions>
             <Button onPress={() => setShowPreview(false)}>
-              Lukk
+              Close
             </Button>
             <Button 
               mode="contained"
@@ -536,7 +536,7 @@ const CreatePollScreen = () => {
               }}
               icon="check"
             >
-              Bekreft og opprett
+              Confirm and create
             </Button>
           </Dialog.Actions>
         </Dialog>
